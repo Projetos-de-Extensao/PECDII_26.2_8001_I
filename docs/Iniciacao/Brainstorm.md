@@ -10,7 +10,7 @@ O brainstorm é uma técnica de elicitação de requisitos que consiste em reuni
  
 ## Metodologia
 <p align = "justify">
-A equipe se reuniu para debater ideias gerais sobre o projeto via..., começou .... e terminou..., onde o XXXX XXXX foi o moderador, direcionando a equipe com questões pré-elaboradas, e transcrevendo as respostas para o documento.
+A equipe se reuniu para debater ideias gerais sobre a API da PKZ Lab via Discord, começou 15:37 e terminou 17:52, onde o aluno Pedro Lucas foi o moderador, direcionando a equipe com questões pré-elaboradas, e transcrevendo as respostas para o documento.
 </p>
  
 ## Brainstorm
@@ -19,104 +19,94 @@ A equipe se reuniu para debater ideias gerais sobre o projeto via..., começou .
  
 ## Perguntas
  
-### 1. Qual o objetivo principal da aplicação?
- 
+### 1. Qual o objetivo principal do sistema?
+
 <p align = "justify">
-<b>XXXX</b> - Deve ser uma plataforma onde qualquer pessoa possa...
-</p>
- 
-<b>ZZZ</b> - A plataforma deve fornece...
- 
-<b>YYYY</b> - O objetivo da aplicação é....
- 
-<b>WWWW</b> - O principal objetivo da aplicação é a...
- 
-<b>KKKK</b> - A plataforma deve gerenciar...
+<b>Rodrigo</b>: Organizar em um único sistema os agendamentos de sessões da PKZ Lab
+
+<b>Pedro Lucas</b>: Facilitar o agendamento das sessões e permitir que a coordenação tenha mais controle sobre os horários, as salas e os instrutores disponíveis
+
+<b>Lucas Santos</b>: A API deve permitir que alunos, responsáveis, professores e a coordenação consultem e gerenciem as informações da agenda de forma confiável
 </p>
  
 ---
  
-### 2. Como será o processo para cadastrar um novo cliente?
- 
-<p align = "justify">
-<b>XXXX</b> - O moderador deverá fazer login e...
- 
-<b>YYYY</b> - O cliente...
- 
-<b>WWWW</b> - Com o usuário logado, ele deverá...
+### 2. Como será o processo de cadastro de um aluno e do responsável legal (quando menor de idade)?
 
-<b>ZZZZ</b> - O cliente...
+<p align = "justify">
+<b>Rodrigo</b>: O aluno deve ser cadastrado com nome, data de nascimento e dados de contato. Caso seja menor de idade, o sistema deve exigir também os dados e o vínculo de um responsável legal antes de permitir qualquer agendamento
+
+<b>Pedro Lucas</b>: O cadastro deve solicitar os dados básicos do aluno. Se ele for menor de idade, também será necessário cadastrar um responsável legal e registrar sua autorização para que o aluno possa participar das atividades
+
+<b>Lucas Santos</b>: Para menores de idade, o responsável legal deve confirmar a autorização para o uso dos dados conforme a LGPD (Lei Geral de Proteção de Dados). Um responsável também pode ficar associado a mais de um aluno
+</p>
+
+---
  
-<b>KKK</b> - O cliente...
+### 3. Como será o cadastro de espaços, professores/instrutores e atividades pela coordenação?
+
+<p align = "justify">
+<b>Rodrigo</b>: A coordenação deve ter acesso exclusivo ao cadastro e a atualização dos espaços, informando nome e capacidade, e dos professores, registrando especialidades e horários disponíveis
+
+<b>Pedro Lucas</b>: A coordenação deverá cadastrar e atualizar os espaços, os professores e as atividades. Essas informações devem indicar onde cada atividade pode acontecer e quais profissionais podem realizá-la.
+
+<b>Lucas Santos</b>: Cada atividade deve possuir informações como nome, duração e modalidade, além de estar vinculada aos profissionais habilitados a ministrá-la e aos espaços adequados para sua realização.
+</p>
+
+---
+ 
+### 4. Como deve funcionar a alocação de uma sessão (sala + horário + profissional) e a verificação automática de conflitos?
+
+<p align = "justify">
+<b>Rodrigo</b>: A sessão deve reunir data, horário inicial e final, atividade, espaço e profissional. Antes de confirmar, a API deve verificar automaticamente se algum desses recursos já está reservado no período solicitado.
+
+<b>Pedro Lucas</b>: Antes de confirmar uma sessão, o sistema deve verificar se a sala e o profissional estão livres naquele horário. Caso exista algum conflito ou a sala esteja lotada, o agendamento não pode ser concluído.
+
+<b>Lucas Santos</b>: Além dos choques de horário, o sistema deve conferir a disponibilidade do professor e a capacidade máxima da sala. Se alguma regra não for atendida, a atribuição deve ser recusada com uma mensagem que explique o conflito.
+</p>
  
 ---
  
-### 3. Como será a forma de adicionar produtos?
- 
-<p align = "justify">
-<b>XXXX</b> - O cliente ao cadastrar...
-</p>
- 
-<p align = "justify">
-<b>YYYYY</b> - O produto tem...
-</p>
- 
-<b>ZZZZ</b> - O produto....
- 
-<b>XXXX</b> - O produto....
+### 5. Outras perguntas pertinentes ao contexto (ex: cancelamento/remarcação de sessão, aula experimental)
 
- 
+<p align = "justify">
+<b>Rodrigo</b>: O cancelamento ou a remarcação deve atualizar a agenda e liberar imediatamente o espaço e o profissional. Também seria importante registrar o motivo e manter um histórico das alterações
+
+<b>Pedro Lucas</b>: O aluno ou responsável deve poder solicitar o cancelamento ou a remarcação de uma sessão. As aulas experimentais também devem ser registradas na agenda para evitar conflitos com as demais atividades
+
+<b>Lucas Santos</b>: A aula experimental pode ser agendada sem um plano regular, mas deve seguir as mesmas regras de disponibilidade e capacidade. O sistema também poderia definir antecedência mínima para cancelamentos e impedir alterações em sessões já realizadas
+</p>
+
 ---
  
-### 4. Outras perguntas pertinentes ao contexto
+### 6. Quais informações seriam interessantes para o aluno/responsável e para o professor visualizarem na agenda?
 
 <p align = "justify">
-<b>XXXX</b> - Com a localização...
- 
-<b>YYYY</b> - O cliente...
- 
-<b>ZZZ</b> - O cliente...
- 
----
- 
-### 5. "Outras perguntas pertinentes ao contexto", Como seria a forma de adicionar do cliente adicionar os produtos ?
-<p align = "justify">
-<b>XXX</b> - O cliente....
-</p>
- 
-### 6. Quais informações seriam interessante para o cliente?
-<p align = "justify">
-   <b>XXX</b> - Informações...
-   
-   <b>ZZZZ</b> - O cliente usuário poderá acessar informações...
+<b>Rodrigo</b>: O aluno/responsável deve visualizar as próximas sessões com data, horário, atividade, professor, espaço e situação do agendamento, além de poder consultar sessões anteriores e eventuais alterações
 
-   <b>WWWWs</b> - O usuário poderá ver scouts de partidas do torneio, ver as regras dos torneios, locais e data das partidas.
-   
+<b>Pedro Lucas</b>: O aluno/responsável deve visualizar as informações das suas sessões, enquanto o professor deve consultar os alunos e as atividades de cada horário. A agenda também deve indicar quando uma sessão for cancelada ou remarcada
+
+<b>Lucas Santos</b>: O professor deve conseguir consultar sua agenda diária e semanal, com os horários, espaços, atividades e alunos de cada sessão. Filtros por data, atividade e espaço ajudariam a localizar as informações com maior rapidez
 </p>
  
 ### Requisitos elicitados
  
 |ID|Descrição|
 |----|-------------|
-|BS01| O cliente...|
-|BS02| O cliente...|
-|BS03| O cliente...|
-|BS04| O cliente...|
-|BS05| O cliente...|
-|BS06| O cliente...|
-|BS07| O cliente...|
-|BS08| O cliente...|
-|BS09| O cliente...|
-|BS10| O produto...|
-|BS11| O produto...|
-|BS12| O produto...|
-|BS13| O produto...|
-|BS14| O produto...|
-|BS15| O produto...|
+|BS01|O sistema deve permitir o cadastro de alunos com nome, data de nascimento e dados de contato.|
+|BS02|O sistema deve exigir o cadastro e a autorização de um responsável legal quando o aluno for menor de idade, permitindo que um responsável seja associado a mais de um aluno.|
+|BS03|O sistema deve permitir que a coordenação cadastre e atualize os espaços, incluindo nome e capacidade.|
+|BS04|O sistema deve permitir que a coordenação cadastre e atualize professores e instrutores, incluindo suas especialidades e disponibilidades.|
+|BS05|O sistema deve permitir o cadastro de atividades com nome, duração e modalidade, vinculando-as aos profissionais habilitados e aos espaços adequados.|
+|BS06|O sistema deve permitir o agendamento de sessões com data, horários inicial e final, atividade, espaço e profissional.|
+|BS07|O sistema deve verificar a disponibilidade do espaço e do profissional, assim como a capacidade da sala, antes de confirmar uma sessão.|
+|BS08|O sistema deve permitir o cancelamento e a remarcação de sessões, liberando os recursos reservados e mantendo o histórico das alterações.|
+|BS09|O sistema deve permitir o agendamento de aulas experimentais, aplicando as mesmas regras de disponibilidade e capacidade das demais sessões.|
+|BS10|O sistema deve disponibilizar agendas para alunos, responsáveis e professores, com informações das sessões e filtros por data, atividade e espaço.|
  
 ## Conclusão
 <p align = "justify">
-Através da aplicação da técnica, foi possível elicitar alguns dos primeiros requisitos do projeto.
+A aplicação da técnica de brainstorm permitiu reunir diferentes ideias sobre o funcionamento da API da PKZ Lab e identificar os principais requisitos do sistema. A discussão destacou a necessidade de centralizar os agendamentos, organizar os cadastros, verificar conflitos automaticamente e oferecer agendas adequadas para cada usuário. Esses requisitos servirão como base para as próximas etapas de análise e desenvolvimento do projeto.
 </p>
 ## Referências Bibliográficas
  
@@ -126,4 +116,4 @@ Através da aplicação da técnica, foi possível elicitar alguns dos primeiros
 ## Autor(es)
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
-| DD/MM/YYYY | 1.0 | Criação do documento | XXX XXXX, XXXX XXXX, YYY YYYY e ZZZ XXXX |
+| 08/09/2026 | 1.0 | Criação do documento | Rodrigo, Pedro Lucas e Lucas Santos |
