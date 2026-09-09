@@ -1,0 +1,27 @@
+@startmindmap pkz_lab_mapa_mental_brainstorm
+skinparam monochrome true
+skinparam ArrowColor #000000
+skinparam NodeFontSize 14
+
+* Requisitos elicitados no Brainstorm
+** Cadastro
+*** Alunos (nome, data de nascimento, contato)
+*** Responsável legal (obrigatório se menor, pode ter mais de um aluno vinculado)
+*** Espaços (nome, capacidade)
+*** Professores/instrutores (especialidade, disponibilidade)
+*** Atividades (nome, duração, modalidade, vinculada a profissional e espaço)
+** Agendamento de sessão
+*** Data, horário inicial e final, atividade, espaço e profissional
+*** Verificação de disponibilidade de espaço e profissional
+*** Verificação de capacidade da sala
+** Gestão da sessão
+*** Cancelamento e remarcação
+    **** Libera os recursos reservados
+    **** Mantém histórico das alterações
+*** Aula experimental
+    **** Mesmas regras de disponibilidade e capacidade
+** Consulta de agenda
+*** Aluno/responsável
+*** Professor
+*** Filtros por data, atividade e espaço
+@endmindmap
