@@ -1,0 +1,48 @@
+@startmindmap pkz_lab_mapa_mental
+skinparam monochrome true
+skinparam ArrowColor #000000
+skinparam NodeFontSize 14
+
+* PKZ Lab: Sistema de Gestão de Treinamento
+** Problema
+*** Agendamento feito só por WhatsApp
+*** Sem calendário ou controle de salas/horários
+*** Risco de conflito de sala/horário com o crescimento da operação
+** Objetivo
+*** API de agendamento
+*** Cadastro de espaços, profissionais, atividades e alunos
+*** Alocação de sessões sem conflito
+** Atores
+*** Aluno
+*** Responsável legal
+*** Professor/Instrutor
+*** Coordenação do centro
+** Escopo da API
+*** Cadastro
+    **** Espaços/salas
+    **** Professores e instrutores
+    **** Atividades e modalidades
+    **** Alunos e responsáveis
+*** Alocação de sessões
+    **** Espaço + horário + profissional
+*** Verificação automática de conflito
+    **** Conflito de agenda
+    **** Conflito de capacidade
+*** Consulta de agenda
+    **** Por espaço
+    **** Por profissional
+    **** Por aluno
+*** Persistência em banco de dados relacional
+** Legislação
+*** Lei Geral de Proteção de Dados
+    **** Consentimento do responsável legal
+*** Estatuto da Criança e do Adolescente
+    **** Proteção do atleta menor de idade
+*** Lei 9.696/1998
+    **** Avaliação vinculada a profissional de Educação Física habilitado
+** Mercado
+*** Tecnofit/Sistema Pacto
+    **** ERPs não necessários para um centro pequeno
+*** SuperSaaS/Calenda
+    **** Não relacionam reserva a profissional/modalidade
+@endmindmap

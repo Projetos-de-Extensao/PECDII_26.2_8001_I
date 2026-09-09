@@ -2,47 +2,37 @@
 id: mapa_mental
 title: Mapas Mentais
 ---
- 
+
 ## Introdução
- 
+
 <p align = "justify">
 Mapa mental consiste em criar resumos cheios de símbolos, cores, setas e frases de efeito com o objetivo de organizar o conteúdo e facilitar associações entre as informações destacadas. Esse material é muito indicado para pessoas que têm facilidade de aprender de forma visual.
 </p>
- 
+
 ## Metodologia
- 
+
 <p align = "justify">
-Foi levantado um ponto importante sobre o app e, assim, foi produzido o mapa mental. O documento foi produzido utilizando a ferramenta...
+O documento foi elaborado por Pedro Lucas, com base no levantamento já registrado em <a href="pesquisa.md">pesquisa.md</a>, organizando o problema, objetivo, atores, escopo, legislação e mercado do projeto PKZ Lab em um mapa mental feito em PlantUML.
 </p>
- 
-## Mapa mental - Geral.
- 
-## Versão 1.0
- 
+
+## Mapa mental - Geral
+
 ### Mapa mental 1
- 
-[![Mapa mental Entrevista](../assets/Mapas_Mentais/image.png)](../assets/Mapas_Mentais/image.png)
- 
- 
-### Mapa mental 2
- 
-[![Mapa mental Brainstorm](../assets/Mapas_Mentais/image.png)](../assets/Mapas_Mentais/image.png)
- 
+
+[![Mapa mental PKZ Lab](../assets/Mapas_Mentais/pkz_lab_mapa_mental.png)](../assets/Mapas_Mentais/pkz_lab_mapa_mental.png)
+
+Fonte (PlantUML): [pkz_lab_mapa_mental.puml](../assets/Mapas_Mentais/pkz_lab_mapa_mental.puml)
+
 ## Conclusão
- 
+
 <p align = "justify">
-O mapa mental é uma ficha de estudos que ajuda a dar uma visão geral do tema, e ajuda a fixar os pontos mais importantes sobre o app.
+O mapa mental organizou visualmente o problema do PKZ Lab (agendamento só via WhatsApp), o objetivo da API, os atores envolvidos, o escopo do sistema, a legislação aplicável e o comparativo de mercado, servindo de base para o levantamento de requisitos.
 </p>
- 
+
 ## Referências
-> Mapa MentalXXX,  Disponível em: https://www.....
- 
-> Ferramentas para Mapas Mentais. Disponível em: https://www....
- 
-> Plataforma para usuários colaborar no desenho... Disponível em: https://...
- 
+> PlantUML Mindmap Diagram. Disponível em: https://plantuml.com/mindmap-diagram
+
 ## Versionamento
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
-| dd/mm/yy | 1.0 | Criação do documento | xxx xxxx |
-| dd/mm/yy | 2.0 | Adicionado Mapa mental 2 | xxxx xxxx |
+| 08/09/26 | 1.0 | Criação do documento | Pedro Lucas |
