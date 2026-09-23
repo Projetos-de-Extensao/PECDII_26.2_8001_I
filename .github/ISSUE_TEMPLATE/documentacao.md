@@ -10,6 +10,8 @@ assignees: ''
 
 <!-- Descreva o documento a ser criado/atualizado -->
 
-## Critérios de aceite
+## Tarefas
+
+<!-- Liste o que deve ser feito para concluir esta documentação -->
 
 - [ ]
