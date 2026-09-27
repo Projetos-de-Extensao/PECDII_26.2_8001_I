@@ -1,15 +1,15 @@
 # Elaboração
 
-Objetivo: Refinar os requisitos, resolver os riscos críticos e definir a arquitetura base.
+> Objetivo: Refinar os requisitos da API da Playmakerz Lab, detalhar o comportamento do sistema e definir uma base arquitetural consistente para a fase de Construção.
 
-## Principais atividades:
+## Principais atividades
 
-Detalhar os requisitos mais importantes.
+* Detalhar e priorizar os requisitos funcionais e não funcionais.
 
-Desenvolver uma arquitetura de software robusta.
+* Identificar os atores, as regras de negócio e as restrições do sistema.
 
-Criar protótipos ou provas de conceito.
+* Descrever os casos de uso, incluindo fluxos principais, alternativos, exceções e regras de negócio.
 
-Planejar as próximas fases com mais precisão.
+* Modelar as classes do domínio e seus relacionamentos.
 
-Produto principal: Arquitetura validada e plano de desenvolvimento para a fase de construção.
+* Representar a interação entre os componentes por meio de diagramas de sequência.
