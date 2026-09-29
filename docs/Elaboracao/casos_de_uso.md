@@ -34,13 +34,14 @@ Os casos de uso foram derivados dos requisitos elicitados no [Brainstorm](../Ini
 | UC06 | Manter professores/instrutores | Coordenação | BS04 |
 | UC07 | Manter atividades | Coordenação | BS05 |
 | UC08 | Agendar sessão | Coordenação | BS06 |
-| UC09 | Verificar disponibilidade e capacidade | (incluído por UC08 e UC11) | BS07 |
+| UC09 | Verificar disponibilidade e capacidade | (incluído por UC08, UC11 e UC16) | BS07 |
 | UC10 | Agendar aula experimental | Coordenação | BS09 |
-| UC11 | Remarcar sessão | Aluno, Responsável Legal, Coordenação | BS08 |
+| UC11 | Remarcar sessão inteira | Coordenação | BS08 |
 | UC12 | Cancelar sessão | Coordenação | BS08 |
 | UC13 | Consultar agenda | Todos | BS10 |
 | UC14 | Registrar ocorrência da sessão | Professor/Instrutor | BS12, Lei 9.696/1998 |
 | UC15 | Cancelar participação em sessão | Aluno, Responsável Legal | BS08 |
+| UC16 | Remarcar participação em sessão | Aluno, Responsável Legal | BS08 |
 
 ## Diagrama de Casos de Uso
 
@@ -68,11 +69,12 @@ rectangle "API Playmakerz Lab" {
   usecase "UC08: Agendar sessão" as UC08
   usecase "UC09: Verificar disponibilidade\ne capacidade" as UC09
   usecase "UC10: Agendar aula experimental" as UC10
-  usecase "UC11: Remarcar sessão" as UC11
+  usecase "UC11: Remarcar sessão inteira" as UC11
   usecase "UC12: Cancelar sessão" as UC12
   usecase "UC13: Consultar agenda" as UC13
   usecase "UC14: Registrar ocorrência\nda sessão" as UC14
   usecase "UC15: Cancelar participação\nem sessão" as UC15
+  usecase "UC16: Remarcar participação\nem sessão" as UC16
 }
 
 Coord --> UC01
@@ -90,19 +92,20 @@ Prof --> UC13
 Prof --> UC14
 
 Aluno --> UC01
-Aluno --> UC11
+Aluno --> UC16
 Aluno --> UC15
 Aluno --> UC13
 
 Resp --> UC01
 Resp --> UC04
-Resp --> UC11
+Resp --> UC16
 Resp --> UC15
 Resp --> UC13
 
 UC03 .> UC02 : <<extend>>\n(aluno menor de 18 anos)
 UC08 ..> UC09 : <<include>>
 UC11 ..> UC09 : <<include>>
+UC16 ..> UC09 : <<include>>
 UC10 .> UC08 : <<extend>>\n(sem plano regular)
 
 @enduml
@@ -221,7 +224,7 @@ UC10 .> UC08 : <<extend>>\n(sem plano regular)
 
 ### UC09 - Verificar disponibilidade e capacidade
 
-- **Atores:** Sistema (incluído por UC08 e UC11).
+- **Atores:** Sistema (incluído por UC08, UC11 e UC16).
 - **Pré-condição:** Dados da sessão informados.
 - **Fluxo Principal:**
     1. Sistema verifica se o espaço não tem outra sessão no mesmo intervalo.
@@ -246,21 +249,21 @@ UC10 .> UC08 : <<extend>>\n(sem plano regular)
     - **FA1:** Mesmos fluxos alternativos do UC08.
 - **Pós-condição:** Aula experimental agendada.
 
-### UC11 - Remarcar sessão
+### UC11 - Remarcar sessão inteira
 
-- **Atores:** Aluno, Responsável Legal, Coordenação.
+- **Atores:** Coordenação.
 - **Pré-condição:** Usuário autenticado; sessão agendada e ainda não realizada.
 - **Fluxo Principal:**
-    1. Usuário seleciona a sessão e informa nova data/horário e o motivo.
+    1. Coordenação seleciona a sessão e informa a nova data/horário e o motivo.
     2. Sistema verifica a antecedência mínima.
     3. Sistema executa o UC09 para o novo horário.
-    4. Sistema atualiza a sessão, libera o horário anterior e registra a alteração no histórico.
+    4. Sistema atualiza o horário da sessão inteira, incluindo todos os participantes, libera o horário anterior e registra a alteração no histórico.
 - **Fluxos Alternativos:**
     - **FA1:** Sessão já realizada → Sistema recusa a remarcação.
     - **FA2:** Fora da antecedência mínima → Sistema recusa a remarcação.
     - **FA3:** Conflito no novo horário (UC09) → Sistema recusa a remarcação e mantém o horário original.
-    - **FA4:** Aluno ou responsável sem vínculo com a sessão → Sistema recusa o acesso.
-- **Pós-condição:** Sessão remarcada, com histórico da alteração.
+    - **FA4:** Usuário sem perfil de coordenação → Sistema recusa o acesso.
+- **Pós-condição:** Sessão inteira remarcada, com todos os participantes mantidos e histórico da alteração.
 
 ### UC12 - Cancelar sessão
 
@@ -276,21 +279,6 @@ UC10 .> UC08 : <<extend>>\n(sem plano regular)
     - **FA2:** Fora da antecedência mínima → Sistema recusa o cancelamento.
     - **FA3:** Usuário sem perfil de coordenação → Sistema recusa o acesso.
 - **Pós-condição:** Sessão inteira cancelada, recursos liberados e histórico mantido.
-
-### UC15 - Cancelar participação em sessão
-
-- **Atores:** Aluno, Responsável Legal.
-- **Pré-condição:** Usuário autenticado; sessão agendada e ainda não realizada; aluno participante da sessão.
-- **Fluxo Principal:**
-    1. Aluno seleciona a própria participação, ou responsável seleciona a participação de aluno vinculado, e informa o motivo.
-    2. Sistema verifica a antecedência mínima e o vínculo do usuário com o aluno.
-    3. Sistema marca somente a participação como cancelada e libera a vaga do aluno; a sessão continua agendada para os demais participantes.
-    4. Sistema registra a alteração no histórico da sessão.
-- **Fluxos Alternativos:**
-    - **FA1:** Sessão já realizada ou cancelada → Sistema recusa a operação.
-    - **FA2:** Fora da antecedência mínima → Sistema recusa a operação.
-    - **FA3:** Responsável não vinculado ao aluno, ou aluno não participante → Sistema recusa o acesso.
-- **Pós-condição:** Somente a participação solicitada é cancelada; a sessão e os demais participantes permanecem inalterados.
 
 ### UC13 - Consultar agenda
 
@@ -318,6 +306,38 @@ UC10 .> UC08 : <<extend>>\n(sem plano regular)
     - **FA1:** Professor não alocado à sessão → Sistema recusa o registro.
     - **FA2:** Sessão cancelada ou ainda não iniciada → Sistema recusa o registro.
 - **Pós-condição:** Sessão realizada, com observações e presença de cada aluno registradas e ocorrência vinculada ao profissional responsável (Lei 9.696/1998).
+
+### UC15 - Cancelar participação em sessão
+
+- **Atores:** Aluno, Responsável Legal.
+- **Pré-condição:** Usuário autenticado; sessão agendada e ainda não realizada; aluno participante da sessão.
+- **Fluxo Principal:**
+    1. Aluno seleciona a própria participação, ou responsável seleciona a participação de aluno vinculado, e informa o motivo.
+    2. Sistema verifica a antecedência mínima e o vínculo do usuário com o aluno.
+    3. Sistema marca somente a participação como cancelada e libera a vaga do aluno; a sessão continua agendada para os demais participantes.
+    4. Sistema registra a alteração no histórico da sessão.
+- **Fluxos Alternativos:**
+    - **FA1:** Sessão já realizada ou cancelada → Sistema recusa a operação.
+    - **FA2:** Fora da antecedência mínima → Sistema recusa a operação.
+    - **FA3:** Responsável não vinculado ao aluno, ou aluno não participante → Sistema recusa o acesso.
+- **Pós-condição:** Somente a participação solicitada é cancelada; a sessão e os demais participantes permanecem inalterados.
+
+### UC16 - Remarcar participação em sessão
+
+- **Atores:** Aluno, Responsável Legal.
+- **Pré-condição:** Usuário autenticado; participação ativa em uma sessão de origem agendada e ainda não realizada; sessão de destino agendada, futura e não cancelada.
+- **Fluxo Principal:**
+    1. Aluno seleciona a própria participação, ou responsável seleciona a participação de aluno vinculado, e escolhe outra sessão já agendada da mesma atividade.
+    2. Sistema verifica a antecedência mínima e o vínculo do usuário com o aluno.
+    3. Sistema executa o UC09 para confirmar a vaga e a capacidade da sessão de destino.
+    4. Sistema confirma que o aluno não tem outra sessão no mesmo intervalo.
+    5. Sistema transfere somente a participação selecionada para a sessão de destino e registra a alteração no histórico da sessão de origem.
+- **Fluxos Alternativos:**
+    - **FA1:** Sessão de origem já realizada ou sessão de destino realizada ou cancelada → Sistema recusa a remarcação.
+    - **FA2:** Fora da antecedência mínima → Sistema recusa a remarcação.
+    - **FA3:** Sessão de destino sem vaga ou incompatível com a atividade → Sistema recusa a remarcação e mantém a participação original.
+    - **FA4:** Responsável sem vínculo com o aluno, aluno sem participação na sessão de origem ou aluno com outra sessão no mesmo intervalo → Sistema recusa a operação.
+- **Pós-condição:** Somente a participação selecionada passa para a sessão de destino; os demais participantes e horários permanecem inalterados e o histórico é mantido.
 
 ## Conclusão
 

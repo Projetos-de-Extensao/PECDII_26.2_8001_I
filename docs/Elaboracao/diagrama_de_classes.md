@@ -11,7 +11,7 @@ O Diagrama de Classes representa as classes do domínio e os relacionamentos ent
 
 ## Metodologia
 
-As classes foram identificadas a partir dos substantivos e responsabilidades presentes nos [Casos de Uso](casos_de_uso.md) (UC01 a UC15), nos requisitos do [Brainstorm](../Iniciacao/Brainstorm.md) (BS01 a BS12) e na [Pesquisa](../Iniciacao/pesquisa.md). Em seguida foram definidos os relacionamentos (associação, composição e generalização) e as multiplicidades de acordo com as regras de negócio descritas nos fluxos principais e alternativos. Classes técnicas (controllers, repositórios, serializers) não foram incluídas. O diagrama foi feito em PlantUML.
+As classes foram identificadas a partir dos substantivos e responsabilidades presentes nos [Casos de Uso](casos_de_uso.md) (UC01 a UC16), nos requisitos do [Brainstorm](../Iniciacao/Brainstorm.md) (BS01 a BS12) e na [Pesquisa](../Iniciacao/pesquisa.md). Em seguida foram definidos os relacionamentos (associação, composição e generalização) e as multiplicidades de acordo com as regras de negócio descritas nos fluxos principais e alternativos. Classes técnicas (controllers, repositórios, serializers) não foram incluídas. O diagrama foi feito em PlantUML.
 
 ## Diagrama de Classes Conceitual
 
@@ -69,6 +69,7 @@ Sessao <|-- AulaExperimental
 
 Sessao "1" *-- "0..*" AlteracaoSessao : histórico >
 AlteracaoSessao "0..*" -- "1" Usuario : solicitada por >
+AlteracaoSessao "0..*" -- "0..1" ParticipacaoSessao : alteração individual >
 
 Sessao "1" *-- "0..1" RegistroSessao : registrada em >
 RegistroSessao "0..*" -- "1" Professor : registrado por >
@@ -94,11 +95,11 @@ Coordenador "1" -- "0..*" Sessao : agenda >
 | Modalidade | Categoria da atividade (ex.: funcional, força, avaliação física). |
 | Atividade | Tipo de treino oferecido, com duração, vinculado aos professores habilitados e aos espaços adequados. |
 | Espaco | Sala ou área do centro, com capacidade máxima. |
-| Sessao | Ocorrência agendada de uma atividade, com data, horário, espaço, professor e alunos. É o centro da verificação de conflito. |
+| Sessao | Ocorrência agendada de uma atividade, com data, horário, espaço e professor. Reúne as participações dos alunos por meio de `ParticipacaoSessao` e é o centro da verificação de conflito. |
 | AulaExperimental | Especialização de sessão para alunos sem plano regular, sujeita às mesmas regras de disponibilidade e capacidade. |
-| AlteracaoSessao | Registro de cancelamento ou remarcação, com motivo e autor, compondo o histórico da sessão. |
+| AlteracaoSessao | Registro de cancelamento ou remarcação integral ou individual, com motivo e autor. Quando individual, referencia a participação alterada e compõe o histórico da sessão de origem. |
 | RegistroSessao | Registro do que ocorreu na sessão (presença e observações), vinculado ao professor responsável (Lei 9.696/1998). |
-| ParticipacaoSessao | Vínculo de um aluno com uma sessão, com situação da participação e presença individual registrada em sua ocorrência. |
+| ParticipacaoSessao | Vínculo de um aluno com uma sessão, com situação da participação e presença individual registrada em sua ocorrência. A participação pode ser transferida para outra sessão compatível sem alterar a agenda dos demais alunos. |
 
 ## Relacionamentos e Multiplicidades
 
@@ -113,6 +114,7 @@ Coordenador "1" -- "0..*" Sessao : agenda >
 | Sessao — Atividade / Espaco / Professor | 0..* para 1 | Cada sessão tem exatamente uma atividade, um espaço e um profissional (BS06). |
 | Sessao — ParticipacaoSessao — Aluno | Sessão 1 para 0..* participações; cada participação liga 1 sessão a 1 aluno | A presença e a situação são registradas por aluno, e não apenas no nível da sessão; participantes ativos são limitados pela capacidade do espaço (BS07, BS12). |
 | Sessao ◆ AlteracaoSessao | 1 para 0..* | O histórico de alterações pertence à sessão (BS08). |
+| AlteracaoSessao — ParticipacaoSessao | Cada alteração referencia 0..1 participação; cada participação pode ter 0..* alterações | Registra qual participação foi remarcada ou cancelada individualmente; alterações integrais da sessão não apontam para uma participação específica (BS08). |
 | Sessao ◆ RegistroSessao | 1 para 0..1 | Uma sessão realizada tem um registro de ocorrência (UC14). |
 
 ## Rastreabilidade
@@ -124,19 +126,19 @@ As classes `Coordenador`, `Professor`, `Aluno` e `ResponsavelLegal` herdam de `U
 | Usuario | BS11 | UC01 |
 | Coordenador | BS01, BS02, BS03, BS04, BS05, BS06, BS08, BS09, BS10 | UC02, UC03, UC05, UC06, UC07, UC08, UC10, UC11, UC12, UC13 |
 | Professor | BS04, BS10, BS12 | UC06, UC08, UC13, UC14 |
-| Aluno | BS01, BS02, BS06, BS08, BS10, BS12 | UC02, UC08, UC11, UC13, UC14, UC15 |
-| ResponsavelLegal | BS02, BS08, BS10, BS11 | UC01, UC03, UC04, UC11, UC13, UC15 |
+| Aluno | BS01, BS02, BS06, BS08, BS10, BS12 | UC02, UC08, UC13, UC14, UC15, UC16 |
+| ResponsavelLegal | BS02, BS08, BS10, BS11 | UC01, UC03, UC04, UC13, UC15, UC16 |
 | Consentimento | BS02 | UC03, UC04, UC08 |
 | Disponibilidade | BS04, BS07 | UC06, UC09 |
 | Especialidade | BS04, BS05 | UC06, UC07 |
 | Modalidade | BS05 | UC07 |
 | Atividade | BS05, BS06, BS09 | UC07, UC08, UC10 |
 | Espaco | BS03, BS05, BS06, BS07, BS09 | UC05, UC07, UC08, UC09, UC10, UC11, UC12, UC13 |
-| Sessao | BS06, BS07, BS08, BS09, BS10, BS12 | UC08, UC09, UC10, UC11, UC12, UC13, UC14, UC15 |
+| Sessao | BS06, BS07, BS08, BS09, BS10, BS12 | UC08, UC09, UC10, UC11, UC12, UC13, UC14, UC15, UC16 |
 | AulaExperimental | BS09 | UC10 |
-| AlteracaoSessao | BS08 | UC11, UC12, UC15 |
+| AlteracaoSessao | BS08 | UC11, UC12, UC15, UC16 |
 | RegistroSessao | BS12, Lei 9.696/1998 | UC14 |
-| ParticipacaoSessao | BS06, BS07, BS08, BS12 | UC08, UC14, UC15 |
+| ParticipacaoSessao | BS06, BS07, BS08, BS12 | UC08, UC14, UC15, UC16 |
 
 ## Conclusão
 
@@ -155,4 +157,4 @@ O diagrama de classes conceitual consolidou os conceitos do domínio da Playmake
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
 | 26/09/2026 | 1.0 | Criação do diagrama de classes conceitual | Lucas Santos |
-| 29/09/2026 | 1.1 | Inclusão da participação e presença individual, revisão das restrições e Rastreabilidade | Pedro Lucas |
+| 29/09/2026 | 1.1 | Inclusão da participação e presença individual, revisão das restrições e rastreabilidade | Pedro Lucas |
