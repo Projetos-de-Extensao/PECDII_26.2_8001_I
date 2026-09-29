@@ -14,7 +14,7 @@ title: Design Thinking
 
 ### **2. Introdução**
 
-- **Contexto do Projeto**: A PKZ Lab é um centro de treinamento de performance integrada na Barra da Tijuca (RJ). Hoje toda a captação e o agendamento são feitos por WhatsApp, sem calendário, controle de salas ou horários, o que gera risco de conflito conforme a operação cresce.
+- **Contexto do Projeto**: A Playmakerz Lab é um centro de treinamento de performance integrada na Barra da Tijuca (RJ). Hoje toda a captação e o agendamento são feitos por WhatsApp, sem calendário, controle de salas ou horários, o que gera risco de conflito conforme a operação cresce.
 
 - **Objetivo**: Especificar e desenvolver uma API back-end que permita cadastrar espaços, professores/instrutores, atividades e alunos, e alocar cada sessão a um espaço, horário e profissional sem conflito.
 
@@ -26,7 +26,7 @@ title: Design Thinking
 
 ### **3. Empatia**
 
-- **Pesquisa**: Levantamento documental sobre a operação da PKZ Lab, complementado por brainstorming interno da equipe para explorar cenários de uso.
+- **Pesquisa**: Levantamento documental sobre a operação da Playmakerz Lab, complementado por brainstorming interno da equipe para explorar cenários de uso.
 
 - **Insights**: Hoje um professor só fica sabendo que tem aula quando alguém manda mensagem, não existe nada fixo, é tudo combinado na hora pelo WhatsApp. Se dois grupos marcarem a mesma sala sem querer, ninguém percebe até um chegar lá e encontrar o outro. Pra aluno menor de idade tem que ter o responsável autorizando antes de qualquer agendamento, isso já traz a LGPD pro fluxo de cadastro.
 
@@ -34,13 +34,13 @@ title: Design Thinking
 
 - **Persona Treinador (Professor/Instrutor)**: quer saber a própria agenda sem depender de mensagem avulsa, e quer registrar rápido o que aconteceu na sessão.
 
-- **Persona Profissional de Saúde**: é a mais difícil de fechar, a pesquisa não detalha quem exatamente ocupa esse papel no dia a dia do PKZ Lab hoje, pode até ser o mesmo professor em alguns casos. O que está claro é que toda avaliação física precisa estar vinculada a um profissional de Educação Física habilitado (Lei 9.696/1998).
+- **Persona Profissional de Saúde**: é a mais difícil de fechar, a pesquisa não detalha quem exatamente ocupa esse papel no dia a dia do Playmakerz Lab hoje, pode até ser o mesmo professor em alguns casos. O que está claro é que toda avaliação física precisa estar vinculada a um profissional de Educação Física habilitado (Lei 9.696/1998).
 
 ---
 
 ### **4. Definição**
 
-- **Problema Central**: Como o PKZ Lab consegue alocar treino, sala e profissional sem um esbarrar no outro, sem depender de mensagem de WhatsApp pra resolver na hora?
+- **Problema Central**: Como o Playmakerz Lab consegue alocar treino, sala e profissional sem um esbarrar no outro, sem depender de mensagem de WhatsApp pra resolver na hora?
 
 - **Pontos de Vista**: o Administrador vive apagando incêndio de agenda, precisa de um jeito de cadastrar e alocar que já avise quando há conflito, em vez de descobrir depois. Treinador e Profissional de Saúde precisam que o sistema saiba exatamente quem fez o quê, com quem, em qual sessão, um pra organizar o próprio dia, o outro porque a lei exige.
 

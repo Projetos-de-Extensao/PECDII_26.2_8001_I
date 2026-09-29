@@ -5,7 +5,7 @@ title: Documento de Visão
 ## Introdução
 
 <p align = "justify">
-O propósito deste documento é apresentar uma visão geral do projeto desenvolvido na disciplina Projeto de Extensão em Computação II (IBM8936), no Ibmec, referente ao sistema back-end de gestão de treinamento e acompanhamento de performance da PKZ Lab. Neste documento são descritos de forma resumida o problema abordado, os objetivos do projeto, os stakeholders envolvidos, o escopo e as principais funcionalidades previstas para a API.
+O propósito deste documento é apresentar uma visão geral do projeto desenvolvido na disciplina Projeto de Extensão em Computação II (IBM8936), no Ibmec, referente à API de agenda e registro de ocorrências de sessões da Playmakerz Lab. O produto centraliza cadastros, agendamentos, consultas de agenda e ocorrências (incluindo presença individual e observações), sem calcular métricas ou acompanhar evolução de performance.
 </p>
 
 ## Descrição do Problema
@@ -13,7 +13,7 @@ O propósito deste documento é apresentar uma visão geral do projeto desenvolv
 ### Problema
 
 <p align = "justify">
-Hoje o agendamento de sessões na PKZ Lab é feito exclusivamente por WhatsApp, sem calendário, sem controle de salas ou horários e sem nenhum sistema de registro. Conforme a operação cresce, isso gera risco real de conflito de horário e de sala entre atividades diferentes.
+Hoje o agendamento de sessões na Playmakerz Lab é feito exclusivamente por WhatsApp, sem calendário, sem controle de salas ou horários e sem nenhum sistema de registro. Conforme a operação cresce, isso gera risco real de conflito de horário e de sala entre atividades diferentes.
 </p>
 
 ### Impactados
@@ -31,7 +31,7 @@ Sem um sistema de controle, a tendência é o aumento de conflitos de agenda (do
 ### Solução
 
 <p align = "justify">
-Especificar e desenvolver uma API back-end que permita cadastrar espaços, professores/instrutores, atividades e alunos, e alocar cada sessão de treino ou aula experimental a um espaço, um horário e um profissional sem conflito, verificando automaticamente disponibilidade e capacidade antes de confirmar o agendamento.
+Especificar e desenvolver uma API back-end que permita cadastrar espaços, professores/instrutores, atividades e alunos, alocar cada sessão de treino ou aula experimental sem conflito e registrar a presença individual e as observações de cada sessão.
 </p>
 
 ## Objetivos
@@ -99,4 +99,5 @@ O sistema não terá interface gráfica própria: toda a funcionalidade é expos
 ## Versionamento
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
-| 27/09/2026 | 1.0 | Criação do documento de visão da API da PKZ Lab | Rodrigo |
+| 27/09/2026 | 1.0 | Criação do documento de visão da API da Playmakerz Lab | Rodrigo |
+| 29/09/2026 | 1.1 | Delimitação do escopo de agenda e registro de ocorrências | Pedro Lucas |

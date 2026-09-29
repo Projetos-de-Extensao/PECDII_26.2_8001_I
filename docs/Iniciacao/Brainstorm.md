@@ -10,7 +10,7 @@ O brainstorm é uma técnica de elicitação de requisitos que consiste em reuni
  
 ## Metodologia
 <p align = "justify">
-A equipe se reuniu para debater ideias gerais sobre a API da PKZ Lab via Discord, começou 15:37 e terminou 17:52, onde o aluno Pedro Lucas foi o moderador, direcionando a equipe com questões pré-elaboradas, e transcrevendo as respostas para o documento.
+A equipe se reuniu para debater ideias gerais sobre a API da Playmakerz Lab via Discord, começou 15:37 e terminou 17:52, onde o aluno Pedro Lucas foi o moderador, direcionando a equipe com questões pré-elaboradas, e transcrevendo as respostas para o documento.
 </p>
  
 ## Brainstorm
@@ -45,13 +45,19 @@ A equipe se reuniu para debater ideias gerais sobre a API da PKZ Lab via Discord
  
 ### 5. Outras perguntas pertinentes ao contexto (ex: cancelamento/remarcação de sessão, aula experimental)
 
-<p align="justify">O aluno ou responsável deve poder solicitar o cancelamento ou a remarcação de uma sessão, respeitando uma possível antecedência mínima e sem permitir alterações em sessões já realizadas. A operação deve atualizar imediatamente a agenda, liberar o espaço e o profissional, registrar o motivo e manter o histórico das alterações. As aulas experimentais podem ser agendadas sem um plano regular, mas devem seguir as mesmas regras de disponibilidade e capacidade aplicadas às outras sessões.</p>
+<p align="justify">O aluno pode cancelar somente sua própria participação, e o responsável pode cancelar a participação de aluno vinculado; a coordenação pode cancelar a sessão inteira. Aluno, responsável e coordenação podem solicitar remarcação, respeitando a antecedência mínima e sem alterar sessões já realizadas. O cancelamento individual libera apenas a vaga do aluno; o cancelamento integral libera espaço e profissional. As alterações registram motivo e ficam no histórico. Aulas experimentais podem ser agendadas sem plano regular e seguem as mesmas regras de disponibilidade e capacidade.</p>
 
 ---
  
 ### 6. Quais informações seriam interessantes para o aluno/responsável e para o professor visualizarem na agenda?
 
 <p align="justify">O aluno ou responsável deve visualizar as próximas sessões, o histórico de agendamentos incluindo data, horário, atividade, professor, espaço, situação e eventuais cancelamentos ou remarcações. O professor deve consultar sua agenda diária e semanal, com informações sobre horários, espaços, atividades e alunos de cada sessão. A agenda também deve oferecer filtros por data, atividade e espaço para facilitar a localização de informações.</p>
+
+---
+
+### 7. Como será o acesso à API e o registro do que ocorreu em cada sessão?
+
+<p align="justify">Todos os perfis devem se autenticar para que a API restrinja as operações e os dados conforme o papel e os vínculos de cada usuário. Após a sessão, o professor alocado deve registrar observações e a presença individual de cada aluno. O produto organiza agenda e ocorrências; não calcula métricas nem acompanha evolução de performance.</p>
  
 ### Requisitos elicitados
  
@@ -67,10 +73,12 @@ A equipe se reuniu para debater ideias gerais sobre a API da PKZ Lab via Discord
 |BS08|O sistema deve permitir o cancelamento e a remarcação de sessões, liberando os recursos reservados e mantendo o histórico das alterações.|
 |BS09|O sistema deve permitir o agendamento de aulas experimentais, aplicando as mesmas regras de disponibilidade e capacidade das demais sessões.|
 |BS10|O sistema deve disponibilizar agendas para alunos, responsáveis e professores, com informações das sessões e filtros por data, atividade e espaço.|
+|BS11|O sistema deve autenticar os usuários e restringir operações e dados conforme o perfil e os vínculos de cada usuário.|
+|BS12|O sistema deve permitir que o professor alocado registre as observações da sessão e a presença individual de cada aluno.|
  
 ## Conclusão
 <p align = "justify">
-A aplicação da técnica de brainstorm permitiu reunir diferentes ideias sobre o funcionamento da API da PKZ Lab e identificar os principais requisitos do sistema. A discussão destacou a necessidade de centralizar os agendamentos, organizar os cadastros, verificar conflitos automaticamente e oferecer agendas adequadas para cada usuário. Esses requisitos servirão como base para as próximas etapas de análise e desenvolvimento do projeto.
+A aplicação da técnica de brainstorm permitiu reunir diferentes ideias sobre o funcionamento da API da Playmakerz Lab e identificar os principais requisitos do sistema. A discussão destacou a necessidade de centralizar os agendamentos, organizar os cadastros, verificar conflitos automaticamente e oferecer agendas e registros de ocorrência adequados para cada usuário. Esses requisitos servirão como base para as próximas etapas de análise e desenvolvimento do projeto.
 </p>
 
 ## Referências Bibliográficas
@@ -83,3 +91,4 @@ A aplicação da técnica de brainstorm permitiu reunir diferentes ideias sobre 
 | -- | -- | -- | -- |
 | 08/09/2026 | 1.0 | Criação do documento | Rodrigo, Pedro Lucas e Lucas Santos |
 | 25/09/2026 | 1.1 | Revisão das respostas do brainstorm | Pedro Lucas |
+| 29/09/2026 | 1.2 | Inclusão dos requisitos de autenticação, registro de ocorrências e esclarecimento do cancelamento (estava ambíguo) | Pedro Lucas |
