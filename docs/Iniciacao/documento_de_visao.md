@@ -69,7 +69,7 @@ A coordenação poderá agendar sessões regulares e aulas experimentais, inform
 ### Cancelamento e Remarcação
 
 <p align = "justify">
-Alunos, responsáveis e a coordenação poderão cancelar ou remarcar sessões já agendadas, respeitando uma antecedência mínima. O sistema libera os recursos reservados e mantém o histórico de todas as alterações.
+Aluno e responsável legal podem cancelar ou remarcar somente a participação do aluno: no cancelamento, a vaga é liberada; na remarcação, a participação é transferida para outra sessão já agendada da mesma atividade que tenha vaga. A coordenação pode cancelar a sessão inteira ou remarcar seu horário, afetando todos os participantes. As operações respeitam a antecedência mínima e mantêm o histórico; o cancelamento integral libera o espaço e o profissional.
 </p>
 
 ### Consulta de Agenda
@@ -100,4 +100,4 @@ O sistema não terá interface gráfica própria: toda a funcionalidade é expos
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
 | 27/09/2026 | 1.0 | Criação do documento de visão da API da Playmakerz Lab | Rodrigo |
-| 29/09/2026 | 1.1 | Delimitação do escopo de agenda e registro de ocorrências | Pedro Lucas |
+| 29/09/2026 | 1.1 | Delimitação do escopo de agenda e registro de ocorrências, distinção entre remarcação de sessão e de participação | Pedro Lucas |
