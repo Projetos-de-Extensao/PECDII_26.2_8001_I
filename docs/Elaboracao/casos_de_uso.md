@@ -6,12 +6,12 @@ title: Casos de Uso
 ## Introdução
 
 <p align = "justify">
-Casos de uso descrevem, do ponto de vista de quem usa o sistema, as interações necessárias para atingir um objetivo. Neste documento são identificados os atores e os casos de uso da API de agendamento da PKZ Lab (Playmakerz Lab), descritos os fluxos principais e alternativos e apresentado o diagrama de casos de uso. O documento serve de base para o diagrama de classes, para o protótipo de baixa fidelidade e para os diagramas de sequência.
+Casos de uso descrevem, do ponto de vista de quem usa o sistema, as interações necessárias para atingir um objetivo. Neste documento são identificados os atores e os casos de uso da API de agendamento da Playmakerz Lab, descritos os fluxos principais e alternativos e apresentado o diagrama de casos de uso. O documento serve de base para o diagrama de classes, para o protótipo de baixa fidelidade e para os diagramas de sequência.
 </p>
 
 ## Metodologia
 
-Os casos de uso foram derivados dos requisitos elicitados no [Brainstorm](../Iniciacao/Brainstorm.md) (BS01 a BS10), do escopo e da legislação registrados na [Pesquisa](../Iniciacao/pesquisa.md) e dos atores identificados no [Mapa Mental](../Iniciacao/mapa_mental.md) e no [Design Thinking](../Iniciacao/design_thinking.md). Cada requisito foi analisado para identificar quem inicia a interação (ator), qual objetivo é atingido (caso de uso) e quais regras de negócio geram fluxos alternativos. O diagrama foi feito em PlantUML, seguindo o modelo de [Levantamento de Requisitos](levreq.md).
+Os casos de uso foram derivados dos requisitos elicitados no [Brainstorm](../Iniciacao/Brainstorm.md) (BS01 a BS12), do escopo e da legislação registrados na [Pesquisa](../Iniciacao/pesquisa.md) e dos atores identificados no [Mapa Mental](../Iniciacao/mapa_mental.md) e no [Design Thinking](../Iniciacao/design_thinking.md). Cada requisito foi analisado para identificar quem inicia a interação (ator), qual objetivo é atingido (caso de uso) e quais regras de negócio geram fluxos alternativos. O diagrama foi feito em PlantUML, seguindo o modelo de [Levantamento de Requisitos](levreq.md).
 
 ## Atores
 
@@ -19,14 +19,14 @@ Os casos de uso foram derivados dos requisitos elicitados no [Brainstorm](../Ini
 | -- | -- |
 | Coordenação | Administra o centro. Tem acesso exclusivo ao cadastro de espaços, profissionais, atividades e alunos, e realiza a alocação das sessões. |
 | Professor/Instrutor | Profissional alocado às sessões. Consulta a própria agenda e registra o que ocorreu em cada sessão. |
-| Aluno | Pessoa atendida pelo centro, em regime regular ou em aula experimental. Consulta sua agenda e solicita cancelamento ou remarcação. |
-| Responsável Legal | Responsável pelo aluno menor de 18 anos. Autoriza o tratamento de dados (LGPD), acompanha a agenda e solicita cancelamento ou remarcação. Pode estar vinculado a mais de um aluno. |
+| Aluno | Pessoa atendida pelo centro, em regime regular ou em aula experimental. Consulta sua agenda e pode solicitar remarcação ou cancelar sua própria participação em uma sessão. |
+| Responsável Legal | Responsável pelo aluno menor de 18 anos. Autoriza o tratamento de dados (LGPD), acompanha a agenda e pode solicitar remarcação ou cancelar a participação do aluno vinculado. Pode estar vinculado a mais de um aluno. |
 
 ## Lista de Casos de Uso
 
 | ID | Caso de Uso | Ator(es) | Requisito(s) |
 | -- | -- | -- | -- |
-| UC01 | Autenticar-se | Todos | BS03 (acesso exclusivo da coordenação) |
+| UC01 | Autenticar-se | Todos | BS11 |
 | UC02 | Cadastrar aluno | Coordenação | BS01 |
 | UC03 | Cadastrar responsável legal | Coordenação | BS02 |
 | UC04 | Autorizar tratamento de dados do aluno | Responsável Legal | BS02, LGPD |
@@ -37,9 +37,10 @@ Os casos de uso foram derivados dos requisitos elicitados no [Brainstorm](../Ini
 | UC09 | Verificar disponibilidade e capacidade | (incluído por UC08 e UC11) | BS07 |
 | UC10 | Agendar aula experimental | Coordenação | BS09 |
 | UC11 | Remarcar sessão | Aluno, Responsável Legal, Coordenação | BS08 |
-| UC12 | Cancelar sessão | Aluno, Responsável Legal, Coordenação | BS08 |
+| UC12 | Cancelar sessão | Coordenação | BS08 |
 | UC13 | Consultar agenda | Todos | BS10 |
-| UC14 | Registrar ocorrência da sessão | Professor/Instrutor | Pesquisa (público-alvo), Lei 9.696/1998 |
+| UC14 | Registrar ocorrência da sessão | Professor/Instrutor | BS12, Lei 9.696/1998 |
+| UC15 | Cancelar participação em sessão | Aluno, Responsável Legal | BS08 |
 
 ## Diagrama de Casos de Uso
 
@@ -56,7 +57,7 @@ actor "Professor/Instrutor" as Prof
 actor "Aluno" as Aluno
 actor "Responsável Legal" as Resp
 
-rectangle "API PKZ Lab" {
+rectangle "API Playmakerz Lab" {
   usecase "UC01: Autenticar-se" as UC01
   usecase "UC02: Cadastrar aluno" as UC02
   usecase "UC03: Cadastrar responsável legal" as UC03
@@ -71,6 +72,7 @@ rectangle "API PKZ Lab" {
   usecase "UC12: Cancelar sessão" as UC12
   usecase "UC13: Consultar agenda" as UC13
   usecase "UC14: Registrar ocorrência\nda sessão" as UC14
+  usecase "UC15: Cancelar participação\nem sessão" as UC15
 }
 
 Coord --> UC01
@@ -89,13 +91,13 @@ Prof --> UC14
 
 Aluno --> UC01
 Aluno --> UC11
-Aluno --> UC12
+Aluno --> UC15
 Aluno --> UC13
 
 Resp --> UC01
 Resp --> UC04
 Resp --> UC11
-Resp --> UC12
+Resp --> UC15
 Resp --> UC13
 
 UC03 .> UC02 : <<extend>>\n(aluno menor de 18 anos)
@@ -262,18 +264,33 @@ UC10 .> UC08 : <<extend>>\n(sem plano regular)
 
 ### UC12 - Cancelar sessão
 
-- **Atores:** Aluno, Responsável Legal, Coordenação.
+- **Atores:** Coordenação.
 - **Pré-condição:** Usuário autenticado; sessão agendada e ainda não realizada.
 - **Fluxo Principal:**
-    1. Usuário seleciona a sessão e informa o motivo do cancelamento.
+    1. Coordenação seleciona a sessão inteira e informa o motivo do cancelamento.
     2. Sistema verifica a antecedência mínima.
-    3. Sistema altera a situação para "cancelada", liberando espaço e profissional (quando cancelada pela coordenação) ou a vaga do aluno (quando cancelada pelo aluno/responsável).
+    3. Sistema altera a situação da sessão para "cancelada" e libera o espaço e o profissional.
     4. Sistema registra a alteração no histórico.
 - **Fluxos Alternativos:**
     - **FA1:** Sessão já realizada → Sistema recusa o cancelamento.
     - **FA2:** Fora da antecedência mínima → Sistema recusa o cancelamento.
-    - **FA3:** Aluno ou responsável sem vínculo com a sessão → Sistema recusa o acesso.
-- **Pós-condição:** Recursos liberados e histórico mantido.
+    - **FA3:** Usuário sem perfil de coordenação → Sistema recusa o acesso.
+- **Pós-condição:** Sessão inteira cancelada, recursos liberados e histórico mantido.
+
+### UC15 - Cancelar participação em sessão
+
+- **Atores:** Aluno, Responsável Legal.
+- **Pré-condição:** Usuário autenticado; sessão agendada e ainda não realizada; aluno participante da sessão.
+- **Fluxo Principal:**
+    1. Aluno seleciona a própria participação, ou responsável seleciona a participação de aluno vinculado, e informa o motivo.
+    2. Sistema verifica a antecedência mínima e o vínculo do usuário com o aluno.
+    3. Sistema marca somente a participação como cancelada e libera a vaga do aluno; a sessão continua agendada para os demais participantes.
+    4. Sistema registra a alteração no histórico da sessão.
+- **Fluxos Alternativos:**
+    - **FA1:** Sessão já realizada ou cancelada → Sistema recusa a operação.
+    - **FA2:** Fora da antecedência mínima → Sistema recusa a operação.
+    - **FA3:** Responsável não vinculado ao aluno, ou aluno não participante → Sistema recusa o acesso.
+- **Pós-condição:** Somente a participação solicitada é cancelada; a sessão e os demais participantes permanecem inalterados.
 
 ### UC13 - Consultar agenda
 
@@ -294,13 +311,13 @@ UC10 .> UC08 : <<extend>>\n(sem plano regular)
 - **Pré-condição:** Professor autenticado e alocado à sessão; sessão iniciada ou encerrada.
 - **Fluxo Principal:**
     1. Professor seleciona a sessão.
-    2. Professor informa a presença dos alunos e as observações da sessão.
+    2. Professor informa a presença individual de cada aluno participante e as observações da sessão.
     3. Sistema registra a ocorrência vinculada ao professor.
     4. Sistema altera a situação da sessão para "realizada".
 - **Fluxos Alternativos:**
     - **FA1:** Professor não alocado à sessão → Sistema recusa o registro.
     - **FA2:** Sessão cancelada ou ainda não iniciada → Sistema recusa o registro.
-- **Pós-condição:** Sessão realizada, com registro vinculado ao profissional responsável (Lei 9.696/1998).
+- **Pós-condição:** Sessão realizada, com observações e presença de cada aluno registradas e ocorrência vinculada ao profissional responsável (Lei 9.696/1998).
 
 ## Conclusão
 
@@ -321,3 +338,4 @@ A elaboração dos casos de uso transformou os requisitos elicitados no brainsto
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
 | 26/09/2026 | 1.0 | Criação do documento com atores, casos de uso, fluxos e diagrama | Lucas Santos |
+| 29/09/2026 | 1.1 | Revisão dos atores e regras de cancelamento; inclusão do UC15 | Pedro Lucas |

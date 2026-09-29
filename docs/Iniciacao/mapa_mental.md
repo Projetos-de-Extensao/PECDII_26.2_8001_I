@@ -12,7 +12,7 @@ Mapa mental consiste em criar resumos cheios de símbolos, cores, setas e frases
 ## Metodologia
 
 <p align = "justify">
-O documento foi elaborado por Pedro Lucas, com base no levantamento já registrado em <a href="pesquisa.md">pesquisa.md</a> e nos requisitos elicitados em <a href="Brainstorm.md">Brainstorm.md</a>, organizando o projeto PKZ Lab em dois mapas mentais feitos em PlantUML.
+O documento foi elaborado por Pedro Lucas, com base no levantamento já registrado em <a href="pesquisa.md">pesquisa.md</a> e nos requisitos elicitados em <a href="Brainstorm.md">Brainstorm.md</a>, organizando o projeto Playmakerz Lab em dois mapas mentais feitos em PlantUML.
 </p>
 
 ## Mapa mental - Geral
@@ -25,7 +25,7 @@ skinparam monochrome true
 skinparam ArrowColor #000000
 skinparam NodeFontSize 14
 
-* PKZ Lab: Sistema de Gestão de Treinamento
+* Playmakerz Lab: Sistema de Gestão de Treinamento
 ** Problema
 *** Agendamento feito só por WhatsApp
 *** Sem calendário ou controle de salas/horários
@@ -105,7 +105,7 @@ skinparam NodeFontSize 14
 ## Conclusão
 
 <p align = "justify">
-O mapa mental 1 organizou visualmente o problema do PKZ Lab (agendamento só via WhatsApp), o objetivo da API, os atores envolvidos, o escopo do sistema, a legislação aplicável e o comparativo ao mercado. O mapa mental 2 organizou os requisitos elicitados na sessão de Brainstorm, agrupados por cadastro, agendamento de sessão, gestão da sessão e consulta de agenda. Juntos, servem de base para o levantamento de requisitos.
+O mapa mental 1 organizou visualmente o problema do Playmakerz Lab (agendamento só via WhatsApp), o objetivo da API, os atores envolvidos, o escopo do sistema, a legislação aplicável e o comparativo ao mercado. O mapa mental 2 organizou os requisitos elicitados na sessão de Brainstorm, agrupados por cadastro, agendamento de sessão, gestão da sessão e consulta de agenda. Juntos, servem de base para o levantamento de requisitos.
 </p>
 
 ## Referências

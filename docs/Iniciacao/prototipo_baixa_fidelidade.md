@@ -5,12 +5,12 @@ title: Protótipo Baixa Fidelidade
 ## Introdução
 
 <p align = "justify">
-O protótipo de baixa fidelidade é uma representação simples e rápida da solução, usada para validar fluxos e funcionalidades antes da implementação. Como o sistema da PKZ Lab é unicamente back-end, o protótipo não representa telas, e sim a API: quais endpoints existem, o que cada request recebe, o que responde e quais erros podem acontecer. Ele serve de base para os casos de uso, para o diagrama de classes e para a implementação em Django.
+O protótipo de baixa fidelidade é uma representação simples e rápida da solução, usada para validar fluxos e funcionalidades antes da implementação. Como o sistema da Playmakerz Lab é unicamente back-end, o protótipo não representa telas, e sim a API: quais endpoints existem, o que cada request recebe, o que responde e quais erros podem acontecer. Ele serve de base para os casos de uso, para o diagrama de classes e para a implementação em Django.
 </p>
 
 ## Metodologia
 
-A equipe definiu os fluxos a partir dos requisitos elicitados no [Brainstorm](Brainstorm.md) (BS01 a BS10) e do escopo da [Pesquisa](pesquisa.md), priorizando o que é central para o problema da PKZ Lab: cadastro, alocação de sessão sem conflito, cancelamento/remarcação e consulta de agenda. Para cada fluxo foram identificados os endpoints, as entradas, as respostas de sucesso e os erros esperados. Os fluxos foram desenhados em PlantUML como diagramas de sequência entre o cliente da API e o sistema, no nível de requests HTTP (sem detalhar classes internas, o que fica para os diagramas de sequência da Elaboração).
+A equipe definiu os fluxos a partir dos requisitos elicitados no [Brainstorm](Brainstorm.md) (BS01 a BS10) e do escopo da [Pesquisa](pesquisa.md), priorizando o que é central para o problema da Playmakerz Lab: cadastro, alocação de sessão sem conflito, cancelamento/remarcação e consulta de agenda. Para cada fluxo foram identificados os endpoints, as entradas, as respostas de sucesso e os erros esperados. Os fluxos foram desenhados em PlantUML como diagramas de sequência entre o cliente da API e o sistema, no nível de requests HTTP (sem detalhar classes internas, o que fica para os diagramas de sequência da Elaboração).
 
 ## Protótipo de Baixa Fidelidade
 
@@ -63,7 +63,7 @@ A equipe definiu os fluxos a partir dos requisitos elicitados no [Brainstorm](Br
 ```plantuml
 @startuml fluxo_autenticacao
 actor "Usuário" as U
-participant "API PKZ Lab" as API
+participant "API Playmakerz Lab" as API
 database "Banco de Dados" as DB
 
 U -> API : POST /api/auth/login/\n{ email, senha }
@@ -83,7 +83,7 @@ end
 @startuml fluxo_cadastro_aluno
 actor "Coordenação" as C
 actor "Responsável Legal" as R
-participant "API PKZ Lab" as API
+participant "API Playmakerz Lab" as API
 database "Banco de Dados" as DB
 
 C -> API : POST /api/alunos/\n{ nome, data_nascimento, telefone, email }
@@ -114,7 +114,7 @@ end
 ```plantuml
 @startuml fluxo_cadastros_coordenacao
 actor "Coordenação" as C
-participant "API PKZ Lab" as API
+participant "API Playmakerz Lab" as API
 database "Banco de Dados" as DB
 
 C -> API : POST /api/espacos/\n{ nome, capacidade }
@@ -153,7 +153,7 @@ end note
 ```plantuml
 @startuml fluxo_agendamento_sessao
 actor "Coordenação" as C
-participant "API PKZ Lab" as API
+participant "API Playmakerz Lab" as API
 database "Banco de Dados" as DB
 
 C -> API : POST /api/sessoes/\n{ data, inicio, fim, atividade, espaco,\n  profissional, alunos: [id], tipo: "regular" | "experimental" }
@@ -186,7 +186,7 @@ end
 ```plantuml
 @startuml fluxo_cancelamento_remarcacao
 actor "Aluno / Responsável /\nCoordenação" as U
-participant "API PKZ Lab" as API
+participant "API Playmakerz Lab" as API
 database "Banco de Dados" as DB
 
 == Cancelamento ==
@@ -224,7 +224,7 @@ end
 ```plantuml
 @startuml fluxo_consulta_agenda
 actor "Usuário" as U
-participant "API PKZ Lab" as API
+participant "API Playmakerz Lab" as API
 database "Banco de Dados" as DB
 
 U -> API : GET /api/agenda/?data_inicio=&data_fim=\n&atividade=&espaco=&profissional=&aluno=
@@ -250,7 +250,7 @@ end
 ## Conclusão
 
 <p align = "justify">
-A elaboração do protótipo de baixa fidelidade permitiu definir, antes da implementação, os endpoints da API da PKZ Lab, o formato das entradas e respostas e os erros esperados em cada fluxo. Isso deixou claras as regras centrais do sistema, como a verificação de conflito de espaço, profissional e capacidade e a exigência de consentimento do responsável para alunos menores, e serve de referência para os casos de uso, o diagrama de classes e a construção da API.
+A elaboração do protótipo de baixa fidelidade permitiu definir, antes da implementação, os endpoints da API da Playmakerz Lab, o formato das entradas e respostas e os erros esperados em cada fluxo. Isso deixou claras as regras centrais do sistema, como a verificação de conflito de espaço, profissional e capacidade e a exigência de consentimento do responsável para alunos menores, e serve de referência para os casos de uso, o diagrama de classes e a construção da API.
 </p>
 
 ## Referências
