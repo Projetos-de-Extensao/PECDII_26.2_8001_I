@@ -5,259 +5,278 @@ title: Protótipo Baixa Fidelidade
 ## Introdução
 
 <p align = "justify">
-O protótipo de baixa fidelidade é uma representação simples e rápida da solução, usada para validar fluxos e funcionalidades antes da implementação. Como o sistema da Playmakerz Lab é unicamente back-end, o protótipo não representa telas, e sim a API: quais endpoints existem, o que cada request recebe, o que responde e quais erros podem acontecer. Ele serve de base para os casos de uso, para o diagrama de classes e para a implementação em Django.
+O protótipo de baixa fidelidade é uma representação simples e rápida da solução, usada para validar telas, navegação e funcionalidades antes da implementação. As telas são representadas em PlantUML Salt, destacando campos, filtros, informações e ações principais para os perfis do sistema. O protótipo serve de base para os casos de uso, o diagrama de classes e a implementação em Django.
 </p>
 
 ## Metodologia
 
-A equipe definiu os fluxos a partir dos requisitos elicitados no [Brainstorm](Brainstorm.md) (BS01 a BS10) e do escopo da [Pesquisa](pesquisa.md), priorizando o que é central para o problema da Playmakerz Lab: cadastro, alocação de sessão sem conflito, cancelamento/remarcação e consulta de agenda. Para cada fluxo foram identificados os endpoints, as entradas, as respostas de sucesso e os erros esperados. Os fluxos foram desenhados em PlantUML como diagramas de sequência entre o cliente da API e o sistema, no nível de requests HTTP (sem detalhar classes internas, o que fica para os diagramas de sequência da Elaboração).
+A equipe definiu as telas a partir dos requisitos elicitados no [Brainstorm](Brainstorm.md) (BS01 a BS10) e do escopo da [Pesquisa](pesquisa.md), priorizando o que é central para o problema da Playmakerz Lab: autenticação, cadastro de aluno e responsável, manutenção de cadastros, agendamento, cancelamento, remarcação e consulta de agenda. Para cada tela foram identificados os campos, filtros, informações exibidas e ações disponíveis para cada perfil. Os protótipos foram desenhados em PlantUML Salt para validar a organização das informações e a navegação prevista antes da implementação.
 
 ## Protótipo de Baixa Fidelidade
 
 ### Versão 1.0
 
-### Fluxos representados
+### Telas representadas
 
-| Fluxo | Descrição | Requisito(s) |
+| Tela | Descrição | Requisito(s) |
 | -- | -- | -- |
-| 1. Autenticação | Login e obtenção do token de acesso por perfil | BS03 |
-| 2. Cadastro de aluno e responsável | Cadastro do aluno, com responsável e consentimento quando menor | BS01, BS02 |
-| 3. Cadastros da coordenação | Espaços, professores/instrutores e atividades | BS03, BS04, BS05 |
-| 4. Agendamento de sessão | Alocação de espaço + horário + profissional com verificação de conflito e capacidade | BS06, BS07, BS09 |
-| 5. Cancelamento e remarcação | Alteração de sessão com histórico | BS08 |
-| 6. Consulta de agenda | Agenda por perfil com filtros | BS10 |
+| 1. Login | Acesso à conta conforme o perfil do usuário | BS03 |
+| 2. Cadastro de aluno e responsável | Inclusão dos dados do aluno e do responsável legal quando necessário | BS01, BS02 |
+| 3. Cadastros da coordenação | Manutenção de espaços, profissionais e atividades | BS03, BS04, BS05 |
+| 4. Agendamento de sessão | Seleção de data, horário, atividade, espaço, profissional e alunos | BS06, BS07, BS09 |
+| 5. Consulta de agenda | Visualização de sessões com filtros e acesso aos detalhes | BS10 |
+| 6. Cancelamento ou remarcação | Visualização dos detalhes e alteração de uma sessão | BS08 |
 
-### Endpoints principais
+### Protótipos de baixa fidelidade
 
-| Método | Endpoint | Descrição | Perfil |
-| -- | -- | -- | -- |
-| POST | `/api/auth/login/` | Autentica o usuário e retorna o token | Todos |
-| POST | `/api/alunos/` | Cadastra aluno | Coordenação |
-| GET | `/api/alunos/{id}/` | Consulta aluno | Coordenação, Responsável |
-| POST | `/api/responsaveis/` | Cadastra responsável legal e vincula a um ou mais alunos | Coordenação |
-| POST | `/api/alunos/{id}/consentimento/` | Registra a autorização do responsável (LGPD) | Responsável |
-| POST / GET / PUT | `/api/espacos/` | Cadastra, lista e atualiza espaços | Coordenação |
-| POST / GET / PUT | `/api/profissionais/` | Cadastra, lista e atualiza professores/instrutores e disponibilidades | Coordenação |
-| POST / GET / PUT | `/api/atividades/` | Cadastra, lista e atualiza atividades | Coordenação |
-| POST | `/api/sessoes/` | Agenda sessão regular ou aula experimental | Coordenação |
-| POST | `/api/sessoes/{id}/remarcacao/` | Remarca sessão | Coordenação, Aluno, Responsável |
-| POST | `/api/sessoes/{id}/cancelamento/` | Cancela sessão | Coordenação, Aluno, Responsável |
-| POST | `/api/sessoes/{id}/registro/` | Registra presença e observações da sessão | Professor |
-| GET | `/api/agenda/` | Consulta agenda com filtros | Todos |
+Os protótipos abaixo representam as telas principais do sistema em PlantUML
+Salt. Os campos, filtros, informações e botões indicam as interações previstas
+para cada perfil de usuário.
 
-### Respostas e erros padrão
-
-| Código | Quando ocorre |
-| -- | -- |
-| 200 OK | Consulta ou atualização realizada |
-| 201 Created | Recurso criado (cadastro, sessão, alteração) |
-| 400 Bad Request | Dados obrigatórios ausentes ou em formato inválido |
-| 401 Unauthorized | Token ausente, inválido ou expirado |
-| 403 Forbidden | Perfil sem permissão para a operação (ex.: aluno tentando cadastrar espaço) |
-| 404 Not Found | Recurso inexistente (aluno, espaço, sessão...) |
-| 409 Conflict | Conflito de espaço, de profissional ou de capacidade |
-| 422 Unprocessable Entity | Regra de negócio violada (menor sem consentimento, sessão já realizada, fora da antecedência mínima) |
-
-### Fluxo 1 - Autenticação
+#### Tela 1: Login
 
 ```plantuml
-@startuml fluxo_autenticacao
-actor "Usuário" as U
-participant "API Playmakerz Lab" as API
-database "Banco de Dados" as DB
+@startsalt
+{+
+    {* <b>Playmakerz Lab - Login}
 
-U -> API : POST /api/auth/login/\n{ email, senha }
-API -> DB : buscar usuário por e-mail
-DB --> API : usuário
-alt credenciais válidas
-  API --> U : 200 OK\n{ token, perfil }
-else credenciais inválidas
-  API --> U : 401 Unauthorized\n{ erro: "E-mail ou senha inválidos" }
-end
-@enduml
+    {
+        <b>Acesse sua conta
+    }
+
+    {
+        @ E-mail: | "exemplo@gmail.com          "
+        <&key> Senha: | "********                 "
+    }
+
+    {
+        [<&account-login> Entrar] | [Esqueci minha senha]
+    }
+
+    ..
+
+    {
+        Ainda não possui uma conta?
+        [<&person> Criar conta]
+    }
+}
+@endsalt
 ```
 
-### Fluxo 2 - Cadastro de aluno e responsável legal
+#### Tela 2: Cadastro de aluno e responsável
 
 ```plantuml
-@startuml fluxo_cadastro_aluno
-actor "Coordenação" as C
-actor "Responsável Legal" as R
-participant "API Playmakerz Lab" as API
-database "Banco de Dados" as DB
+@startsalt
+{+
+    {* <b>Playmakerz Lab - Cadastro de aluno}
 
-C -> API : POST /api/alunos/\n{ nome, data_nascimento, telefone, email }
-alt dados inválidos
-  API --> C : 400 Bad Request\n{ campos com erro }
-else aluno maior de idade
-  API -> DB : salvar aluno
-  API --> C : 201 Created\n{ id, nome, situacao: "ativo" }
-else aluno menor de 18 anos
-  API -> DB : salvar aluno
-  API --> C : 201 Created\n{ id, nome, situacao: "aguardando_responsavel" }
-  C -> API : POST /api/responsaveis/\n{ nome, cpf, telefone, email, alunos: [id] }
-  API -> DB : salvar responsável e vínculo
-  API --> C : 201 Created\n{ id, alunos, consentimento: "pendente" }
-  R -> API : POST /api/alunos/{id}/consentimento/\n{ autorizado: true }
-  alt responsável vinculado ao aluno
-    API -> DB : registrar consentimento (data/hora)
-    API --> R : 201 Created\n{ aluno, situacao: "ativo" }
-  else responsável sem vínculo
-    API --> R : 403 Forbidden
-  end
-end
-@enduml
+    {
+        <b>Dados do aluno
+    }
+
+    {
+        <&person> Nome: | "                         "
+        Data de nascimento: | "dd/mm/aaaa"
+        @ E-mail: | "exemplo@gmail.com        "
+        <&phone> Telefone: | "(00) 00000-0000     "
+    }
+
+    {
+        Aluno menor de idade? | ^Não^
+    }
+
+    {
+        <b>Responsável legal (quando aplicável)
+    }
+
+    {
+        Nome: | "                         "
+        CPF: | "000.000.000-00"
+        E-mail: | "responsavel@email.com   "
+        <&phone> Telefone: | "(00) 00000-0000     "
+    }
+
+    [X] Concordo com os Termos de Uso e a Política de Privacidade
+
+    {
+        [<&person> Cadastrar aluno] | [Limpar]
+    }
+}
+@endsalt
 ```
 
-### Fluxo 3 - Cadastros da coordenação (espaço, profissional e atividade)
+#### Tela 3: Cadastros da coordenação
 
 ```plantuml
-@startuml fluxo_cadastros_coordenacao
-actor "Coordenação" as C
-participant "API Playmakerz Lab" as API
-database "Banco de Dados" as DB
+@startsalt
+{+
+    {* <b>Playmakerz Lab - Cadastros}
 
-C -> API : POST /api/espacos/\n{ nome, capacidade }
-alt capacidade <= 0 ou nome duplicado
-  API --> C : 400 Bad Request
-else válido
-  API -> DB : salvar espaço
-  API --> C : 201 Created\n{ id, nome, capacidade }
-end
+    {
+        [Espaços] | [Profissionais] | [Atividades]
+    }
 
-C -> API : POST /api/profissionais/\n{ nome, contato, especialidades,\n  disponibilidades: [{ dia, inicio, fim }] }
-alt horário final antes do inicial
-  API --> C : 400 Bad Request
-else válido
-  API -> DB : salvar profissional
-  API --> C : 201 Created\n{ id, nome, especialidades }
-end
+    {
+        <b>Novo espaço
+    }
 
-C -> API : POST /api/atividades/\n{ nome, duracao_min, modalidade,\n  profissionais: [id], espacos: [id] }
-alt profissional ou espaço inexistente
-  API --> C : 404 Not Found
-else válido
-  API -> DB : salvar atividade e vínculos
-  API --> C : 201 Created\n{ id, nome, modalidade }
-end
+    {
+        Nome: | "Sala de treinamento       "
+        Capacidade: | "00"
+    }
 
-note over C, API
-  Qualquer outro perfil que tente
-  esses endpoints recebe 403 Forbidden
-end note
-@enduml
+    {
+        [Salvar espaço] | [Cancelar]
+    }
+
+    --
+
+    {
+        <b>Espaços cadastrados
+    }
+
+    {
+        Sala de treinamento / Capacidade: 10 | [Editar]
+        Quadra principal    / Capacidade: 20 | [Editar]
+    }
+}
+@endsalt
 ```
 
-### Fluxo 4 - Agendamento de sessão com verificação de conflito
+#### Tela 4: Agendamento de sessão
 
 ```plantuml
-@startuml fluxo_agendamento_sessao
-actor "Coordenação" as C
-participant "API Playmakerz Lab" as API
-database "Banco de Dados" as DB
+@startsalt
+{+
+    {* <b>Playmakerz Lab - Agendar sessão}
 
-C -> API : POST /api/sessoes/\n{ data, inicio, fim, atividade, espaco,\n  profissional, alunos: [id], tipo: "regular" | "experimental" }
-API -> DB : buscar atividade, espaço, profissional e alunos
-alt algum recurso inexistente
-  API --> C : 404 Not Found
-else profissional não habilitado ou espaço inadequado
-  API --> C : 422 Unprocessable Entity
-else aluno menor sem consentimento
-  API --> C : 422 Unprocessable Entity\n{ erro: "Aluno sem autorização do responsável" }
-else recursos válidos
-  API -> DB : sessões do espaço no intervalo
-  API -> DB : sessões e disponibilidade do profissional
-  alt espaço ocupado
-    API --> C : 409 Conflict\n{ erro: "Espaço ocupado no horário" }
-  else profissional ocupado ou indisponível
-    API --> C : 409 Conflict\n{ erro: "Profissional indisponível no horário" }
-  else alunos > capacidade do espaço
-    API --> C : 409 Conflict\n{ erro: "Capacidade do espaço excedida" }
-  else sem conflito
-    API -> DB : salvar sessão (situacao: "agendada")
-    API --> C : 201 Created\n{ id, data, inicio, fim, atividade,\n  espaco, profissional, alunos, tipo }
-  end
-end
-@enduml
+    {
+        Data: | "dd/mm/aaaa"
+    }
+
+    {
+        Horário inicial: | "00:00"
+        Horário final: | "00:00"
+    }
+
+    {
+        Tipo: | ^Sessão regular^
+    }
+
+    {
+        Atividade: | ^Selecione uma atividade^
+    }
+
+    {
+        Espaço: | ^Selecione um espaço^
+    }
+
+    {
+        Profissional: | ^Selecione um profissional^
+    }
+
+    {
+        <b>Alunos
+        [ ] João da Silva
+        [ ] Maria Oliveira
+        [ ] Pedro Santos
+    }
+
+    {
+        [Verificar disponibilidade] | [Agendar sessão]
+    }
+
+    {
+        Status: Nenhum conflito encontrado
+    }
+}
+@endsalt
 ```
 
-### Fluxo 5 - Cancelamento e remarcação de sessão
+#### Tela 5: Consulta de agenda
 
 ```plantuml
-@startuml fluxo_cancelamento_remarcacao
-actor "Aluno / Responsável /\nCoordenação" as U
-participant "API Playmakerz Lab" as API
-database "Banco de Dados" as DB
+@startsalt
+{+
+    {* <b>Playmakerz Lab - Agenda}
 
-== Cancelamento ==
-U -> API : POST /api/sessoes/{id}/cancelamento/\n{ motivo }
-API -> DB : buscar sessão
-alt sessão inexistente
-  API --> U : 404 Not Found
-else usuário sem vínculo com a sessão
-  API --> U : 403 Forbidden
-else sessão já realizada ou fora da antecedência mínima
-  API --> U : 422 Unprocessable Entity
-else permitido
-  API -> DB : atualizar situação e liberar recursos
-  API -> DB : registrar alteração no histórico
-  API --> U : 200 OK\n{ id, situacao: "cancelada" }
-end
+    {
+        <b>Filtrar agendamentos
+    }
 
-== Remarcação ==
-U -> API : POST /api/sessoes/{id}/remarcacao/\n{ nova_data, novo_inicio, novo_fim, motivo }
-API -> DB : buscar sessão
-alt sessão já realizada ou fora da antecedência mínima
-  API --> U : 422 Unprocessable Entity
-else conflito no novo horário
-  API --> U : 409 Conflict\n{ erro: motivo do conflito }
-else permitido
-  API -> DB : atualizar horário e liberar o anterior
-  API -> DB : registrar alteração no histórico
-  API --> U : 200 OK\n{ id, data, inicio, fim, situacao: "remarcada" }
-end
-@enduml
+    {
+        Data inicial: | "dd/mm/aaaa"
+        Data final: | "dd/mm/aaaa"
+        Atividade: | ^Todas^
+        Profissional: | ^Todos^
+    }
+
+    {
+        [Filtrar] | [Limpar filtros]
+    }
+
+    --
+
+    {
+        <b>Agendamentos encontrados
+    }
+
+    {
+        15/09/2026 / 08:00 - 09:00 / Carlos Mendes / João da Silva | [Detalhes]
+        15/09/2026 / 09:00 - 10:00 / Carlos Mendes / Maria Oliveira | [Detalhes]
+        16/09/2026 / 14:00 - 15:00 / Ana Souza / Pedro Santos | [Detalhes]
+    }
+}
+@endsalt
 ```
 
-### Fluxo 6 - Consulta de agenda
+#### Tela 6:  Cancelamento ou remarcação
 
 ```plantuml
-@startuml fluxo_consulta_agenda
-actor "Usuário" as U
-participant "API Playmakerz Lab" as API
-database "Banco de Dados" as DB
+@startsalt
+{+
+    {* <b>Playmakerz Lab - Detalhes da sessão}
 
-U -> API : GET /api/agenda/?data_inicio=&data_fim=\n&atividade=&espaco=&profissional=&aluno=
-alt filtro inválido (data final antes da inicial)
-  API --> U : 400 Bad Request
-else válido
-  API -> API : restringir pelo perfil do token
-  note right of API
-    Aluno: suas sessões
-    Responsável: sessões dos alunos vinculados
-    Professor: sessões em que está alocado
-    Coordenação: todas
-  end note
-  API -> DB : buscar sessões filtradas
-  DB --> API : sessões
-  API --> U : 200 OK\n[ { data, inicio, fim, atividade, profissional,\n    espaco, alunos*, situacao, historico } ]
-end
-@enduml
+    {
+        Data: 15/09/2026
+        Horário: 08:00 - 09:00
+        Atividade: Treinamento funcional
+        Profissional: Carlos Mendes
+        Espaço: Sala de treinamento
+        Aluno: João da Silva
+        Situação: Agendada
+    }
+
+    {
+        [Remarcar sessão] | [Cancelar sessão]
+    }
+
+    --
+
+    {
+        <b>Nova data e horário
+        Data: | "dd/mm/aaaa"
+        Início: | "00:00"
+        Fim: | "00:00"
+        Motivo: | "                         "
+    }
+
+    {
+        [Confirmar alteração] | [Voltar]
+    }
+}
+@endsalt
 ```
-
-\* A lista de alunos da sessão só é retornada para professor e coordenação.
 
 ## Conclusão
 
 <p align = "justify">
-A elaboração do protótipo de baixa fidelidade permitiu definir, antes da implementação, os endpoints da API da Playmakerz Lab, o formato das entradas e respostas e os erros esperados em cada fluxo. Isso deixou claras as regras centrais do sistema, como a verificação de conflito de espaço, profissional e capacidade e a exigência de consentimento do responsável para alunos menores, e serve de referência para os casos de uso, o diagrama de classes e a construção da API.
+A elaboração do protótipo de baixa fidelidade permitiu visualizar, antes da implementação, a organização das telas, os campos necessários, as ações disponíveis e a navegação principal da Playmakerz Lab. Os protótipos destacam regras importantes do sistema, como a exigência de consentimento para alunos menores, a seleção de recursos no agendamento e a possibilidade de consultar, cancelar ou remarcar sessões. O material serve de referência para os casos de uso, o diagrama de classes e a construção da aplicação.
 </p>
 
 ## Referências
 
-> PlantUML Sequence Diagram. Disponível em: https://plantuml.com/sequence-diagram
-
-> MDN Web Docs. HTTP response status codes. Disponível em: https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status
+> PlantUML Salt. Disponível em: https://plantuml.com/salt
 
 > Protótipo de Baixa Fidelidade. Disponível em: https://jonh-carvalho.github.io/PECDII_26.2_8001/Iniciacao/prototipo_baixa_fidelidade/
 
@@ -265,4 +284,5 @@ A elaboração do protótipo de baixa fidelidade permitiu definir, antes da impl
 
 | Data | Versão | Descrição | Autor(es) |
 | -- | -- | -- | -- |
-| 26/09/2026 | 1.0 | Criação do protótipo de baixa fidelidade da API com fluxos, endpoints e erros | Lucas Santos |
+| 26/09/2026 | 1.0 | Criação do protótipo de baixa fidelidade | Lucas Santos |
+| 04/10/2026 | 2.0 | Inclusão e organização dos protótipos de telas em PlantUML Salt | Pedro Lucas |
