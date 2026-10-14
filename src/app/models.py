@@ -37,6 +37,8 @@ class Sessao(models.Model):
 
     class Meta:
         ordering = ['inicio']
+        verbose_name = 'sessão'
+        verbose_name_plural = 'sessões'
 
     def __str__(self):
         return f'Sessão {self.pk} — {self.inicio:%d/%m/%Y %H:%M}'
