@@ -1,0 +1,41 @@
+name: Verificação de Pull Request
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  testes-python:
+    name: Testes da API Django
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    env:
+      SECRET_KEY: ci-test-secret-key
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar dependências da API
+        run: python -m pip install Django==6.1.2 djangorestframework==3.18.3 python-dotenv==1.2.4
+
+      - name: Verificar configuração Django
+        run: python manage.py check
+
+      - name: Verificar migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Executar testes
+        run: python manage.py test app
