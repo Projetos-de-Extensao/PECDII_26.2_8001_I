@@ -89,6 +89,20 @@ class SessaoAdmin(admin.ModelAdmin):
     """Configura filtros e colunas de sessões no admin."""
 
     form = SessaoAdminForm
+    readonly_fields = ('notificacao_enviada_em',)
     list_display = ('__str__', 'tipo', 'professor', 'inicio', 'fim', 'status')
     list_filter = ('tipo', 'status')
     ordering = ('inicio',)
+
+    def get_readonly_fields(self, request, obj=None):
+        """Exibe o horário enviado como somente leitura após o cadastro."""
+        if obj is None:
+            return ()
+        return self.readonly_fields
+
+    def get_exclude(self, request, obj=None):
+        """Oculta o controle de notificação ao cadastrar uma sessão."""
+        campos_excluidos = list(super().get_exclude(request, obj) or [])
+        if obj is None:
+            campos_excluidos.append('notificacao_enviada_em')
+        return campos_excluidos
