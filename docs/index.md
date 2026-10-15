@@ -15,12 +15,14 @@ hide:
         </div>
         <div class="card-content">
             <p class="contributors">Lucas Santos, Rodrigo Abranches, Pedro Lucas</p>
-            <a href="https://github.com/Projetos-de-Extensao/PECDII_26.2_8001_I" class="button primary-btn">
-                <span class="octicon-arrow-right-24:"></span> Ver Repositório
-            </a>
-            <a href="http://184.73.14.155/admin/" class="button primary-btn" target="_blank" rel="noopener noreferrer">
-                <span class="octicon-arrow-right-24:"></span> Acessar VPS
-            </a>
+            <div class="module-actions">
+                <a href="https://github.com/Projetos-de-Extensao/PECDII_26.2_8001_I" class="button primary-btn">
+                    <span class="octicon-arrow-right-24:"></span> Ver Repositório
+                </a>
+                <a href="http://184.73.14.155/admin/" class="button primary-btn" target="_blank" rel="noopener noreferrer">
+                    <span class="octicon-arrow-right-24:"></span> Acessar VPS
+                </a>
+            </div>
         </div>
     </div>
 

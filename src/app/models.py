@@ -24,6 +24,8 @@ class Professor(models.Model):
 
     class Meta:
         ordering = ['nome']
+        verbose_name = 'Professor'
+        verbose_name_plural = 'Professores'
 
     def __str__(self):
         """Retorna o nome do professor para exibição."""

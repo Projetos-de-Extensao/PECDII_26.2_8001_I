@@ -74,6 +74,8 @@ h6 {
     border-radius: 8px;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 410px;
+    max-width: 100%;
 }
 
 .module-card:hover {
@@ -92,6 +94,19 @@ h6 {
     padding: 10px 0;
     border-bottom: 1px dashed #eee;
     margin-bottom: 20px;
+}
+
+.module-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .module-card {
+        width: 100%;
+    }
 }
 
 .button {
