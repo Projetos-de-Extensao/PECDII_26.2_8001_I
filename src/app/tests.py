@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase, override_settings
@@ -15,6 +16,9 @@ class TelefoneApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.client.force_authenticate(
+            user=get_user_model().objects.create_user(username='teste-api-aluno')
+        )
 
     def test_aluno_telefone_sem_mascara_e_normalizado(self):
         response = self.client.post(
@@ -65,6 +69,9 @@ class SessaoApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.client.force_authenticate(
+            user=get_user_model().objects.create_user(username='teste-api-sessao')
+        )
         self.professor = Professor.objects.create(
             nome='Bruno Costa',
             email='bruno@example.com',
