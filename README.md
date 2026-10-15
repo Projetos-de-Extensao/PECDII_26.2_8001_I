@@ -13,11 +13,11 @@ Projeto desenvolvido para a PKZ Lab, centro de treinamento de performance integr
 
 A API oferece operações REST para:
 
-- **Alunos**: cadastro, consulta, edição e remoção; telefones brasileiros são validados e normalizados.
+- **Alunos**: cadastro, consulta, edição e remoção; telefones internacionais são validados pelo DDI e formatados conforme o país. Números sem DDI assumem o Brasil.
 - **Professores**: cadastro, consulta, edição e remoção, com e-mail de contato.
 - **Sessões**: agendamento de treinamento ou avaliação, vínculo obrigatório a um professor, descrição, observações, horários e estado de realização.
 
-Uma sessão agendada que permaneça sem confirmação por pelo menos 30 minutos após o horário de término pode ser listada para confirmação. O professor pode confirmar se ocorreu e registrar observações. O comando `notificar_sessoes_pendentes` envia e-mail aos professores uma única vez por sessão pendente. O backend de e-mail padrão do projeto é o console do Django, que exibe as mensagens no terminal. O envio real exige configurar um backend SMTP nas configurações da aplicação.
+Se uma sessão continuar com status `AGENDADA` 30 minutos após o horário de término, um timer do `systemd` verifica isso a cada minuto e notifica o professor. O professor registra o desfecho atualizando o status para `REALIZADA` ou `NAO_REALIZADA` e pode editar as observações da sessão. Cada sessão é notificada uma única vez. O backend de e-mail padrão do projeto é o console do Django; o envio real exige configurar um backend SMTP nas configurações da aplicação.
 
 ## Documentação
 
@@ -37,10 +37,9 @@ Os endpoints ficam sob `/api/`:
 | Alunos | `/api/alunos/` |
 | Professores | `/api/professores/` |
 | Sessões | `/api/sessoes/` |
-| Sessões aguardando confirmação após 30 minutos | `/api/sessoes/pendentes-confirmacao/` |
-| Confirmar realização de uma sessão | `/api/sessoes/{id}/confirmar-realizacao/` |
+| Sessões ainda agendadas 30 minutos após o fim | `/api/sessoes/pendentes-status/` |
 
-Para confirmar uma sessão, envie `POST` para o endpoint da sessão com `ocorreu` (`true` ou `false`) e, opcionalmente, `observacoes`. O comando para processar notificações pode ser executado manualmente:
+Para registrar o desfecho, atualize `status` e, opcionalmente, `observacoes` com `PATCH` no endpoint da sessão. O comando para processar notificações pode ser executado manualmente:
 
 ```bash
 cd src

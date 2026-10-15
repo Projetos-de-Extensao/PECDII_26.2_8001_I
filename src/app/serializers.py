@@ -1,33 +1,33 @@
 from rest_framework import serializers
 
 from app.models import Aluno, Professor, Sessao
+from app.telefones import formatar_telefone, normalizar_telefone
 
 
-class TelefoneBrasileiroField(serializers.CharField):
-    """Normaliza celular brasileiro de 11 dígitos para o padrão +55 (DD) 9XXXX-XXXX."""
+class TelefoneField(serializers.CharField):
+    """Valida telefones com DDI e assume Brasil quando o DDI é omitido."""
 
     default_error_messages = {
-        'invalid': 'Informe um celular com DDD e 9 dígitos, opcionalmente com DDI 55.'
+        'invalid': 'Informe um telefone válido. Números sem DDI usam o Brasil como padrão.'
     }
 
     def to_internal_value(self, data):
         """Aceita telefone com ou sem máscara e devolve o formato padronizado."""
         value = super().to_internal_value(data)
-        digits = ''.join(character for character in value if character.isdigit())
-
-        if len(digits) == 13 and digits.startswith('55'):
-            digits = digits[2:]
-
-        if len(digits) != 11 or digits[0] == '0' or digits[2] != '9':
+        try:
+            return normalizar_telefone(value)
+        except ValueError:
             self.fail('invalid')
 
-        return f'+55 ({digits[:2]}) {digits[2:7]}-{digits[7:]}'
+    def to_representation(self, value):
+        """Retorna o telefone formatado conforme o país do DDI."""
+        return formatar_telefone(value)
 
 
 class AlunoSerializer(serializers.ModelSerializer):
     """Converte alunos entre modelos Django e JSON."""
 
-    telefone = TelefoneBrasileiroField(required=False, allow_blank=True)
+    telefone = TelefoneField(required=False, allow_blank=True)
 
     class Meta:
         model = Aluno
@@ -38,7 +38,7 @@ class AlunoSerializer(serializers.ModelSerializer):
 class ProfessorSerializer(serializers.ModelSerializer):
     """Converte professores entre modelos Django e JSON."""
 
-    telefone = TelefoneBrasileiroField(required=False, allow_blank=True)
+    telefone = TelefoneField(required=False, allow_blank=True)
 
     class Meta:
         model = Professor
@@ -53,9 +53,9 @@ class SessaoSerializer(serializers.ModelSerializer):
         model = Sessao
         fields = [
             'id', 'titulo', 'tipo', 'descricao', 'observacoes', 'inicio', 'fim', 'professor', 'status',
-            'confirmacao_realizacao', 'notificacao_enviada_em',
+            'notificacao_enviada_em',
         ]
-        read_only_fields = ['id', 'confirmacao_realizacao', 'notificacao_enviada_em']
+        read_only_fields = ['id', 'notificacao_enviada_em']
         extra_kwargs = {
             'titulo': {'required': True},
             'tipo': {'required': True},

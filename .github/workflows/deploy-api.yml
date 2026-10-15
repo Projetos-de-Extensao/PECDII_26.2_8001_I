@@ -36,6 +36,10 @@ jobs:
           sudo -H -u ubuntu bash -lc 'cd /home/ubuntu/PECDII_26.2_8001_I && git pull --ff-only origin main'
           sudo -H -u ubuntu bash -lc 'cd /home/ubuntu/PECDII_26.2_8001_I/src && .venv/bin/python manage.py migrate && .venv/bin/python manage.py collectstatic --noinput'
           cp -r /home/ubuntu/PECDII_26.2_8001_I/src/staticfiles/. /var/www/PECDII_26.2_8001_I/static/
+          install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-sessoes.service /etc/systemd/system/pbe-notificar-sessoes.service
+          install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-sessoes.timer /etc/systemd/system/pbe-notificar-sessoes.timer
+          systemctl daemon-reload
+          systemctl enable --now pbe-notificar-sessoes.timer
           systemctl restart pbe
           SCRIPT
           )"

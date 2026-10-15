@@ -32,7 +32,7 @@ class TelefoneApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['telefone'], '+55 (11) 98765-4321')
+        self.assertEqual(response.data['telefone'], '+55 11 98765-4321')
 
     def test_professor_telefone_com_ddi_e_mascara_e_normalizado(self):
         response = self.client.post(
@@ -46,7 +46,22 @@ class TelefoneApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['telefone'], '+55 (21) 91234-5678')
+        self.assertEqual(response.data['telefone'], '+55 21 91234-5678')
+
+    def test_telefone_com_ddi_americano_preserva_o_pais(self):
+        response = self.client.post(
+            '/api/alunos/',
+            {
+                'nome': 'Chris Smith',
+                'data_nascimento': '2000-01-01',
+                'telefone': '+1 650-253-0000',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['telefone'], '+1 650-253-0000')
+        self.assertEqual(Aluno.objects.get(nome='Chris Smith').telefone, '+16502530000')
 
     def test_telefone_com_quantidade_de_digitos_invalida_e_rejeitado(self):
         response = self.client.post(
@@ -65,7 +80,7 @@ class TelefoneApiTests(TestCase):
 
 
 class SessaoApiTests(TestCase):
-    """Verifica criação, pendências e confirmação de sessões."""
+    """Verifica criação, pendências e atualização do status das sessões."""
 
     def setUp(self):
         self.client = APIClient()
@@ -152,76 +167,45 @@ class SessaoApiTests(TestCase):
         self.criar_sessao(
             titulo='Já realizada',
             status=Sessao.Status.REALIZADA,
-            confirmacao_realizacao=Sessao.Confirmacao.OCORREU,
         )
 
-        response = self.client.get('/api/sessoes/pendentes-confirmacao/')
+        response = self.client.get('/api/sessoes/pendentes-status/')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual([item['id'] for item in response.data], [vencida.pk])
         self.assertNotIn(recente.pk, [item['id'] for item in response.data])
 
-    def test_confirma_sessao_realizada_e_salva_observacoes(self):
+    def test_atualiza_status_para_realizada_e_salva_observacoes(self):
         sessao = self.criar_sessao()
 
-        response = self.client.post(
-            f'/api/sessoes/{sessao.pk}/confirmar-realizacao/',
-            {'ocorreu': True, 'observacoes': 'Treino de força concluído.'},
+        response = self.client.patch(
+            f'/api/sessoes/{sessao.pk}/',
+            {'status': Sessao.Status.REALIZADA, 'observacoes': 'Treino de força concluído.'},
             format='json',
         )
 
         self.assertEqual(response.status_code, 200)
         sessao.refresh_from_db()
         self.assertEqual(sessao.status, Sessao.Status.REALIZADA)
-        self.assertEqual(sessao.confirmacao_realizacao, Sessao.Confirmacao.OCORREU)
         self.assertEqual(sessao.observacoes, 'Treino de força concluído.')
 
-    def test_confirma_sessao_nao_realizada(self):
+    def test_atualiza_status_para_nao_realizada(self):
         sessao = self.criar_sessao()
 
-        response = self.client.post(
-            f'/api/sessoes/{sessao.pk}/confirmar-realizacao/',
-            {'ocorreu': False},
+        response = self.client.patch(
+            f'/api/sessoes/{sessao.pk}/',
+            {'status': Sessao.Status.NAO_REALIZADA},
             format='json',
         )
 
         self.assertEqual(response.status_code, 200)
         sessao.refresh_from_db()
         self.assertEqual(sessao.status, Sessao.Status.NAO_REALIZADA)
-        self.assertEqual(sessao.confirmacao_realizacao, Sessao.Confirmacao.NAO_OCORREU)
-
-    def test_nao_permite_confirmar_antes_dos_30_minutos(self):
-        fim = timezone.now() - timedelta(minutes=29)
-        sessao = self.criar_sessao(
-            inicio=fim - timedelta(hours=1),
-            fim=fim,
-        )
-
-        response = self.client.post(
-            f'/api/sessoes/{sessao.pk}/confirmar-realizacao/',
-            {'ocorreu': True},
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 400)
-        sessao.refresh_from_db()
-        self.assertEqual(sessao.status, Sessao.Status.AGENDADA)
-
-    def test_rejeita_valor_nao_booleano_para_ocorreu(self):
-        sessao = self.criar_sessao()
-
-        response = self.client.post(
-            f'/api/sessoes/{sessao.pk}/confirmar-realizacao/',
-            {'ocorreu': 'sim'},
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 400)
 
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class NotificacaoSessaoTests(TestCase):
-    """Verifica o comando que avisa sobre sessões sem confirmação."""
+    """Verifica avisos para sessões que continuam agendadas após o horário."""
 
     def setUp(self):
         self.professor = Professor.objects.create(
@@ -253,6 +237,14 @@ class NotificacaoSessaoTests(TestCase):
 
     def test_nao_notifica_sessao_cancelada(self):
         self.sessao.status = Sessao.Status.CANCELADA
+        self.sessao.save(update_fields=['status'])
+
+        call_command('notificar_sessoes_pendentes')
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_nao_notifica_sessao_com_status_atualizado(self):
+        self.sessao.status = Sessao.Status.REALIZADA
         self.sessao.save(update_fields=['status'])
 
         call_command('notificar_sessoes_pendentes')

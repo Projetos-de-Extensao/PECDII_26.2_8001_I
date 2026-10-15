@@ -1,0 +1,9 @@
+[Unit]
+Description=Notifica professores sobre sessões pendentes
+After=network.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/PECDII_26.2_8001_I/src
+ExecStart=/home/ubuntu/PECDII_26.2_8001_I/src/.venv/bin/python manage.py notificar_sessoes_pendentes
