@@ -1,0 +1,60 @@
+name: Deploy da API Django
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-api-producao
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+
+    steps:
+      - name: Autenticar na AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Atualizar a VPS via SSM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          remote_script="$(cat <<'SCRIPT'
+          set -eu
+          sudo -H -u ubuntu bash -lc 'cd /home/ubuntu/PECDII_26.2_8001_I && git pull --ff-only origin main'
+          sudo -H -u ubuntu bash -lc 'cd /home/ubuntu/PECDII_26.2_8001_I/src && .venv/bin/python manage.py migrate && .venv/bin/python manage.py collectstatic --noinput'
+          cp -r /home/ubuntu/PECDII_26.2_8001_I/src/staticfiles/. /var/www/PECDII_26.2_8001_I/static/
+          systemctl restart pbe
+          SCRIPT
+          )"
+
+          parameters="$(jq -cn --arg command "$remote_script" '{commands: [$command]}')"
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --parameters "$parameters" \
+            --query 'Command.CommandId' \
+            --output text)"
+
+          aws ssm wait command-executed \
+            --command-id "$command_id" \
+            --instance-id "$EC2_INSTANCE_ID"
+
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$EC2_INSTANCE_ID" \
+            --query 'StandardOutputContent' \
+            --output text
