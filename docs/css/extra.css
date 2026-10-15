@@ -76,6 +76,7 @@ h6 {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     width: 410px;
     max-width: 100%;
+    grid-column: span 2;
 }
 
 .module-card:hover {
@@ -98,14 +99,33 @@ h6 {
 
 .module-actions {
     display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
     gap: 12px;
+}
+
+.module-actions .button {
+    flex: 0 1 auto;
+    white-space: nowrap;
+    padding: 8px 10px;
+    font-size: 0.9rem;
 }
 
 @media (max-width: 640px) {
     .module-card {
         width: 100%;
+        grid-column: auto;
+    }
+
+    .module-actions {
+        gap: 8px;
+    }
+
+    .module-actions .button {
+        gap: 4px;
+        padding: 7px 6px;
+        font-size: 0.75rem;
     }
 }
 
