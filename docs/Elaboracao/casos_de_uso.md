@@ -39,7 +39,7 @@ Os casos de uso foram derivados dos requisitos elicitados no [Brainstorm](../Ini
 | UC11 | Remarcar sessão inteira | Coordenação | BS08 |
 | UC12 | Cancelar sessão | Coordenação | BS08 |
 | UC13 | Consultar agenda | Todos | BS10 |
-| UC14 | Registrar ocorrência da sessão | Professor/Instrutor | BS12, Lei 9.696/1998 |
+| UC14 | Registrar ocorrência da sessão | Professor/Instrutor | BS12, BS13, Lei 9.696/1998 |
 | UC15 | Cancelar participação em sessão | Aluno, Responsável Legal | BS08 |
 | UC16 | Remarcar participação em sessão | Aluno, Responsável Legal | BS08 |
 
@@ -296,16 +296,19 @@ UC10 .> UC08 : <<extend>>\n(sem plano regular)
 ### UC14 - Registrar ocorrência da sessão
 
 - **Atores:** Professor/Instrutor.
-- **Pré-condição:** Professor autenticado e alocado à sessão; sessão iniciada ou encerrada.
+- **Pré-condição:** Professor autenticado e alocado à sessão; sessão iniciada ou encerrada, ou professor recebeu notificação de sessão pendente de confirmação.
 - **Fluxo Principal:**
     1. Professor seleciona a sessão.
-    2. Professor informa a presença individual de cada aluno participante e as observações da sessão.
-    3. Sistema registra a ocorrência vinculada ao professor.
-    4. Sistema altera a situação da sessão para "realizada".
+    2. Professor informa se a sessão ocorreu.
+    3. Se ocorreu, professor informa a presença individual de cada aluno participante e as observações da sessão.
+    4. Sistema registra a confirmação e, quando aplicável, a ocorrência vinculada ao professor.
+    5. Quando o professor confirma que ocorreu, sistema altera a situação da sessão para "realizada".
 - **Fluxos Alternativos:**
     - **FA1:** Professor não alocado à sessão → Sistema recusa o registro.
     - **FA2:** Sessão cancelada ou ainda não iniciada → Sistema recusa o registro.
-- **Pós-condição:** Sessão realizada, com observações e presença de cada aluno registradas e ocorrência vinculada ao profissional responsável (Lei 9.696/1998).
+    - **FA3:** Sessão permanece como "agendada" 30 minutos após o horário previsto de término → Sistema notifica o professor alocado; ao consultar a pendência, o professor informa se a sessão ocorreu.
+    - **FA4:** Professor informa que a sessão não ocorreu → Sistema registra a confirmação e altera a situação da sessão para "não realizada" para tratamento pela coordenação.
+- **Pós-condição:** Se realizada, sessão marcada como "realizada", com observações e presença individual registradas e ocorrência vinculada ao profissional responsável (Lei 9.696/1998). Se não realizada, sessão marcada como "não realizada" para acompanhamento da coordenação.
 
 ### UC15 - Cancelar participação em sessão
 
@@ -359,3 +362,5 @@ A elaboração dos casos de uso transformou os requisitos elicitados no brainsto
 | -- | -- | -- | -- |
 | 26/09/2026 | 1.0 | Criação do documento com atores, casos de uso, fluxos e diagrama | Lucas Santos |
 | 29/09/2026 | 1.1 | Revisão dos atores e regras de cancelamento; inclusão do UC15 | Pedro Lucas |
+| 15/10/2026 | 1.2 | Inclusão do fluxo de notificação e confirmação da ocorrência da sessão no UC14 | Pedro Lucas |
+| 15/10/2026 | 1.3 | Especificação da situação "não realizada" após confirmação negativa do professor | Pedro Lucas |

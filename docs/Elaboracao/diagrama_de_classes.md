@@ -134,7 +134,7 @@ As classes `Coordenador`, `Professor`, `Aluno` e `ResponsavelLegal` herdam de `U
 | Modalidade | BS05 | UC07 |
 | Atividade | BS05, BS06, BS09 | UC07, UC08, UC10 |
 | Espaco | BS03, BS05, BS06, BS07, BS09 | UC05, UC07, UC08, UC09, UC10, UC11, UC12, UC13 |
-| Sessao | BS06, BS07, BS08, BS09, BS10, BS12 | UC08, UC09, UC10, UC11, UC12, UC13, UC14, UC15, UC16 |
+| Sessao | BS06, BS07, BS08, BS09, BS10, BS12, BS13 | UC08, UC09, UC10, UC11, UC12, UC13, UC14, UC15, UC16 |
 | AulaExperimental | BS09 | UC10 |
 | AlteracaoSessao | BS08 | UC11, UC12, UC15, UC16 |
 | RegistroSessao | BS12, Lei 9.696/1998 | UC14 |
@@ -158,3 +158,4 @@ O diagrama de classes conceitual consolidou os conceitos do domínio da Playmake
 | -- | -- | -- | -- |
 | 26/09/2026 | 1.0 | Criação do diagrama de classes conceitual | Lucas Santos |
 | 29/09/2026 | 1.1 | Inclusão da participação e presença individual, revisão das restrições e rastreabilidade | Pedro Lucas |
+| 15/10/2026 | 1.2 | Inclusão do requisito BS13 na rastreabilidade da classe Sessao | Pedro Lucas |
