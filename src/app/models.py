@@ -1,6 +1,17 @@
 from django.db import models
 
-class Aluno(models.Model):
+from app.telefones import normalizar_telefone
+
+
+class TelefoneMixin:
+    """Normaliza o telefone antes de salvar um modelo com contato."""
+
+    def save(self, *args, **kwargs):
+        self.telefone = normalizar_telefone(self.telefone)
+        super().save(*args, **kwargs)
+
+
+class Aluno(TelefoneMixin, models.Model):
     """Armazena os dados básicos de um aluno."""
 
     nome = models.CharField(max_length=150)
@@ -15,7 +26,7 @@ class Aluno(models.Model):
         return self.nome
 
 
-class Professor(models.Model):
+class Professor(TelefoneMixin, models.Model):
     """Armazena o contato do professor responsável pelas sessões."""
 
     nome = models.CharField(max_length=150)
@@ -49,13 +60,6 @@ class Sessao(models.Model):
         NAO_REALIZADA = 'NAO_REALIZADA', 'Não realizada'
         CANCELADA = 'CANCELADA', 'Cancelada'
 
-    class Confirmacao(models.TextChoices):
-        """Respostas do professor sobre a realização da sessão."""
-
-        PENDENTE = 'PENDENTE', 'Pendente'
-        OCORREU = 'OCORREU', 'Ocorreu'
-        NAO_OCORREU = 'NAO_OCORREU', 'Não ocorreu'
-
     titulo = models.CharField(max_length=150, default='Sessão')
     descricao = models.TextField(blank=True)
     observacoes = models.TextField(blank=True)
@@ -77,11 +81,6 @@ class Sessao(models.Model):
         max_length=15,
         choices=Status.choices,
         default=Status.AGENDADA,
-    )
-    confirmacao_realizacao = models.CharField(
-        max_length=12,
-        choices=Confirmacao.choices,
-        default=Confirmacao.PENDENTE,
     )
     notificacao_enviada_em = models.DateTimeField(null=True, blank=True)
 

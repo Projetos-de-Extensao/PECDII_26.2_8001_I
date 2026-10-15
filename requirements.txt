@@ -89,3 +89,4 @@ webencodings==0.5.1
 django==6.1.2
 djangorestframework==3.18.3
 python-dotenv==1.2.4
+phonenumbers==9.0.41

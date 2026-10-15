@@ -1,0 +1,12 @@
+[Unit]
+Description=Verifica sessões vencidas para notificar professores
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=1s
+Unit=pbe-notificar-sessoes.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target
