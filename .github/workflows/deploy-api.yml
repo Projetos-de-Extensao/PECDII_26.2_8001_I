@@ -20,23 +20,6 @@ jobs:
       EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
 
     steps:
-      - name: Conferir claims do OIDC
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const token = await core.getIDToken('sts.amazonaws.com');
-            const claims = JSON.parse(
-              Buffer.from(token.split('.')[1], 'base64url').toString()
-            );
-            core.info(JSON.stringify({
-              iss: claims.iss,
-              aud: claims.aud,
-              sub: claims.sub,
-              repository: claims.repository,
-              ref: claims.ref,
-              environment: claims.environment
-            }, null, 2));
-      
       - name: Autenticar na AWS via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
