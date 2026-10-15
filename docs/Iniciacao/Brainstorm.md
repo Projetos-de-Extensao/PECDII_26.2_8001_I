@@ -57,7 +57,7 @@ A equipe se reuniu para debater ideias gerais sobre a API da Playmakerz Lab via 
 
 ### 7. Como será o acesso à API e o registro do que ocorreu em cada sessão?
 
-<p align="justify">Todos os perfis devem se autenticar para que a API restrinja as operações e os dados conforme o papel e os vínculos de cada usuário. Após a sessão, o professor alocado deve registrar observações e a presença individual de cada aluno. O produto organiza agenda e ocorrências; não calcula métricas nem acompanha evolução de performance.</p>
+<p align="justify">Todos os perfis devem se autenticar para que a API restrinja as operações e os dados conforme o papel e os vínculos de cada usuário. Após a sessão, o professor alocado deve registrar observações e a presença individual de cada aluno. Se a sessão continuar como agendada 30 minutos após o horário previsto de término, o sistema deve notificar o professor responsável para que confirme se ela ocorreu. O produto organiza agenda e ocorrências; não calcula métricas nem acompanha evolução de performance.</p>
  
 ### Requisitos elicitados
  
@@ -75,6 +75,7 @@ A equipe se reuniu para debater ideias gerais sobre a API da Playmakerz Lab via 
 |BS10|O sistema deve disponibilizar agendas para alunos, responsáveis e professores, com informações das sessões e filtros por data, atividade e espaço.|
 |BS11|O sistema deve autenticar os usuários e restringir operações e dados conforme o perfil e os vínculos de cada usuário.|
 |BS12|O sistema deve permitir que o professor alocado registre as observações da sessão e a presença individual de cada aluno.|
+|BS13|Se uma sessão permanecer agendada 30 minutos após o horário previsto de término, o sistema deve notificar o professor alocado para que confirme se ela ocorreu.|
  
 ## Conclusão
 <p align = "justify">
@@ -92,3 +93,4 @@ A aplicação da técnica de brainstorm permitiu reunir diferentes ideias sobre 
 | 08/09/2026 | 1.0 | Criação do documento | Rodrigo, Pedro Lucas e Lucas Santos |
 | 25/09/2026 | 1.1 | Revisão das respostas do brainstorm | Pedro Lucas |
 | 29/09/2026 | 1.2 | Inclusão dos requisitos de autenticação, registro de ocorrências e esclarecimento do cancelamento (estava ambíguo) | Pedro Lucas |
+| 15/10/2026 | 1.3 | Inclusão do requisito de notificação ao professor para confirmação da sessão após o horário previsto | Pedro Lucas |
