@@ -17,7 +17,7 @@ A API oferece operações REST para:
 - **Professores**: cadastro, consulta, edição e remoção, com e-mail de contato.
 - **Sessões**: agendamento de treinamento ou avaliação, vínculo obrigatório a um professor, descrição, observações, horários e estado de realização.
 
-Se uma sessão continuar com status `AGENDADA` 30 minutos após o horário de término, um timer do `systemd` verifica isso a cada minuto e notifica o professor. O professor registra o desfecho atualizando o status para `REALIZADA` ou `NAO_REALIZADA` e pode editar as observações da sessão. Cada sessão é notificada uma única vez. O backend de e-mail padrão do projeto é o console do Django; o envio real exige configurar um backend SMTP nas configurações da aplicação.
+Se uma sessão continuar com status `AGENDADA` 30 minutos após o horário de término, um timer do `systemd` verifica isso a cada minuto e notifica o professor. O professor registra o desfecho atualizando o status para `REALIZADA` ou `NAO_REALIZADA` e pode editar as observações da sessão. Cada sessão é notificada uma única vez. O backend padrão é o console do Django; para enviar e-mails na VPS, configure o SMTP no arquivo `src/.env`.
 
 ## Documentação
 
@@ -69,6 +69,23 @@ python manage.py runserver
 ```
 
 A API ficará disponível em `http://127.0.0.1:8000/api/` e o painel administrativo em `http://127.0.0.1:8000/admin/`. Crie um usuário administrativo com `python manage.py createsuperuser`.
+
+## Configurar envio de e-mails por SMTP
+
+O backend padrão imprime os e-mails no terminal e serve para desenvolvimento. Para o timer enviar notificações reais na VPS, configure estas variáveis no arquivo ignorado pelo Git `src/.env`, usando os dados fornecidos pelo seu provedor de e-mail:
+
+```dotenv
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.seu-provedor.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=conta@seu-dominio.com
+EMAIL_HOST_PASSWORD=senha-de-aplicativo
+DEFAULT_FROM_EMAIL=conta@seu-dominio.com
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+```
+
+Use a porta e a criptografia exigidas pelo provedor. Normalmente, a porta 587 usa TLS e a porta 465 usa SSL; não habilite `EMAIL_USE_TLS` e `EMAIL_USE_SSL` ao mesmo tempo. Prefira uma senha de aplicativo ou credencial SMTP própria e nunca envie `src/.env` ao Git. O projeto lê essas variáveis e configura o `MAILERS` do Django; esse é o formato atual de configuração de e-mail no Django 6.1 ([documentação oficial](https://docs.djangoproject.com/en/6.1/howto/mailers-migration/)). Como o comando do timer carrega esse mesmo arquivo ao iniciar, as configurações são aplicadas na próxima execução. Para testar manualmente, rode `python manage.py notificar_sessoes_pendentes` dentro de `src/`; sem SMTP, o e-mail aparece no terminal.
 
 ## Testes e workflows
 

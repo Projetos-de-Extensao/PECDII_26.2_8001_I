@@ -36,7 +36,6 @@ class Command(BaseCommand):
                 ),
                 from_email=None,
                 recipient_list=[sessao.professor.email],
-                fail_silently=False,
             )
             sessao.notificacao_enviada_em = timezone.now()
             sessao.save(update_fields=['notificacao_enviada_em'])
