@@ -109,7 +109,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
@@ -126,12 +126,29 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-# Usa o backend de console no desenvolvimento e permite configurar outro por ambiente.
-EMAIL_BACKEND = os.getenv(
+# Mantém o console no desenvolvimento e permite selecionar SMTP pelo ambiente.
+backend_email = os.getenv(
     'EMAIL_BACKEND',
     'django.core.mail.backends.console.EmailBackend',
 )
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@playmakerz.local')
+opcoes_email = {}
+if backend_email == 'django.core.mail.backends.smtp.EmailBackend':
+    opcoes_email = {
+        'host': os.getenv('EMAIL_HOST', ''),
+        'port': int(os.getenv('EMAIL_PORT', '587')),
+        'username': os.getenv('EMAIL_HOST_USER', ''),
+        'password': os.getenv('EMAIL_HOST_PASSWORD', ''),
+        'use_tls': os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true',
+        'use_ssl': os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true',
+    }
+
+MAILERS = {
+    'default': {
+        'BACKEND': backend_email,
+        'OPTIONS': opcoes_email,
+    },
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
