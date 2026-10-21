@@ -6,7 +6,7 @@ title: Design Thinking
 
 ### **1. Capa**
 
-- Título do Projeto: Sistema Back-End Gestão de treinamento e acompanhamento de performance
+- Título do Projeto: GAAP — Gestão de Atletas de Alta Performance
 - Equipe: Rodrigo, Pedro Lucas e Lucas Santos
 - Data: 2026.2
 
@@ -14,19 +14,19 @@ title: Design Thinking
 
 ### **2. Introdução**
 
-- **Contexto do Projeto**: A Playmakerz Lab é um centro de treinamento de performance integrada na Barra da Tijuca (RJ). Hoje toda a captação e o agendamento são feitos por WhatsApp, sem calendário, controle de salas ou horários, o que gera risco de conflito conforme a operação cresce.
+- **Contexto do Projeto**: O cenário GAAP descreve uma escola de treinamento esportivo que precisa organizar alunos, profissionais e sessões de Treino, Fisioterapia, Psicologia e Nutrição. PKZ & One to One é o ambiente analisado que inspirou o cenário; não é o nome do produto acadêmico.
 
-- **Objetivo**: Especificar e desenvolver uma API back-end que permita cadastrar espaços, professores/instrutores, atividades e alunos, e alocar cada sessão a um espaço, horário e profissional sem conflito.
+- **Objetivo**: Entregar uma API funcional, testada e documentada para apoiar a operação de agenda e treino do recorte inicial do GAAP.
 
-- **Público-Alvo**: Alunos (regulares ou em aula experimental), responsáveis legais de alunos menores de idade, professores/instrutores e a coordenação do centro.
+- **Público-Alvo**: Administrador, Treinador e Profissional de Saúde, conforme os perfis definidos no cenário GAAP.
 
-- **Escopo**: Cadastro de espaços, profissionais, atividades e alunos/responsáveis; alocação de sessões; verificação automática de conflito de agenda e capacidade; consulta de agenda por espaço, profissional e aluno; persistência em banco de dados relacional.
+- **Escopo**: Recorte inicial descrito no [Documento de Visão](documento_de_visao.md) e no [Cenário GAAP](cenario.md). Os detalhes deste documento que não estiverem alinhados a essas referências precisam ser revalidados.
 
 ---
 
 ### **3. Empatia**
 
-- **Pesquisa**: Levantamento documental sobre a operação da Playmakerz Lab, complementado por brainstorming interno da equipe para explorar cenários de uso.
+- **Pesquisa**: O levantamento documental e o brainstorming registrados neste documento são materiais anteriores à adoção do cenário GAAP e devem ser tratados como contexto histórico até serem revalidados.
 
 - **Insights**: Hoje um professor só fica sabendo que tem aula quando alguém manda mensagem, não existe nada fixo, é tudo combinado na hora pelo WhatsApp. Se dois grupos marcarem a mesma sala sem querer, ninguém percebe até um chegar lá e encontrar o outro. Pra aluno menor de idade tem que ter o responsável autorizando antes de qualquer agendamento, isso já traz a LGPD pro fluxo de cadastro.
 
@@ -34,13 +34,13 @@ title: Design Thinking
 
 - **Persona Treinador (Professor/Instrutor)**: quer saber a própria agenda sem depender de mensagem avulsa, e quer registrar rápido o que aconteceu na sessão.
 
-- **Persona Profissional de Saúde**: é a mais difícil de fechar, a pesquisa não detalha quem exatamente ocupa esse papel no dia a dia do Playmakerz Lab hoje, pode até ser o mesmo professor em alguns casos. O que está claro é que toda avaliação física precisa estar vinculada a um profissional de Educação Física habilitado (Lei 9.696/1998).
+- **Persona Profissional de Saúde**: o cenário GAAP define esse perfil como usuário que consulta somente os atendimentos atribuídos ao seu serviço e à sua agenda. Detalhes adicionais de responsabilidades devem ser confirmados antes de serem tratados como requisitos.
 
 ---
 
 ### **4. Definição**
 
-- **Problema Central**: Como o Playmakerz Lab consegue alocar treino, sala e profissional sem um esbarrar no outro, sem depender de mensagem de WhatsApp pra resolver na hora?
+- **Problema Central**: Como o GAAP pode oferecer uma fonte confiável para acompanhar vagas, presenças e relatórios de treino e apoiar a operação de agenda?
 
 - **Pontos de Vista**: o Administrador vive apagando incêndio de agenda, precisa de um jeito de cadastrar e alocar que já avise quando há conflito, em vez de descobrir depois. Treinador e Profissional de Saúde precisam que o sistema saiba exatamente quem fez o quê, com quem, em qual sessão, um pra organizar o próprio dia, o outro porque a lei exige.
 

@@ -6,7 +6,7 @@ title: Casos de Uso
 ## Introdução
 
 <p align = "justify">
-Casos de uso descrevem, do ponto de vista de quem usa o sistema, as interações necessárias para atingir um objetivo. Neste documento são identificados os atores e os casos de uso da API de agendamento da Playmakerz Lab, descritos os fluxos principais e alternativos e apresentado o diagrama de casos de uso. O documento serve de base para o diagrama de classes, para o protótipo de baixa fidelidade e para os diagramas de sequência.
+Casos de uso descrevem, do ponto de vista de quem usa o sistema, as interações necessárias para atingir um objetivo. Neste documento são identificados os atores e os casos de uso da API do GAAP, descritos os fluxos principais e alternativos e apresentado o diagrama de casos de uso. O documento serve de base para o diagrama de classes, para o protótipo de baixa fidelidade e para os diagramas de sequência. Os atores e fluxos deste documento ainda precisam ser revalidados conforme o cenário GAAP.
 </p>
 
 ## Metodologia
@@ -58,7 +58,7 @@ actor "Professor/Instrutor" as Prof
 actor "Aluno" as Aluno
 actor "Responsável Legal" as Resp
 
-rectangle "API Playmakerz Lab" {
+rectangle "API GAAP" {
   usecase "UC01: Autenticar-se" as UC01
   usecase "UC02: Cadastrar aluno" as UC02
   usecase "UC03: Cadastrar responsável legal" as UC03
@@ -364,3 +364,4 @@ A elaboração dos casos de uso transformou os requisitos elicitados no brainsto
 | 29/09/2026 | 1.1 | Revisão dos atores e regras de cancelamento; inclusão do UC15 | Pedro Lucas |
 | 15/10/2026 | 1.2 | Inclusão do fluxo de notificação e confirmação da ocorrência da sessão no UC14 | Pedro Lucas |
 | 15/10/2026 | 1.3 | Especificação da situação "não realizada" após confirmação negativa do professor | Pedro Lucas |
+| 21/10/2026 | 1.4 | Manutenção do fluxo de notificação automática por e-mail como funcionalidade implementada fora do escopo do cenário GAAP | Equipe |

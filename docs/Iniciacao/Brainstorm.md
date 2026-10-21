@@ -7,10 +7,12 @@ title: Brainstorm
 <p align = "justify">
 O brainstorm é uma técnica de elicitação de requisitos que consiste em reunir a equipe e discutir sobre diversos tópicos gerais do projeto apresentados no documento problema de negócio. No brainstorm o diálogo é incentivado e críticas são evitadas para permitir que todos colaborem com suas próprias ideias.
 </p>
+
+> Este brainstorm registra ideias levantadas antes da adoção do cenário GAAP. Elas são propostas históricas da equipe e precisam ser revalidadas antes de serem consideradas requisitos do produto.
  
 ## Metodologia
 <p align = "justify">
-A equipe se reuniu para debater ideias gerais sobre a API da Playmakerz Lab via Discord, começou 15:37 e terminou 17:52, onde o aluno Pedro Lucas foi o moderador, direcionando a equipe com questões pré-elaboradas, e transcrevendo as respostas para o documento.
+A equipe se reuniu para debater ideias gerais para o produto, atualmente denominado GAAP, via Discord. A reunião começou às 15:37 e terminou às 17:52. Pedro Lucas foi o moderador, direcionando a equipe com questões pré-elaboradas e transcrevendo as respostas para o documento.
 </p>
  
 ## Brainstorm
@@ -21,7 +23,7 @@ A equipe se reuniu para debater ideias gerais sobre a API da Playmakerz Lab via 
  
 ### 1. Qual o objetivo principal do sistema?
 
-<p align="justify">O objetivo principal do sistema é centralizar e facilitar o agendamento das sessões da Playmakerz Lab, permitindo que alunos, responsáveis, professores e a coordenação consultem e gerenciem de forma confiável informações sobre horários, salas, atividades e instrutores disponíveis.</p>
+<p align="justify">A proposta histórica do brainstorm era centralizar o agendamento das sessões, permitindo que alunos, responsáveis, professores e a coordenação consultassem e gerenciassem informações sobre horários, salas, atividades e instrutores disponíveis. Esses perfis e funções precisam ser comparados com o recorte atual do GAAP.</p>
  
 ---
  
@@ -57,7 +59,7 @@ A equipe se reuniu para debater ideias gerais sobre a API da Playmakerz Lab via 
 
 ### 7. Como será o acesso à API e o registro do que ocorreu em cada sessão?
 
-<p align="justify">Todos os perfis devem se autenticar para que a API restrinja as operações e os dados conforme o papel e os vínculos de cada usuário. Após a sessão, o professor alocado deve registrar observações e a presença individual de cada aluno. Se a sessão continuar como agendada 30 minutos após o horário previsto de término, o sistema deve notificar o professor responsável para que confirme se ela ocorreu. O produto organiza agenda e ocorrências; não calcula métricas nem acompanha evolução de performance.</p>
+<p align="justify">Todos os perfis devem se autenticar para que a API restrinja as operações e os dados conforme o papel e os vínculos de cada usuário. Após a sessão, o profissional responsável deve registrar observações e a presença individual de cada aluno. O produto organiza agenda e ocorrências; não calcula métricas nem acompanha evolução de performance.</p>
  
 ### Requisitos elicitados
  
@@ -75,11 +77,11 @@ A equipe se reuniu para debater ideias gerais sobre a API da Playmakerz Lab via 
 |BS10|O sistema deve disponibilizar agendas para alunos, responsáveis e professores, com informações das sessões e filtros por data, atividade e espaço.|
 |BS11|O sistema deve autenticar os usuários e restringir operações e dados conforme o perfil e os vínculos de cada usuário.|
 |BS12|O sistema deve permitir que o professor alocado registre as observações da sessão e a presença individual de cada aluno.|
-|BS13|Se uma sessão permanecer agendada 30 minutos após o horário previsto de término, o sistema deve notificar o professor alocado para que confirme se ela ocorreu.|
+|BS13|Se uma sessão permanecer agendada 30 minutos após o horário previsto de término, o sistema deve notificar o professor alocado para que confirme se ela ocorreu. **Implementado fora do escopo do cenário GAAP.**|
  
 ## Conclusão
 <p align = "justify">
-A aplicação da técnica de brainstorm permitiu reunir diferentes ideias sobre o funcionamento da API da Playmakerz Lab e identificar os principais requisitos do sistema. A discussão destacou a necessidade de centralizar os agendamentos, organizar os cadastros, verificar conflitos automaticamente e oferecer agendas e registros de ocorrência adequados para cada usuário. Esses requisitos servirão como base para as próximas etapas de análise e desenvolvimento do projeto.
+A aplicação da técnica de brainstorm permitiu reunir propostas iniciais para o sistema, que agora é denominado GAAP. As ideias registradas são insumos históricos e devem ser revalidadas contra o [Cenário de Aula: Backend GAAP](cenario.md) e o [Documento de Visão](documento_de_visao.md) antes de servirem como requisitos.
 </p>
 
 ## Referências Bibliográficas
@@ -94,3 +96,4 @@ A aplicação da técnica de brainstorm permitiu reunir diferentes ideias sobre 
 | 25/09/2026 | 1.1 | Revisão das respostas do brainstorm | Pedro Lucas |
 | 29/09/2026 | 1.2 | Inclusão dos requisitos de autenticação, registro de ocorrências e esclarecimento do cancelamento (estava ambíguo) | Pedro Lucas |
 | 15/10/2026 | 1.3 | Inclusão do requisito de notificação ao professor para confirmação da sessão após o horário previsto | Pedro Lucas |
+| 21/10/2026 | 1.4 | Registro da manutenção da notificação automática por e-mail como funcionalidade implementada fora do escopo do cenário GAAP | Equipe |

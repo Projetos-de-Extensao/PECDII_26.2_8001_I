@@ -12,7 +12,7 @@ Mapa mental consiste em criar resumos cheios de símbolos, cores, setas e frases
 ## Metodologia
 
 <p align = "justify">
-O documento foi elaborado por Pedro Lucas, com base no levantamento já registrado em <a href="pesquisa.md">pesquisa.md</a> e nos requisitos elicitados em <a href="Brainstorm.md">Brainstorm.md</a>, organizando o projeto Playmakerz Lab em dois mapas mentais feitos em PlantUML.
+O documento foi elaborado por Pedro Lucas, com base no levantamento já registrado em <a href="pesquisa.md">pesquisa.md</a> e nas propostas elicitadas em <a href="Brainstorm.md">Brainstorm.md</a>. Os mapas mentais registram a compreensão inicial do projeto e precisam ser revalidados contra o cenário GAAP.
 </p>
 
 ## Mapa mental - Geral
@@ -20,12 +20,12 @@ O documento foi elaborado por Pedro Lucas, com base no levantamento já registra
 ### Mapa mental 1
 
 ```plantuml
-@startmindmap pkz_lab_mapa_mental
+@startmindmap gaap_mapa_mental
 skinparam monochrome true
 skinparam ArrowColor #000000
 skinparam NodeFontSize 14
 
-* Playmakerz Lab: Sistema de Gestão de Treinamento
+* GAAP: Gestão de Atletas de Alta Performance
 ** Problema
 *** Agendamento feito só por WhatsApp
 *** Sem calendário ou controle de salas/horários
@@ -105,7 +105,7 @@ skinparam NodeFontSize 14
 ## Conclusão
 
 <p align = "justify">
-O mapa mental 1 organizou visualmente o problema do Playmakerz Lab (agendamento só via WhatsApp), o objetivo da API, os atores envolvidos, o escopo do sistema, a legislação aplicável e o comparativo ao mercado. O mapa mental 2 organizou os requisitos elicitados na sessão de Brainstorm, agrupados por cadastro, agendamento de sessão, gestão da sessão e consulta de agenda. Juntos, servem de base para o levantamento de requisitos.
+O mapa mental 1 organizou visualmente a compreensão inicial do problema, do objetivo da API e do escopo. O mapa mental 2 organizou as propostas elicitadas na sessão de Brainstorm. Como ambos foram produzidos antes da adoção do cenário GAAP, seus atores e requisitos precisam ser revalidados antes de servirem de base para o levantamento atualizado.
 </p>
 
 ## Referências

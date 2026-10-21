@@ -1,10 +1,10 @@
 # Iniciação
 
-> Objetivo: Compreender a demanda da Playmakerz Lab, identificar os usuários envolvidos, definir o escopo inicial e levantar os principais requisitos do sistema.
+> Objetivo: Compreender o cenário GAAP, identificar os perfis envolvidos, definir o escopo inicial e levantar os principais requisitos do sistema.
 
 ## Principais atividades
 
-* Compreender o contexto e e a demanda da Playmakerz Lab.
+* Compreender o contexto e a demanda do GAAP definidos no cenário da disciplina.
 
 * Identificar os usuários e as partes interessadas no sistema.
 
