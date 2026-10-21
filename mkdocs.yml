@@ -8,6 +8,7 @@ nav:
   - Home: index.md
   - Iniciação: 
       - Index: Iniciacao/index.md
+      - Cenário GAAP: Iniciacao/cenario.md
       - Pesquisa: Iniciacao/pesquisa.md
       - Documento de Visão: Iniciacao/documento_de_visao.md
       - 5w2h: Iniciacao/5w2h.md
