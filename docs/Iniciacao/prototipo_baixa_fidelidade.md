@@ -10,7 +10,7 @@ O protótipo de baixa fidelidade é uma representação simples e rápida da sol
 
 ## Metodologia
 
-A equipe definiu as telas a partir dos requisitos elicitados no [Brainstorm](Brainstorm.md) (BS01 a BS10) e do escopo da [Pesquisa](pesquisa.md), priorizando o que é central para o problema da Playmakerz Lab: autenticação, cadastro de aluno e responsável, manutenção de cadastros, agendamento, cancelamento, remarcação e consulta de agenda. Para cada tela foram identificados os campos, filtros, informações exibidas e ações disponíveis para cada perfil. Os protótipos foram desenhados em PlantUML Salt para validar a organização das informações e a navegação prevista antes da implementação.
+A equipe definiu estas telas a partir dos requisitos elicitados no [Brainstorm](Brainstorm.md) e do escopo registrado na [Pesquisa](pesquisa.md), antes da adoção do cenário GAAP. O protótipo é um artefato histórico: seus perfis e funções precisam ser revalidados contra o [Documento de Visão](documento_de_visao.md) antes de servirem de especificação. Os protótipos foram desenhados em PlantUML Salt.
 
 ## Protótipo de Baixa Fidelidade
 
@@ -38,7 +38,7 @@ para cada perfil de usuário.
 ```plantuml
 @startsalt
 {+
-    {* <b>Playmakerz Lab - Login}
+    {* <b>GAAP - Login}
 
     {
         <b>Acesse sua conta
@@ -68,7 +68,7 @@ para cada perfil de usuário.
 ```plantuml
 @startsalt
 {+
-    {* <b>Playmakerz Lab - Cadastro de aluno}
+    {* <b>GAAP - Cadastro de aluno}
 
     {
         <b>Dados do aluno
@@ -110,7 +110,7 @@ para cada perfil de usuário.
 ```plantuml
 @startsalt
 {+
-    {* <b>Playmakerz Lab - Cadastros}
+    {* <b>GAAP - Cadastros}
 
     {
         [Espaços] | [Profissionais] | [Atividades]
@@ -148,7 +148,7 @@ para cada perfil de usuário.
 ```plantuml
 @startsalt
 {+
-    {* <b>Playmakerz Lab - Agendar sessão}
+    {* <b>GAAP - Agendar sessão}
 
     {
         Data: | "dd/mm/aaaa"
@@ -198,7 +198,7 @@ para cada perfil de usuário.
 ```plantuml
 @startsalt
 {+
-    {* <b>Playmakerz Lab - Agenda}
+    {* <b>GAAP - Agenda}
 
     {
         <b>Filtrar agendamentos
@@ -235,7 +235,7 @@ para cada perfil de usuário.
 ```plantuml
 @startsalt
 {+
-    {* <b>Playmakerz Lab - Detalhes da sessão}
+    {* <b>GAAP - Detalhes da sessão}
 
     {
         Data: 15/09/2026
@@ -271,7 +271,7 @@ para cada perfil de usuário.
 ## Conclusão
 
 <p align = "justify">
-A elaboração do protótipo de baixa fidelidade permitiu visualizar, antes da implementação, a organização das telas, os campos necessários, as ações disponíveis e a navegação principal da Playmakerz Lab. Os protótipos destacam regras importantes do sistema, como a exigência de consentimento para alunos menores, a seleção de recursos no agendamento e a possibilidade de consultar, cancelar ou remarcar sessões. O material serve de referência para os casos de uso, o diagrama de classes e a construção da aplicação.
+A elaboração do protótipo de baixa fidelidade permitiu visualizar uma proposta inicial para as telas do GAAP. Algumas regras e funções representadas, como consentimento de responsáveis, cancelamento e remarcação, não estão confirmadas no cenário atual; o protótipo deverá ser atualizado após a revalidação dos requisitos.
 </p>
 
 ## Referências

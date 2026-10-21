@@ -1,6 +1,6 @@
 # Elaboração
 
-> Objetivo: Refinar os requisitos da API da Playmakerz Lab, detalhar o comportamento do sistema e definir uma base arquitetural consistente para a fase de Construção.
+> Objetivo: Refinar os requisitos da API do GAAP, detalhar o comportamento do sistema e definir uma base arquitetural consistente para a fase de Construção.
 
 ## Principais atividades
 

@@ -6,7 +6,7 @@ title: Diagrama de Classes
 ## Introdução
 
 <p align = "justify">
-O Diagrama de Classes representa as classes do domínio e os relacionamentos entre elas, servindo de base para a modelagem orientada a objetos e para a implementação do sistema. Nesta fase de Elaboração é apresentado o Diagrama de Classes Conceitual da API da Playmakerz Lab, com as classes vazias, ou seja, sem atributos e métodos, focando nos conceitos do domínio, nos relacionamentos e nas multiplicidades. A evolução para o Diagrama de Classes de Especificação, com atributos, tipos e operações, fica para as próximas fases.
+O Diagrama de Classes representa as classes do domínio e os relacionamentos entre elas, servindo de base para a modelagem orientada a objetos e para a implementação do sistema. Nesta fase de Elaboração é apresentado o Diagrama de Classes Conceitual da API do GAAP, com as classes vazias, ou seja, sem atributos e métodos, focando nos conceitos do domínio, nos relacionamentos e nas multiplicidades. A evolução para o Diagrama de Classes de Especificação, com atributos, tipos e operações, fica para as próximas fases. O modelo atual ainda precisa ser revalidado conforme o cenário GAAP.
 </p>
 
 ## Metodologia
@@ -143,7 +143,7 @@ As classes `Coordenador`, `Professor`, `Aluno` e `ResponsavelLegal` herdam de `U
 ## Conclusão
 
 <p align = "justify">
-O diagrama de classes conceitual consolidou os conceitos do domínio da Playmakerz Lab identificados nos casos de uso, deixando explícito que a Sessão é o elemento central do sistema, ligando atividade, espaço, professor e alunos, e sobre ela recaem as regras de conflito e capacidade. As multiplicidades traduzem as regras de negócio levantadas no brainstorm e a tabela de rastreabilidade garante que cada classe tem origem em ao menos um requisito e caso de uso. Na próxima fase o modelo será refinado para o Diagrama de Classes de Especificação, com atributos, tipos e operações.
+O diagrama de classes conceitual registra uma proposta inicial para o domínio do GAAP. Suas classes e multiplicidades foram derivadas de artefatos anteriores ao cenário atual e precisam ser revalidadas contra os requisitos do GAAP antes de servirem como modelo definitivo. Na próxima fase, o modelo será refinado para o Diagrama de Classes de Especificação, com atributos, tipos e operações.
 </p>
 
 ## Referências

@@ -4,100 +4,81 @@ title: Documento de Visão
 ---
 ## Introdução
 
-<p align = "justify">
-O propósito deste documento é apresentar uma visão geral do projeto desenvolvido na disciplina Projeto de Extensão em Computação II (IBM8936), no Ibmec, referente à API de agenda e registro de ocorrências de sessões da Playmakerz Lab. O produto centraliza cadastros, agendamentos, consultas de agenda e ocorrências (incluindo presença individual e observações), sem calcular métricas ou acompanhar evolução de performance.
-</p>
+Este documento apresenta a visão do recorte inicial do **GAAP (Gestão de Atletas de Alta Performance)** desenvolvido na disciplina Projeto de Extensão em Computação II (IBM8936), no Ibmec. O produto acadêmico é uma API back-end para apoiar a operação de agenda e treino de uma escola de treinamento esportivo. PKZ & One to One é o ambiente analisado que inspirou o cenário, não o nome do produto desenvolvido.
 
 ## Descrição do Problema
 
 ### Problema
 
-<p align = "justify">
-Hoje o agendamento de sessões na Playmakerz Lab é feito exclusivamente por WhatsApp, sem calendário, sem controle de salas ou horários e sem nenhum sistema de registro. Conforme a operação cresce, isso gera risco real de conflito de horário e de sala entre atividades diferentes.
-</p>
+Uma escola de treinamento esportivo precisa organizar alunos, profissionais e sessões de Treino, Fisioterapia, Psicologia e Nutrição. A operação depende de controles dispersos e não possui uma fonte confiável para acompanhar vagas, presenças e relatórios de treino.
 
 ### Impactados
 
-<p align = "justify">
-São impactados os alunos e seus responsáveis legais (quando menores de idade), que dependem de mensagens avulsas para saber horário e sala de suas sessões; os professores e instrutores, que não têm uma agenda confiável e só ficam sabendo de uma sessão quando alguém os avisa; e a coordenação do centro, que hoje resolve manualmente qualquer sobreposição de sala, horário ou profissional.
-</p>
+O cenário identifica três perfis de usuário: Administrador, Treinador e Profissional de Saúde. Alunos também são atendidos pelo sistema, mas não são descritos como um perfil de acesso inicial no cenário.
 
-### Consequência
+### Consequências
 
-<p align = "justify">
-Sem um sistema de controle, a tendência é o aumento de conflitos de agenda (dois grupos usando a mesma sala ou o mesmo profissional no mesmo horário), retrabalho da coordenação para reorganizar sessões na hora e risco de não conformidade com a LGPD e o ECA no tratamento dos dados de alunos menores de idade, já que hoje não existe um fluxo formal de consentimento do responsável legal.
-</p>
+Sem uma fonte confiável para a agenda e os registros de treino, a equipe tem dificuldade para acompanhar vagas, presenças e relatórios, além de prevenir conflitos e respeitar bloqueios de agenda e limites de capacidade.
 
 ### Solução
 
-<p align = "justify">
-Especificar e desenvolver uma API back-end que permita cadastrar espaços, professores/instrutores, atividades e alunos, alocar cada sessão de treino ou aula experimental sem conflito e registrar a presença individual e as observações de cada sessão.
-</p>
+Entregar uma API funcional, testada e documentada para sustentar a operação de agenda e treino do recorte inicial do GAAP, com autenticação e autorização por perfil.
 
 ## Objetivos
 
-<p align = "justify">
-O objetivo da equipe de desenvolvimento é entregar, até o fim do 2º semestre de 2026, uma API funcional que centralize o cadastro de espaços, profissionais, atividades e alunos/responsáveis, automatize a alocação de sessões com verificação de conflito de agenda e de capacidade, e disponibilize consultas de agenda por espaço, por profissional e por aluno, seguindo a metodologia RUP/UP e utilizando Python/Django com banco de dados relacional.
-</p>
+- Organizar os dados de alunos, profissionais e serviços necessários à operação.
+- Apoiar a consulta e a gestão da agenda, incluindo horários e bloqueios.
+- Evitar a confirmação de agendamentos conflitantes, bloqueados ou acima da capacidade.
+- Permitir o registro de presença ou falta e a criação e finalização de relatórios de treino por profissionais autorizados.
+- Entregar uma API testada e documentada, respaldada por banco de dados relacional.
 
-## Descrição do Usuário
+## Perfis de Usuário
 
-<p align = "justify">
-Os usuários da API são a Coordenação do centro, que administra os cadastros de espaços, profissionais e atividades e realiza a alocação das sessões; o Professor/Instrutor, que consulta a própria agenda e registra o que ocorreu em cada sessão; o Aluno, pessoa atendida pelo centro em regime regular ou em aula experimental, que consulta sua agenda e solicita cancelamento ou remarcação; e o Responsável Legal, obrigatório quando o aluno é menor de 18 anos, que autoriza o tratamento de dados e acompanha a agenda do aluno, podendo estar vinculado a mais de um aluno.
-</p>
+| Perfil | Responsabilidades iniciais |
+|---|---|
+| Administrador | Mantém alunos, profissionais, serviços, horários e bloqueios; consulta pendências. |
+| Treinador | Consulta a agenda sob sua responsabilidade, registra presença ou falta e cria relatórios de treino. |
+| Profissional de Saúde | Consulta somente os atendimentos atribuídos ao seu serviço e à sua agenda. |
 
-## Recursos do produto
+## Escopo do MVP
 
-### Cadastro de Espaços, Profissionais e Atividades
+O MVP contempla uma API back-end com autenticação e autorização por perfil; cadastro dos dados de base e configuração de ao menos um serviço; gestão de horários e bloqueios; consulta de agenda; validação de conflitos e capacidade nos agendamentos; registro de presença ou falta; e criação e finalização de relatórios de treino por profissionais autorizados.
 
-<p align = "justify">
-A coordenação poderá cadastrar e atualizar os espaços do centro (nome e capacidade), os professores e instrutores (especialidades e disponibilidades) e as atividades oferecidas (nome, duração, modalidade), vinculando cada atividade aos profissionais habilitados e aos espaços adequados.
-</p>
+O cenário recebido deixa em branco quatro itens da lista de funcionalidades iniciais, não enumera as entidades mínimas e não detalha as regras RN01–RN03 nem os requisitos não funcionais. Os itens acima se limitam ao que está descrito no contexto, nos perfis e nos critérios de aceite do cenário. Regras e detalhes adicionais devem ser confirmados antes de serem assumidos como requisitos.
 
-### Cadastro de Alunos e Responsáveis
+## Fora do Escopo
 
-<p align = "justify">
-A coordenação poderá cadastrar alunos com nome, data de nascimento e dados de contato. Quando o aluno for menor de 18 anos, o sistema exigirá o cadastro de um responsável legal e o registro da sua autorização antes de liberar o aluno para agendamentos, em conformidade com a LGPD e o ECA.
-</p>
+Esta entrega não inclui:
 
-### Agendamento de Sessões
+- Pagamentos, gateway, cobrança recorrente ou ledger financeiro completo — não implementados.
+- Prontuário clínico detalhado, assinatura digital ou cálculos de força por sexo e idade — não implementados.
+- Aplicativo mobile — não implementado.
+- QR Code — não implementado.
+- Notificações por WhatsApp — não implementadas.
+- Notificações por e-mail — **implementadas fora do escopo**, por recomendação do professor durante uma revisão com a equipe em 14/10/2026.
+- Operação offline — não implementada.
+- Dashboards analíticos, data warehouse, multi-tenancy e integrações públicas — não implementados.
+- Geração de PDF e upload de fotos — não implementados; devem ser documentados pontos de extensão para essas evoluções.
 
-<p align = "justify">
-A coordenação poderá agendar sessões regulares e aulas experimentais, informando data, horário, atividade, espaço, profissional e alunos. Antes de confirmar, o sistema verificará automaticamente conflito de horário do espaço e do profissional e a capacidade máxima do espaço, recusando o agendamento quando alguma regra não for atendida.
-</p>
+O cenário lista notificações por e-mail entre os itens fora do escopo. A equipe manteve a implementação após recomendação do professor durante uma revisão em 14/10/2026; portanto, essa funcionalidade é uma exceção implementada e deve ser considerada em futuras decisões de aderência ao cenário GAAP.
 
-### Cancelamento e Remarcação
+## Restrições e Requisitos de Qualidade
 
-<p align = "justify">
-Aluno e responsável legal podem cancelar ou remarcar somente a participação do aluno: no cancelamento, a vaga é liberada; na remarcação, a participação é transferida para outra sessão já agendada da mesma atividade que tenha vaga. A coordenação pode cancelar a sessão inteira ou remarcar seu horário, afetando todos os participantes. As operações respeitam a antecedência mínima e mantêm o histórico; o cancelamento integral libera o espaço e o profissional.
-</p>
+- A solução é uma API back-end, sem aplicativo mobile ou operação offline nesta entrega.
+- A persistência deve usar banco de dados relacional normalizado, com chaves, restrições e índices adequados às consultas de agenda.
+- Senhas não podem ser armazenadas em texto puro; devem ser protegidas por hash.
+- As operações devem validar dados e permissões, e os testes automatizados devem cobrir as regras prioritárias.
+- A implementação deve seguir as fases e iterações RUP/UP descritas no [Cenário de Aula: Backend GAAP](cenario.md).
 
-### Consulta de Agenda
+## Referências
 
-<p align = "justify">
-Cada perfil poderá consultar sua agenda com filtros por data, atividade e espaço: o aluno vê suas próprias sessões, o responsável vê as sessões dos alunos vinculados, o professor vê as sessões em que está alocado e a coordenação vê a agenda completa.
-</p>
-
-## Restrições
-
-<p align = "justify">
-O sistema não terá interface gráfica própria: toda a funcionalidade é exposta como uma API back-end, consumida por outra aplicação ou por ferramentas de teste como Postman/Insomnia. O escopo não inclui controle financeiro, cobrança ou pagamento de mensalidades, nem a gestão pedagógica do conteúdo das atividades. A implementação está limitada ao tempo disponível no 2º semestre de 2026 e ao trio responsável pelo projeto.
-</p>
-
-## Referências Bibliográficas
-
-> Levantamento completo em [Pesquisa](pesquisa.md).
-
-> BRASIL. Lei nº 13.709, de 14 de agosto de 2018 (Lei Geral de Proteção de Dados Pessoais - LGPD).
-
-> BRASIL. Lei nº 8.069, de 13 de julho de 1990 (Estatuto da Criança e do Adolescente - ECA).
-
-> BRASIL. Lei nº 9.696, de 1º de setembro de 1998 (regulamenta a profissão de Educação Física).
-
-> BEZERRA, E. Princípios de Análise e Projeto de Sistemas com UML. 3. ed. Rio de Janeiro: Elsevier, 2015.
+- [Cenário de Aula: Backend GAAP](cenario.md), referência principal para o problema, perfis, escopo e critérios de aceite.
+- [Pesquisa](pesquisa.md), levantamento complementar do projeto.
 
 ## Versionamento
 | Data | Versão | Descrição | Autor(es) |
-| -- | -- | -- | -- |
+|---|---|---|---|
 | 27/09/2026 | 1.0 | Criação do documento de visão da API da Playmakerz Lab | Rodrigo |
 | 29/09/2026 | 1.1 | Delimitação do escopo de agenda e registro de ocorrências, distinção entre remarcação de sessão e de participação | Pedro Lucas |
+| 21/10/2026 | 2.0 | Revalidação do problema, dos perfis e do recorte do MVP com base no cenário GAAP | Equipe |
+| 21/10/2026 | 2.1 | Registro da manutenção das notificações automáticas por e-mail como funcionalidade implementada fora do escopo | Equipe |

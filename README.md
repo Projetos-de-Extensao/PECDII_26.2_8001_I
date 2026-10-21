@@ -1,4 +1,4 @@
-# Sistema de Gestão de Treinamento e Acompanhamento de Performance
+# GAAP — Gestão de Atletas de Alta Performance
 
 **Código da Disciplina**: IBM8936 (PECDII_26.2_8001)
 
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Django-6.1-092E20?logo=django&logoColor=white" alt="Django 6.1">
 </p>
 
-Projeto desenvolvido para a PKZ Lab, centro de treinamento de performance integrada na Barra da Tijuca. O sistema está sendo construído como uma API Django REST Framework para organizar alunos, professores e sessões de treinamento e avaliação.
+Projeto acadêmico baseado no cenário Backend GAAP. O produto é uma API Django REST Framework para apoiar a agenda e o treino de uma escola de treinamento esportivo. O ambiente PKZ & One to One é a referência analisada no cenário.
 
 ## Estado atual
 
@@ -17,7 +17,7 @@ A API oferece operações REST para:
 - **Professores**: cadastro, consulta, edição e remoção, com e-mail de contato.
 - **Sessões**: agendamento de treinamento ou avaliação, vínculo obrigatório a um professor, descrição, observações, horários e estado de realização.
 
-Se uma sessão continuar com status `AGENDADA` 30 minutos após o horário de término, um timer do `systemd` verifica isso a cada minuto e notifica o professor. O professor registra o desfecho atualizando o status para `REALIZADA` ou `NAO_REALIZADA` e pode editar as observações da sessão. Cada sessão é notificada uma única vez. O backend padrão é o console do Django; para enviar e-mails na VPS, configure o SMTP no arquivo `src/.env`.
+Se uma sessão continuar com status `AGENDADA` 30 minutos após o horário de término, um timer do `systemd` verifica isso a cada minuto e notifica o professor. O professor registra o desfecho atualizando o status para `REALIZADA` ou `NAO_REALIZADA` e pode editar as observações. Cada sessão é notificada uma única vez. O backend padrão é o console do Django; para enviar e-mails na VPS, configure o SMTP no arquivo `src/.env`.
 
 ## Documentação
 
@@ -72,7 +72,7 @@ A API ficará disponível em `http://127.0.0.1:8000/api/` e o painel administrat
 
 ## Configurar envio de e-mails por SMTP
 
-O backend padrão imprime os e-mails no terminal e serve para desenvolvimento. Para o timer enviar notificações reais na VPS, configure estas variáveis no arquivo ignorado pelo Git `src/.env`, usando os dados fornecidos pelo seu provedor de e-mail:
+O backend padrão imprime os e-mails no terminal e serve para desenvolvimento. Para o timer enviar notificações reais na VPS, configure estas variáveis em `src/.env`, usando os dados fornecidos pelo seu provedor:
 
 ```dotenv
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend

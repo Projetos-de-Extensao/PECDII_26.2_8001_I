@@ -4,11 +4,14 @@ title: Pesquisa
 ---
 
 # Pesquisa
+
+> Este levantamento foi produzido sob uma compreensão anterior do projeto. As referências a Playmakerz Lab registram esse contexto histórico; o produto acadêmico atual é o GAAP, e o cenário da disciplina identifica PKZ & One to One como ambiente analisado. As informações deste levantamento devem ser revalidadas antes de orientar requisitos do GAAP.
+
 ### **1. Capa**
 
 - Tema: Sistema Back-End Gestão de treinamento e acompanhamento de performance
 - Data: 2026.2
-- Stakeholder: Playmakerz Lab, Desenvolvedores, Professor Jonh
+- Stakeholders do projeto atual: Administrador, Treinador, Profissional de Saúde, equipe desenvolvedora e Professor Jonh. Ambiente analisado no cenário: PKZ & One to One.
 
 ---
 
