@@ -97,3 +97,4 @@ A aplicação da técnica de brainstorm permitiu reunir propostas iniciais para 
 | 29/09/2026 | 1.2 | Inclusão dos requisitos de autenticação, registro de ocorrências e esclarecimento do cancelamento (estava ambíguo) | Pedro Lucas |
 | 15/10/2026 | 1.3 | Inclusão do requisito de notificação ao professor para confirmação da sessão após o horário previsto | Pedro Lucas |
 | 21/10/2026 | 1.4 | Registro da manutenção da notificação automática por e-mail como funcionalidade implementada fora do escopo do cenário GAAP | Equipe |
+| 28/10/2026 | 1.5 | Alinhamento da terminologia e identificação das ideias mantidas fora do escopo do MVP | Pedro Lucas |

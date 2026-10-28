@@ -1,288 +1,200 @@
 ---
-id: prototipobaixa
-title: Protótipo Baixa Fidelidade
+id: prototipo_baixa_fidelidade
+title: Protótipo de Baixa Fidelidade
 ---
-## Introdução
+# Protótipo de Baixa Fidelidade — GAAP
 
-<p align = "justify">
-O protótipo de baixa fidelidade é uma representação simples e rápida da solução, usada para validar telas, navegação e funcionalidades antes da implementação. As telas são representadas em PlantUML Salt, destacando campos, filtros, informações e ações principais para os perfis do sistema. O protótipo serve de base para os casos de uso, o diagrama de classes e a implementação em Django.
-</p>
+Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [levantamento](../Elaboracao/levreq.md). É uma proposta de telas para uma API consumida por cliente web; a interface não faz parte da entrega do backend. Campos ainda não definidos pelo cenário estão identificados como pendentes.
 
-## Metodologia
+## Mapa das telas
 
-A equipe definiu estas telas a partir dos requisitos elicitados no [Brainstorm](Brainstorm.md) e do escopo registrado na [Pesquisa](pesquisa.md), antes da adoção do cenário GAAP. O protótipo é um artefato histórico: seus perfis e funções precisam ser revalidados contra o [Documento de Visão](documento_de_visao.md) antes de servirem de especificação. Os protótipos foram desenhados em PlantUML Salt.
+| Tela | Perfil | Requisitos | Ações principais |
+|---|---|---|---|
+| Acesso | Todos | RF-01 | Autenticar; apresentar acesso negado. |
+| Cadastros | Administrador | RF-02 | Manter aluno, profissional e serviço. |
+| Agenda e configuração | Administrador | RF-03, RF-04, RF-05 | Consultar disponibilidade/bloqueios e confirmar agendamento. |
+| Agenda pessoal | Treinador | RF-04 | Consultar sessões sob sua responsabilidade. |
+| Atendimentos | Profissional de Saúde | RF-04 | Consultar apenas serviço e agenda atribuídos. |
+| Presença e relatório | Treinador; Profissional de Saúde (presença nos atendimentos) | RF-06, RF-07 | Registrar presença/falta em sessões e atendimentos; Treinador finaliza relatório de treino. |
+| Aviso de sessão pendente | Treinador | RF-08 (fora do escopo) | Receber o aviso excepcional por e-mail. |
 
-## Protótipo de Baixa Fidelidade
-
-### Versão 1.0
-
-### Telas representadas
-
-| Tela | Descrição | Requisito(s) |
-| -- | -- | -- |
-| 1. Login | Acesso à conta conforme o perfil do usuário | BS03 |
-| 2. Cadastro de aluno e responsável | Inclusão dos dados do aluno e do responsável legal quando necessário | BS01, BS02 |
-| 3. Cadastros da coordenação | Manutenção de espaços, profissionais e atividades | BS03, BS04, BS05 |
-| 4. Agendamento de sessão | Seleção de data, horário, atividade, espaço, profissional e alunos | BS06, BS07, BS09 |
-| 5. Consulta de agenda | Visualização de sessões com filtros e acesso aos detalhes | BS10 |
-| 6. Cancelamento ou remarcação | Visualização dos detalhes e alteração de uma sessão | BS08 |
-
-### Protótipos de baixa fidelidade
-
-Os protótipos abaixo representam as telas principais do sistema em PlantUML
-Salt. Os campos, filtros, informações e botões indicam as interações previstas
-para cada perfil de usuário.
-
-#### Tela 1: Login
+## Acesso — RF-01
 
 ```plantuml
 @startsalt
 {+
-    {* <b>GAAP - Login}
-
-    {
-        <b>Acesse sua conta
-    }
-
-    {
-        @ E-mail: | "exemplo@gmail.com          "
-        <&key> Senha: | "********                 "
-    }
-
-    {
-        [<&account-login> Entrar] | [Esqueci minha senha]
-    }
-
-    ..
-
-    {
-        Ainda não possui uma conta?
-        [<&person> Criar conta]
-    }
+  {* <b>GAAP — Entrar}
+  E-mail | "usuario@exemplo.com"
+  Senha | "**************"
+  [Entrar]
+  ..
+  Status | "Credencial inválida ou perfil sem permissão"
 }
 @endsalt
 ```
 
-#### Tela 2: Cadastro de aluno e responsável
+## Cadastros — Administrador — RF-02
 
 ```plantuml
 @startsalt
 {+
-    {* <b>GAAP - Cadastro de aluno}
-
-    {
-        <b>Dados do aluno
-    }
-
-    {
-        <&person> Nome: | "                         "
-        Data de nascimento: | "dd/mm/aaaa"
-        @ E-mail: | "exemplo@gmail.com        "
-        <&phone> Telefone: | "(00) 00000-0000     "
-    }
-
-    {
-        Aluno menor de idade? | ^Não^
-    }
-
-    {
-        <b>Responsável legal (quando aplicável)
-    }
-
-    {
-        Nome: | "                         "
-        CPF: | "000.000.000-00"
-        E-mail: | "responsavel@email.com   "
-        <&phone> Telefone: | "(00) 00000-0000     "
-    }
-
-    [X] Concordo com os Termos de Uso e a Política de Privacidade
-
-    {
-        [<&person> Cadastrar aluno] | [Limpar]
-    }
+  {* <b>GAAP — Cadastros}
+  [Alunos] | [Profissionais] | [Serviços]
+  --
+  Nome | "Digite o nome"
+  E-mail/contato | "Digite e-mail ou telefone"
+  Perfil profissional | "Selecionar perfil (Treinador ou Profissional de Saúde)"
+  Serviço | "Selecionar serviço (Treino, Fisioterapia, Psicologia ou Nutrição)"
+  [Salvar] | [Cancelar]
+  Status | "Cadastro salvo ou campo obrigatório inválido"
 }
 @endsalt
 ```
 
-#### Tela 3: Cadastros da coordenação
+## Agenda e confirmação — Administrador — RF-03, RF-04, RF-05
 
 ```plantuml
 @startsalt
 {+
-    {* <b>GAAP - Cadastros}
-
-    {
-        [Espaços] | [Profissionais] | [Atividades]
-    }
-
-    {
-        <b>Novo espaço
-    }
-
-    {
-        Nome: | "Sala de treinamento       "
-        Capacidade: | "00"
-    }
-
-    {
-        [Salvar espaço] | [Cancelar]
-    }
-
-    --
-
-    {
-        <b>Espaços cadastrados
-    }
-
-    {
-        Sala de treinamento / Capacidade: 10 | [Editar]
-        Quadra principal    / Capacidade: 20 | [Editar]
-    }
+  {* <b>GAAP — Agenda}
+  Início do período | "dd/mm/aaaa"
+  Fim do período | "dd/mm/aaaa"
+  Serviço | "Todas as categorias de serviço"
+  Profissional | "Selecionar profissional"
+  [Consultar agenda]
+  [Configurar disponibilidade]
+  [Registrar bloqueio]
+  --
+  <b>Confirmar sessão/atendimento
+  Data | "dd/mm/aaaa"
+  Início | "hh:mm"
+  Fim | "hh:mm"
+  Serviço | "Selecionar serviço (Treino, Fisioterapia, Psicologia ou Nutrição)"
+  Profissional | "Selecionar profissional"
+  Participantes | "Selecionar alunos, se aplicável"
+  [Validar e confirmar]
+  Resultado | "Confirmado ou rejeitado com o motivo"
 }
 @endsalt
 ```
 
-#### Tela 4: Agendamento de sessão
+## Agenda do Treinador — RF-04, RF-06, RF-07
 
 ```plantuml
 @startsalt
 {+
-    {* <b>GAAP - Agendar sessão}
-
-    {
-        Data: | "dd/mm/aaaa"
-    }
-
-    {
-        Horário inicial: | "00:00"
-        Horário final: | "00:00"
-    }
-
-    {
-        Tipo: | ^Sessão regular^
-    }
-
-    {
-        Atividade: | ^Selecione uma atividade^
-    }
-
-    {
-        Espaço: | ^Selecione um espaço^
-    }
-
-    {
-        Profissional: | ^Selecione um profissional^
-    }
-
-    {
-        <b>Alunos
-        [ ] João da Silva
-        [ ] Maria Oliveira
-        [ ] Pedro Santos
-    }
-
-    {
-        [Verificar disponibilidade] | [Agendar sessão]
-    }
-
-    {
-        Status: Nenhum conflito encontrado
-    }
+  {* <b>GAAP — Minha agenda}
+  Data inicial | "dd/mm/aaaa"
+  Data final | "dd/mm/aaaa"
+  Serviço | "Todos os meus serviços"
+  [Consultar]
+  ..
+  Sessão | Horário | Serviço | Situação
+  Sessão 01 | 09:00 | Treino | Agendada
+  Sessão 02 | 10:00 | Treino | Realizada
+  [Abrir sessão]
+  ..
+  <b>Presença e relatório (sessão de Treino realizada)
+  Participante | Situação
+  Aluno 01 | "Selecionar situação (Presente ou Falta)"
+  Atletas participantes | "Associados à sessão"
+  Data, horário e local | "Dados da sessão"
+  Objetivo da sessão | "Descrever foco principal"
+  Exercícios executados | "Descrever exercícios"
+  Volume total | "Valor + unidade da modalidade"
+  Intensidade da sessão | "Borg CR10 (0–10)"
+  [Salvar rascunho] | [Finalizar relatório]
+  Status | "Finalizado, dados inválidos ou acesso negado"
 }
 @endsalt
 ```
 
-#### Tela 5: Consulta de agenda
+## Atendimentos do Profissional de Saúde — RF-04
 
 ```plantuml
 @startsalt
 {+
-    {* <b>GAAP - Agenda}
-
-    {
-        <b>Filtrar agendamentos
-    }
-
-    {
-        Data inicial: | "dd/mm/aaaa"
-        Data final: | "dd/mm/aaaa"
-        Atividade: | ^Todas^
-        Profissional: | ^Todos^
-    }
-
-    {
-        [Filtrar] | [Limpar filtros]
-    }
-
-    --
-
-    {
-        <b>Agendamentos encontrados
-    }
-
-    {
-        15/09/2026 / 08:00 - 09:00 / Carlos Mendes / João da Silva | [Detalhes]
-        15/09/2026 / 09:00 - 10:00 / Carlos Mendes / Maria Oliveira | [Detalhes]
-        16/09/2026 / 14:00 - 15:00 / Ana Souza / Pedro Santos | [Detalhes]
-    }
+  {* <b>GAAP — Meus atendimentos}
+  Data inicial | "dd/mm/aaaa"
+  Data final | "dd/mm/aaaa"
+  Serviço | "Serviços vinculados"
+  [Consultar]
+  ..
+  Horário | Serviço | Aluno | Situação | Presença
+  13:00 | Fisioterapia | Aluno 01 | Agendado | "Selecionar presente ou falta"
+  14:00 | Fisioterapia | Aluno 02 | Agendado | "Selecionar presente ou falta"
+  ..
+  A consulta respeita serviço e agenda atribuídos.
 }
 @endsalt
 ```
 
-#### Tela 6:  Cancelamento ou remarcação
+## Referência visual — protótipo de alta fidelidade
 
-```plantuml
-@startsalt
-{+
-    {* <b>GAAP - Detalhes da sessão}
+As telas abaixo são as versões visuais de alta fidelidade correspondentes aos fluxos deste protótipo. Os wireframes PlantUML acima continuam sendo a referência de baixa fidelidade; as imagens não alteram o escopo nem resolvem as decisões ainda pendentes. O arquivo editável está no [Figma](https://www.figma.com/design/7a3PVqNYNlwLtSgN4sfiU4/GAAP-%E2%80%94-Prot%C3%B3tipo-de-alta-fidelidade).
 
-    {
-        Data: 15/09/2026
-        Horário: 08:00 - 09:00
-        Atividade: Treinamento funcional
-        Profissional: Carlos Mendes
-        Espaço: Sala de treinamento
-        Aluno: João da Silva
-        Situação: Agendada
-    }
+=== "Desktop · 1920 × 1080"
 
-    {
-        [Remarcar sessão] | [Cancelar sessão]
-    }
+    ### Acesso
 
-    --
+    ![Protótipo desktop — Acesso](<../assets/Prototipo/desktop/1920×1080 · · Acesso.png>){ width="100%" }
 
-    {
-        <b>Nova data e horário
-        Data: | "dd/mm/aaaa"
-        Início: | "00:00"
-        Fim: | "00:00"
-        Motivo: | "                         "
-    }
+    ### Visão geral
 
-    {
-        [Confirmar alteração] | [Voltar]
-    }
-}
-@endsalt
-```
+    ![Protótipo desktop — Visão geral](<../assets/Prototipo/desktop/1920×1080 · · Visão geral.png>){ width="100%" }
 
-## Conclusão
+    ### Cadastros
 
-<p align = "justify">
-A elaboração do protótipo de baixa fidelidade permitiu visualizar uma proposta inicial para as telas do GAAP. Algumas regras e funções representadas, como consentimento de responsáveis, cancelamento e remarcação, não estão confirmadas no cenário atual; o protótipo deverá ser atualizado após a revalidação dos requisitos.
-</p>
+    ![Protótipo desktop — Cadastros](<../assets/Prototipo/desktop/1920×1080 · · Cadastros.png>){ width="100%" }
+
+    ### Novo agendamento
+
+    ![Protótipo desktop — Novo agendamento](<../assets/Prototipo/desktop/1920×1080 · · Novo agendamento.png>){ width="100%" }
+
+    ### Agenda do treinador
+
+    ![Protótipo desktop — Agenda do treinador](<../assets/Prototipo/desktop/1920×1080 · · Agenda do treinador.png>){ width="100%" }
+
+    ### Atendimentos de saúde
+
+    ![Protótipo desktop — Atendimentos de saúde](<../assets/Prototipo/desktop/1920×1080 · · Atendimentos de saúde.png>){ width="100%" }
+
+=== "Mobile · 390 × 844"
+
+    ### Acesso
+
+    ![Protótipo mobile — Acesso](<../assets/Prototipo/mobile/01 · Acesso · Mobile.png>){ width="390" }
+
+    ### Visão geral
+
+    ![Protótipo mobile — Visão geral](<../assets/Prototipo/mobile/02 · Visão geral · Mobile.png>){ width="390" }
+
+    ### Cadastros
+
+    ![Protótipo mobile — Cadastros](<../assets/Prototipo/mobile/03 · Cadastros · Mobile.png>){ width="390" }
+
+    ### Novo agendamento
+
+    ![Protótipo mobile — Novo agendamento](<../assets/Prototipo/mobile/04 · Novo agendamento · Mobile.png>){ width="390" }
+
+    ### Agenda do treinador
+
+    ![Protótipo mobile — Agenda do treinador](<../assets/Prototipo/mobile/05 · Agenda treinador · Mobile.png>){ width="390" }
+
+    ### Atendimentos de saúde
+
+    ![Protótipo mobile — Atendimentos de saúde](<../assets/Prototipo/mobile/06 · Atendimentos saúde · Mobile.png>){ width="390" }
+
+## Decisões que afetam as telas
+
+- Definir onde a capacidade é configurada e se sessões comportam múltiplos alunos.
+- Após a finalização, o relatório fica bloqueado para edição; rascunhos podem ser alterados antes de finalizar.
+- A interface é representativa; a experiência visual não foi validada com usuários.
+- A notificação por e-mail é RF-08, uma exceção registrada fora do escopo no cenário GAAP.
 
 ## Referências
 
-> PlantUML Salt. Disponível em: https://plantuml.com/salt
-
-> Protótipo de Baixa Fidelidade. Disponível em: https://jonh-carvalho.github.io/PECDII_26.2_8001/Iniciacao/prototipo_baixa_fidelidade/
-
-## Autor(es)
-
-| Data | Versão | Descrição | Autor(es) |
-| -- | -- | -- | -- |
-| 26/09/2026 | 1.0 | Criação do protótipo de baixa fidelidade | Lucas Santos |
-| 04/10/2026 | 2.0 | Inclusão e organização dos protótipos de telas em PlantUML Salt | Pedro Lucas |
+- [Glossário](../Elaboracao/glossario.md)
+- [Documento de Visão](documento_de_visao.md)
+- [Levantamento de Requisitos](../Elaboracao/levreq.md)
+- [Casos de Uso](../Elaboracao/casos_de_uso.md)

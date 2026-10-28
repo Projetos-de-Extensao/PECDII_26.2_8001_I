@@ -1,23 +1,10 @@
 ---
 id: mapa_mental
-title: Mapas Mentais
+title: Mapa Mental do Domínio
 ---
+# Mapa Mental — GAAP
 
-## Introdução
-
-<p align = "justify">
-Mapa mental consiste em criar resumos cheios de símbolos, cores, setas e frases de efeito com o objetivo de organizar o conteúdo e facilitar associações entre as informações destacadas. Esse material é muito indicado para pessoas que têm facilidade de aprender de forma visual.
-</p>
-
-## Metodologia
-
-<p align = "justify">
-O documento foi elaborado por Pedro Lucas, com base no levantamento já registrado em <a href="pesquisa.md">pesquisa.md</a> e nas propostas elicitadas em <a href="Brainstorm.md">Brainstorm.md</a>. Os mapas mentais registram a compreensão inicial do projeto e precisam ser revalidados contra o cenário GAAP.
-</p>
-
-## Mapa mental - Geral
-
-### Mapa mental 1
+Mapa revisado conforme o cenário GAAP. Os IDs remetem ao [levantamento de requisitos](../Elaboracao/levreq.md); termos estão definidos no [glossário](../Elaboracao/glossario.md).
 
 ```plantuml
 @startmindmap gaap_mapa_mental
@@ -25,93 +12,52 @@ skinparam monochrome true
 skinparam ArrowColor #000000
 skinparam NodeFontSize 14
 
-* GAAP: Gestão de Atletas de Alta Performance
-** Problema
-*** Agendamento feito só por WhatsApp
-*** Sem calendário ou controle de salas/horários
-*** Risco de conflito de sala/horário com o crescimento da operação
-** Objetivo
-*** API de agendamento
-*** Cadastro de espaços, profissionais, atividades e alunos
-*** Alocação de sessões sem conflito
-** Atores
+* GAAP — API de agenda e treino
+** Perfis
+*** Administrador
+**** RF-02 cadastros de base e serviços
+**** RF-03 disponibilidade e bloqueios
+**** RF-04 consulta operacional da agenda
+**** RF-05 confirmação de agendamento
+*** Treinador
+**** RF-04 agenda sob responsabilidade
+**** RF-06 presença/falta
+**** RF-07 relatório de treino
+*** Profissional de Saúde
+**** RF-04 consulta de atendimentos do serviço e agenda atribuídos
+** Domínio
 *** Aluno
-*** Responsável legal
-*** Professor/Instrutor
-*** Coordenação do centro
-** Escopo da API
-*** Cadastro
-    **** Espaços/salas
-    **** Professores e instrutores
-    **** Atividades e modalidades
-    **** Alunos e responsáveis
-*** Alocação de sessões
-    **** Espaço + horário + profissional
-*** Verificação automática de conflito
-    **** Conflito de agenda
-    **** Conflito de capacidade
-*** Consulta de agenda
-    **** Por espaço
-    **** Por profissional
-    **** Por aluno
-*** Persistência em banco de dados relacional
-** Legislação
-*** Lei Geral de Proteção de Dados
-    **** Consentimento do responsável legal
-*** Estatuto da Criança e do Adolescente
-    **** Proteção do atleta menor de idade
-*** Lei 9.696/1998
-    **** Avaliação vinculada a profissional de Educação Física habilitado
-** Mercado
-*** Tecnofit/Sistema Pacto
-    **** ERPs não necessários para um centro pequeno
-*** SuperSaaS/Calenda
-    **** Não relacionam reserva a profissional/modalidade
+*** Profissional
+*** Serviço: Treino, Fisioterapia, Psicologia, Nutrição
+*** Sessão/Atendimento
+*** Agenda: disponibilidade, bloqueios, conflitos e capacidade
+*** Presença/falta e relatório de treino
+** Regras
+*** RN-01 conflito de horário
+*** RN-02 capacidade máxima
+*** RN-03 bloqueio e disponibilidade
+*** RN-04 profissional compatível com serviço
+*** RN-05 autorização para presença e relatório
+*** RN-06 confirmação atômica
+** Qualidade
+*** RNF-01 banco relacional normalizado
+*** RNF-02 hash de senha
+*** RNF-03 atomicidade sob concorrência
+*** RNF-04 validação e autorização
+*** RNF-05 testes e documentação
+** Exceção fora do escopo
+*** RF-08 notificação por e-mail já implementada
+** Fora do MVP
+*** pagamentos, prontuário detalhado, assinatura digital
+*** mobile, QR Code, WhatsApp, offline
+*** dashboards analíticos, BI, multi-tenancy, integrações públicas
+*** PDF e upload de fotos
 @endmindmap
 ```
-
-### Mapa mental 2
-
-```plantuml
-@startmindmap pkz_lab_mapa_mental_brainstorm
-skinparam monochrome true
-skinparam ArrowColor #000000
-skinparam NodeFontSize 14
-
-* Requisitos elicitados no Brainstorm
-** Cadastro
-*** Alunos (nome, data de nascimento, contato)
-*** Responsável legal (obrigatório se menor, pode ter mais de um aluno vinculado)
-*** Espaços (nome, capacidade)
-*** Professores/instrutores (especialidade, disponibilidade)
-*** Atividades (nome, duração, modalidade, vinculada a profissional e espaço)
-** Agendamento de sessão
-*** Data, horário inicial e final, atividade, espaço e profissional
-*** Verificação de disponibilidade de espaço e profissional
-*** Verificação de capacidade da sala
-** Gestão da sessão
-*** Cancelamento e remarcação
-    **** Libera os recursos reservados
-    **** Mantém histórico das alterações
-*** Aula experimental
-    **** Mesmas regras de disponibilidade e capacidade
-** Consulta de agenda
-*** Aluno/responsável
-*** Professor
-*** Filtros por data, atividade e espaço
-@endmindmap
-```
-
-## Conclusão
-
-<p align = "justify">
-O mapa mental 1 organizou visualmente a compreensão inicial do problema, do objetivo da API e do escopo. O mapa mental 2 organizou as propostas elicitadas na sessão de Brainstorm. Como ambos foram produzidos antes da adoção do cenário GAAP, seus atores e requisitos precisam ser revalidados antes de servirem de base para o levantamento atualizado.
-</p>
 
 ## Referências
-> PlantUML Mindmap Diagram. Disponível em: https://plantuml.com/mindmap-diagram
 
-## Versionamento
-| Data | Versão | Descrição | Autor(es) |
-| -- | -- | -- | -- |
-| 08/09/26 | 1.0 | Criação do documento | Pedro Lucas |
+- [Cenário GAAP](cenario.md)
+- [Documento de Visão](documento_de_visao.md)
+- [Glossário](../Elaboracao/glossario.md)
+- [Levantamento de Requisitos](../Elaboracao/levreq.md)
