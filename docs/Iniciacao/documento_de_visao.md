@@ -38,7 +38,7 @@ Entregar uma API funcional, testada e documentada para sustentar a operação de
 |---|---|
 | Administrador | Mantém alunos, profissionais, serviços, horários e bloqueios; consulta pendências (RF-02 a RF-05). |
 | Treinador | Consulta a agenda sob sua responsabilidade, registra presença/falta e cria/finaliza relatórios de treino (RF-04, RF-06, RF-07). |
-| Profissional de Saúde | Consulta somente os atendimentos atribuídos ao seu serviço e à sua agenda (RF-04). |
+| Profissional de Saúde | Consulta somente os atendimentos atribuídos ao seu serviço e à sua agenda e registra presença/falta dos alunos atendidos sob sua responsabilidade (RF-04, RF-06). |
 
 ## Escopo do MVP
 
@@ -86,3 +86,4 @@ O cenário lista notificações por e-mail entre os itens fora do escopo. A equi
 | 21/10/2026 | 2.0 | Revalidação do problema, dos perfis e do recorte do MVP com base no cenário GAAP | Equipe |
 | 21/10/2026 | 2.1 | Registro da manutenção das notificações automáticas por e-mail como funcionalidade implementada fora do escopo | Equipe |
 | 28/10/2026 | 2.2 | Rastreabilidade dos objetivos, perfis e escopo aos requisitos; registro explícito da RF-08 como exceção implementada fora do escopo | Pedro Lucas |
+| 28/10/2026 | 2.3 | Alinhamento das responsabilidades do Profissional de Saúde à RF-06 para presença/falta nos atendimentos | Pedro Lucas |

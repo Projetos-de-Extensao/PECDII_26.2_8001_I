@@ -14,7 +14,7 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 | Cadastros | Administrador | RF-02 | Manter aluno, profissional e serviço. |
 | Agenda e configuração | Administrador | RF-03, RF-04, RF-05 | Consultar disponibilidade/bloqueios e confirmar agendamento. |
 | Agenda pessoal | Treinador | RF-04 | Consultar sessões sob sua responsabilidade. |
-| Atendimentos | Profissional de Saúde | RF-04 | Consultar apenas serviço e agenda atribuídos. |
+| Atendimentos | Profissional de Saúde | RF-04, RF-06 | Consultar apenas serviço e agenda atribuídos; registrar presença/falta dos alunos atendidos. |
 | Presença e relatório | Treinador; Profissional de Saúde (presença nos atendimentos) | RF-06, RF-07 | Registrar presença/falta em sessões e atendimentos; Treinador finaliza relatório de treino. |
 | Aviso de sessão pendente | Treinador | RF-08 (fora do escopo) | Receber o aviso excepcional por e-mail. |
 
@@ -89,14 +89,13 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
   Serviço | "Todos os meus serviços"
   [Consultar]
   ..
-  Sessão | Horário | Serviço | Situação
-  Sessão 01 | 09:00 | Treino | Agendada
-  Sessão 02 | 10:00 | Treino | Realizada
+  <b>Sessões do período
+  09:00 | "Sessão 01 — Treino — Agendada"
+  10:00 | "Sessão 02 — Treino — Realizada"
   [Abrir sessão]
   ..
   <b>Presença e relatório (sessão de Treino realizada)
-  Participante | Situação
-  Aluno 01 | "Selecionar situação (Presente ou Falta)"
+  Presença do Aluno 01 | "Selecionar Presente ou Falta"
   Atletas participantes | "Associados à sessão"
   Data, horário e local | "Dados da sessão"
   Objetivo da sessão | "Descrever foco principal"
@@ -104,12 +103,12 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
   Volume total | "Valor + unidade da modalidade"
   Intensidade da sessão | "Borg CR10 (0–10)"
   [Salvar rascunho] | [Finalizar relatório]
-  Status | "Finalizado, dados inválidos ou acesso negado"
+  Status | "Rascunho editável, finalizado somente leitura ou erro"
 }
 @endsalt
 ```
 
-## Atendimentos do Profissional de Saúde — RF-04
+## Atendimentos do Profissional de Saúde — RF-04, RF-06
 
 ```plantuml
 @startsalt
@@ -120,9 +119,15 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
   Serviço | "Serviços vinculados"
   [Consultar]
   ..
-  Horário | Serviço | Aluno | Situação | Presença
-  13:00 | Fisioterapia | Aluno 01 | Agendado | "Selecionar presente ou falta"
-  14:00 | Fisioterapia | Aluno 02 | Agendado | "Selecionar presente ou falta"
+  <b>Atendimentos do período
+  13:00 | "Fisioterapia — Aluno 01 — Agendado"
+  14:00 | "Fisioterapia — Aluno 02 — Agendado"
+  ..
+  <b>Registrar presença/falta
+  Aluno 01 | "Selecionar Presente ou Falta"
+  Aluno 02 | "Selecionar Presente ou Falta"
+  [Salvar presença]
+  Status | "Presença registrada, dados inválidos ou acesso negado"
   ..
   A consulta respeita serviço e agenda atribuídos.
 }
@@ -131,7 +136,7 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 
 ## Referência visual — protótipo de alta fidelidade
 
-As telas abaixo são as versões visuais de alta fidelidade correspondentes aos fluxos deste protótipo. Os wireframes PlantUML acima continuam sendo a referência de baixa fidelidade; as imagens não alteram o escopo nem resolvem as decisões ainda pendentes. O arquivo editável está no [Figma](https://www.figma.com/design/7a3PVqNYNlwLtSgN4sfiU4/GAAP-%E2%80%94-Prot%C3%B3tipo-de-alta-fidelidade).
+As telas abaixo são os exports atuais de alta fidelidade. Os wireframes PlantUML acima continuam sendo a referência de baixa fidelidade; as imagens não alteram o escopo nem resolvem as decisões ainda pendentes. **Os exports ainda não mostram o registro de presença/falta nos atendimentos de saúde nem todos os campos e estados definidos para o relatório de treino.** O arquivo editável está no [Figma](https://www.figma.com/design/7a3PVqNYNlwLtSgN4sfiU4/GAAP-%E2%80%94-Prot%C3%B3tipo-de-alta-fidelidade).
 
 === "Desktop · 1920 × 1080"
 

@@ -62,7 +62,7 @@ Considerar Elaboração concluída somente quando:
 
 ## Milestone do GitHub
 
-Proposta de milestone: **Elaboração**. Descrição: “Concluir e validar os requisitos, o modelo de domínio, a arquitetura, os fluxos UML, os protótipos, os riscos e os critérios de saída da fase de Elaboração do GAAP.” A criação do milestone é uma configuração do GitHub e precisa ser feita na página **Issues → Milestones**; não há ferramenta GitHub disponível nesta sessão para criá-lo diretamente.
+O milestone [Elaboração](https://github.com/Projetos-de-Extensao/PECDII_26.2_8001_I/milestone/3) já existe no GitHub e está associado à issue #61. Sua existência organiza o trabalho; a conclusão do marco depende dos seis critérios de saída acima, inclusive da revisão cruzada e da aprovação do escopo.
 
 ## Referências
 
