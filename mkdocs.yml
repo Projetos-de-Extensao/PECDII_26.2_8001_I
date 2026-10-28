@@ -18,10 +18,15 @@ nav:
       - Prototipagem Baixa Fidelidade: Iniciacao/prototipo_baixa_fidelidade.md
   - Elaboração:
       - Index: Elaboracao/index.md
+      - Glossário: Elaboracao/glossario.md
       - Requisitos: Elaboracao/levreq.md
       - Casos de Uso: Elaboracao/casos_de_uso.md
       - Diagrama de Classes: Elaboracao/diagrama_de_classes.md
       - Diagrama de Sequência: Elaboracao/diagrama_de_sequencia.md
+      - Protótipo de Alta Fidelidade: Elaboracao/prototipo_alta_fidelidade.md
+      - Rastreabilidade: Elaboracao/rastreabilidade.md
+      - Viabilidade e Iterações: Elaboracao/viabilidade_mvp.md
+      - Revisão Cruzada: Elaboracao/revisao_cruzada.md
   - Construção:
       - Index: Construcao/index.md
       - Github Workflows: Construcao/github_workflows.md
