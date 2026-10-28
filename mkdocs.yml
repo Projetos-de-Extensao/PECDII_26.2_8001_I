@@ -23,6 +23,7 @@ nav:
       - Casos de Uso: Elaboracao/casos_de_uso.md
       - Diagrama de Classes: Elaboracao/diagrama_de_classes.md
       - Diagrama de Sequência: Elaboracao/diagrama_de_sequencia.md
+      - Diagrama Entidade-Relacionamento: Elaboracao/der.md
       - Protótipo de Alta Fidelidade: Elaboracao/prototipo_alta_fidelidade.md
       - Rastreabilidade: Elaboracao/rastreabilidade.md
       - Viabilidade e Iterações: Elaboracao/viabilidade_mvp.md

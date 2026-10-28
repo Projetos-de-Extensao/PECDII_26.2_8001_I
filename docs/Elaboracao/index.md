@@ -21,6 +21,7 @@
 - [Casos de uso](casos_de_uso.md)
 - [Diagrama de classes](diagrama_de_classes.md)
 - [Diagramas de sequência](diagrama_de_sequencia.md)
+- [Diagrama entidade-relacionamento](der.md)
 - [Protótipo de alta fidelidade — registro de lacunas](prototipo_alta_fidelidade.md)
 - [Rastreabilidade requisito × artefato](rastreabilidade.md)
 - [Viabilidade e iterações](viabilidade_mvp.md)
