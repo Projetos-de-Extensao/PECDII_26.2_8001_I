@@ -10,6 +10,8 @@ Este levantamento parte do [Cenário de Aula: Backend GAAP](../Iniciacao/cenario
 
 Os IDs RF, RN e RNF são estáveis e devem ser usados nos demais artefatos. O requisito RF-08 registra uma funcionalidade já existente que o cenário lista fora do escopo; não integra o MVP proposto.
 
+Na revisão de 28/10/2026, a comparação com as seções 3 e 7 do cenário encontrou itens citados sem requisito correspondente: consulta de pendências pelo Administrador, aula ministrada, dashboard simples e auditoria. Eles entraram como RF-09 a RF-11 e RNF-06. Também entrou a RN-07, para o conflito de horário do aluno, que a RN-01 não cobria.
+
 ## Stakeholders e perfis
 
 | Stakeholder/perfil | Interesse e responsabilidade no recorte inicial |
@@ -24,7 +26,7 @@ Aluno é pessoa atendida e dado gerenciado pela API; o cenário não o define co
 
 ## Requisitos funcionais
 
-Prioridades: **Alta** = necessária para o aceite do MVP; **Média** = apoio ao uso operacional, sujeita à confirmação das lacunas do cenário; **Fora do escopo** = mantida apenas para registrar uma exceção já implementada.
+Prioridades: **Alta** = necessária para o aceite do MVP; **Média** = apoio ao uso operacional, sujeita à confirmação das lacunas do cenário; **A confirmar** = citada no cenário sem detalhe suficiente para definir critério ou prioridade; **Fora do escopo** = mantida apenas para registrar uma exceção já implementada.
 
 | ID | Requisito | Critério observável de aceite | Prioridade |
 |---|---|---|---|
@@ -36,6 +38,9 @@ Prioridades: **Alta** = necessária para o aceite do MVP; **Média** = apoio ao 
 | RF-06 | O profissional responsável deve registrar presença ou falta do aluno em sessões de Treino e atendimentos de saúde. | Treinador registra presença/falta nas sessões de Treino sob sua responsabilidade; Profissional de Saúde registra nos atendimentos vinculados à sua agenda e serviço. O sistema rejeita usuário sem vínculo/permissão e valores inválidos. | Alta |
 | RF-07 | O Treinador autorizado deve criar, salvar como rascunho e finalizar um relatório por sessão de Treino. | O relatório fica associado à sessão e ao Treinador responsável, identifica os alunos participantes e contém data, horário, local, objetivo, exercícios executados, volume (valor e unidade) e intensidade da sessão na escala Borg CR10 (0–10). Rascunhos podem estar incompletos; a finalização valida os campos obrigatórios e torna o relatório imutável. | Alta |
 | RF-08 | O sistema envia ao Treinador uma notificação por e-mail quando uma sessão permanece agendada por 30 minutos após o fim previsto. | Uma sessão elegível gera uma notificação ao profissional com e-mail cadastrado e é marcada para evitar envio duplicado. | Fora do escopo do cenário; exceção implementada por recomendação do professor em 14/10/2026. |
+| RF-09 | O Administrador deve consultar as pendências operacionais da agenda. | A consulta lista as sessões e atendimentos já encerrados que continuam sem presença/falta registrada e as sessões de Treino com relatório ainda em rascunho; Treinador e Profissional de Saúde não acessam a visão completa. | Alta; definição de pendência é proposta a confirmar |
+| RF-10 | O profissional responsável deve registrar se a sessão ou o atendimento foi ministrado. | O compromisso passa para o estado realizado ou não realizado; usuário sem vínculo com o compromisso recebe acesso negado. | Média; proposta a confirmar |
+| RF-11 | O Administrador deve consultar um dashboard simples da operação. | Indicadores a definir com o responsável pelo cenário; não inclui BI, data warehouse nem dashboards analíticos, que estão fora do escopo. | A confirmar |
 
 ## Regras de negócio
 
@@ -49,6 +54,7 @@ As regras abaixo detalham as lacunas identificadas na issue #59. A regra de capa
 | RN-04 | O profissional designado deve estar habilitado para o serviço solicitado. | Serviço incompatível com o cadastro/vínculo do profissional é recusado. | Proposta a confirmar |
 | RN-05 | Somente o profissional responsável e autorizado pode registrar presença/falta no compromisso sob sua responsabilidade; somente o Treinador autorizado pode finalizar relatório de treino. | Treinador atua nas sessões de Treino atribuídas; Profissional de Saúde atua nos atendimentos vinculados ao seu serviço e agenda; usuário sem vínculo recebe acesso negado. | Regra definida para presença; autorização segue os vínculos do cenário |
 | RN-06 | Confirmar a sessão e reservar capacidade são uma operação atômica. | Se qualquer validação ou gravação falhar, nenhuma sessão parcial nem reserva é persistida; solicitações concorrentes não excedem a capacidade. | Derivada do requisito de consistência/atomicidade da issue #59; validar implementação |
+| RN-07 | Um aluno não pode participar de duas sessões ou atendimentos com horários sobrepostos; intervalos são tratados como `[início, fim)`. | Incluir o aluno em um compromisso que sobrepõe outro em que ele já participa é recusado com o motivo; horários contíguos podem ser aceitos. | Proposta a confirmar |
 
 ## Requisitos não funcionais
 
@@ -59,11 +65,20 @@ As regras abaixo detalham as lacunas identificadas na issue #59. A regra de capa
 | RNF-03 | A confirmação de agendamento deve preservar atomicidade e consistência sob concorrência. | Teste concorrente demonstra que bloqueios, conflitos e capacidade não são violados por duas solicitações simultâneas. | Alta |
 | RNF-04 | A API deve validar entrada e restringir dados/operações por perfil e vínculo. | Testes cobrem payload inválido, perfil sem permissão e acesso fora da própria agenda; erros retornam códigos HTTP apropriados. | Alta |
 | RNF-05 | Regras prioritárias devem ter testes automatizados e a documentação deve refletir o comportamento implementado. | Pipeline executa testes de conflito, capacidade, bloqueio, autorização, presença e relatório; documentação e modelos correspondem às migrações. | Alta |
+| RNF-06 | Operações que alteram agenda, presença/falta e relatório de treino devem gerar registro de auditoria. | Cada confirmação, alteração de presença e finalização de relatório registra o usuário, a operação e a data/hora; o registro não pode ser alterado pela API. | Média; proposta a confirmar |
 
 ## Pendências de validação
 
 1. Perguntar ao cliente/responsável pelo cenário qual é o limite de participantes, a que nível ele se aplica (serviço, sessão ou outro) e se sessões podem ser em grupo; a equipe não deve inventar esses valores.
 2. Confirmar formalmente com o professor a manutenção da notificação por e-mail como exceção já implementada, pois ela permanece fora do escopo descrito no cenário.
+3. Confirmar o que conta como pendência na RF-09 e se "aula ministrada" (RF-10) é um registro separado da presença/falta.
+4. Perguntar quais indicadores o dashboard simples da Construção 3 deve mostrar (RF-11).
+5. Confirmar o nível de detalhe esperado para a auditoria (RNF-06) e a regra de conflito do aluno (RN-07).
+
+## Pendências de artefatos
+
+- O cenário exige um diagrama entidade-relacionamento compatível com as migrações (seção 8). Ele ainda não existe e é a evidência do RNF-01.
+- Os IDs novos (RF-09 a RF-11, RN-07 e RNF-06) ainda precisam entrar na [rastreabilidade](rastreabilidade.md), nos casos de uso e no diagrama de sequência "Confirmar agendamento", que deve passar a validar a RN-07 (#62).
 
 ## Referências
 
