@@ -34,9 +34,27 @@ Este documento transforma os critérios de aceite da seção 10 do cenário GAAP
 
 | Revisor(a) | Artefatos revisados | Data | Achados | Decisões/dúvidas registradas em |
 |---|---|---|---|---|
+| Lucas Santos | Casos de uso, classes, sequência, glossário, rastreabilidade, viabilidade, visão, mapa mental e protótipos (exports desktop e mobile) | 28/10/2026 | 7 inconsistências entre documentos (A1–A7) e 4 pontos no protótipo (P1–P4); detalhes abaixo | D-07 a D-09 |
 | A preencher pela equipe | | | | |
 | A preencher pela equipe | | | | |
-| A preencher pela equipe | | | | |
+
+### Achados da revisão — Lucas Santos (28/10/2026)
+
+Revisão feita sobre a `main` após o PR #71. Os IDs novos da #59 (RF-09 a RF-11, RN-07, RNF-06) ausentes dos artefatos ficam com a #62 e não se repetem aqui. As correções cabem ao autor de cada artefato.
+
+| # | Artefato | Achado |
+|---|---|---|
+| A1 | Casos de uso, UC-07 | Cita RN-06 e RNF-03, que tratam da atomicidade do agendamento e da capacidade, não do relatório de treino. |
+| A2 | Casos de uso, diagrama | O UC-08 não tem ator associado; a tabela indica o Treinador como ator primário. |
+| A3 | Diagrama de classes | Não há associação entre o profissional (Usuario) e Servico. Sem ela o modelo não representa a habilitação exigida pela RN-04, embora a classe Servico, a Disponibilidade ("serviços habilitados") e a RN-03 dependam dela. |
+| A4 | Sequência "Finalizar relatório de treino" | O texto diz que a edição de relatório finalizado deve ser recusada, mas o fluxo não tem esse caminho alternativo. |
+| A5 | Sequência "Finalizar relatório de treino" | A chamada envia relatório e presenças juntos, acoplando RF-06 (UC-06) a RF-07; o Profissional de Saúde registra presença sem relatório. |
+| A6 | Glossário | Profissional de Saúde aparece só consultando atendimentos; D-03, LevReq e visão 2.3 incluem o registro de presença/falta. |
+| A7 | Revisão cruzada, F4 | Diz que o protótipo de alta fidelidade está ausente, mas o Figma e os exports já existem (PR #68). |
+| P1 | Protótipo, "Novo agendamento" | O botão "Salvar rascunho" do desktop cria um agendamento em rascunho que não existe em nenhum requisito nem em `SituacaoSessao`; a versão mobile não tem o botão. Remover ou transformar em requisito. |
+| P2 | Protótipo, "Agenda do treinador" | O relatório é texto livre; faltam objetivo, volume com unidade e intensidade Borg CR10 (RF-07). Lacuna já declarada no registro do protótipo. |
+| P3 | Protótipo, "Agenda do treinador" | Filtro "Todos os serviços" para o Treinador, que pelo glossário atua em Treino. Ver D-09. |
+| P4 | Protótipo, "Novo agendamento" | Não há estados de erro (conflito, bloqueio, capacidade). Lacuna já declarada no registro do protótipo. |
 
 ## Registro de decisões e dúvidas
 
@@ -48,6 +66,9 @@ Este documento transforma os critérios de aceite da seção 10 do cenário GAAP
 | D-04 | A notificação de e-mail deve permanecer apesar de constar fora do escopo? | Mantida no código por recomendação de 14/10; confirmar aprovação formal | Equipe/professor | | Visão, LevReq, casos de uso |
 | D-05 | Cronograma duplicou a iteração 3 e usa “aplicativo” na entrega de backend? | Interpretado como uma iteração de 4 semanas e API; confirmar com professor | | | Viabilidade, cenário |
 | D-06 | A disponibilidade e os bloqueios são definidos por serviço ou profissional? | Gerais por profissional e compartilhados entre os serviços habilitados; conflitos e bloqueios valem para a agenda toda. Compatibilidade com o serviço é validada separadamente. | Usuário/equipe | 28/10/2026 | LevReq, glossário, classes, sequência, protótipos |
+| D-07 | Quem marca a sessão como realizada? O UC-07 exige sessão realizada como pré-condição, mas nenhum fluxo define esse passo. | Pendente; perguntado ao professor na #56 (pergunta 7, RF-10). | Professor/equipe | | LevReq, casos de uso, sequência |
+| D-08 | O relatório de treino se liga ao Treinador diretamente ou só pela sessão? Se o responsável da sessão mudar, o vínculo do relatório muda junto. | Pendente | Equipe | | LevReq, classes |
+| D-09 | Treinador e Profissional de Saúde são um perfil com tipo ou especializações de usuário? Um Treinador pode atender mais de um serviço? | Pendente | Equipe | | Classes, glossário, protótipos |
 
 ## Aprovação do escopo
 
