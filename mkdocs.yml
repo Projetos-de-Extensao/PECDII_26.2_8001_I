@@ -28,6 +28,7 @@ nav:
       - Rastreabilidade: Elaboracao/rastreabilidade.md
       - Viabilidade e Iterações: Elaboracao/viabilidade_mvp.md
       - Revisão Cruzada: Elaboracao/revisao_cruzada.md
+      - Estudo do Clone PKZ: Elaboracao/estudo_clone_pkz.md
   - Construção:
       - Index: Construcao/index.md
       - Github Workflows: Construcao/github_workflows.md
