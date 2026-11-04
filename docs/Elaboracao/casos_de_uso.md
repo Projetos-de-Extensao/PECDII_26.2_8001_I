@@ -22,10 +22,13 @@ Este documento usa exclusivamente os perfis do cenário GAAP e rastreia os requi
 | UC-02 | Manter alunos, profissionais e serviços | Administrador | RF-02 |
 | UC-03 | Configurar disponibilidade e bloqueios | Administrador | RF-03 |
 | UC-04 | Consultar agenda autorizada | Todos | RF-04 |
-| UC-05 | Confirmar agendamento | Administrador | RF-03, RF-05 |
+| UC-05 | Confirmar agendamento | Administrador | RF-03, RF-05; RN-07 (proposta) |
 | UC-06 | Registrar presença/falta | Treinador ou Profissional de Saúde responsável | RF-06 |
 | UC-07 | Criar e finalizar relatório de treino | Treinador | RF-07 |
 | UC-08 | Receber aviso de sessão pendente por e-mail | Treinador | RF-08 (fora do escopo) |
+| UC-09 | Consultar pendências operacionais | Administrador | RF-09 (definição de pendência a confirmar) |
+| UC-10 | Registrar compromisso ministrado | Treinador ou Profissional de Saúde responsável | RF-10 (proposta a confirmar) |
+| UC-11 | Consultar dashboard simples | Administrador | RF-11 (indicadores a confirmar) |
 
 ## Diagrama de casos de uso
 
@@ -44,10 +47,13 @@ rectangle "API GAAP" {
   usecase "UC-03\nConfigurar disponibilidade e bloqueios" as UC03
   usecase "UC-04\nConsultar agenda autorizada" as UC04
   usecase "UC-05\nConfirmar agendamento" as UC05
-  usecase "Validar conflito, bloqueio, capacidade\ne compatibilidade do serviço" as VALID
+  usecase "Validar conflitos do profissional e do aluno,\nbloqueio, capacidade e compatibilidade" as VALID
   usecase "UC-06\nRegistrar presença/falta" as UC06
   usecase "UC-07\nCriar/finalizar relatório de treino" as UC07
   usecase "UC-08\nEnviar aviso de sessão pendente\n(exceção fora do escopo)" as UC08
+  usecase "UC-09\nConsultar pendências" as UC09
+  usecase "UC-10\nRegistrar compromisso ministrado\n(proposta)" as UC10
+  usecase "UC-11\nConsultar dashboard simples\n(a confirmar)" as UC11
 }
 
 Admin --> UC01
@@ -55,15 +61,19 @@ Admin --> UC02
 Admin --> UC03
 Admin --> UC04
 Admin --> UC05
+Admin --> UC09
+Admin --> UC11
 Trainer --> UC01
 Trainer --> UC04
 Trainer --> UC06
 Trainer --> UC07
+Trainer --> UC10
+Trainer --> UC08
 Health --> UC01
 Health --> UC04
 Health --> UC06
+Health --> UC10
 UC05 ..> VALID : <<include>>
-UC08 ..> UC04 : consulta pendência
 @enduml
 ```
 
@@ -74,7 +84,7 @@ UC08 ..> UC04 : consulta pendência
 - **Fluxo principal:** usuário envia credenciais; API valida; API associa o perfil e permite somente as operações e os dados autorizados.
 - **Alternativas:** credencial inválida resulta em 401; usuário autenticado sem autorização resulta em 403.
 - **Pós-condição:** requisição autorizada ou negada sem exposição de dados indevidos.
-- **Requisitos:** RF-01; RN-05; RNF-02, RNF-04.
+- **Requisitos:** RF-01; RNF-02, RNF-04.
 
 ## UC-02 — Manter alunos, profissionais e serviços
 
@@ -101,16 +111,16 @@ UC08 ..> UC04 : consulta pendência
 - **Fluxo principal:** usuário consulta um período; API restringe a resposta ao escopo do perfil: administrador consulta a operação, treinador consulta sessões sob sua responsabilidade e profissional de saúde consulta atendimentos de seu serviço e agenda.
 - **Alternativas:** período inválido recebe 400; usuário não pode ampliar o escopo de acesso alterando filtros.
 - **Pós-condição:** API retorna apenas registros autorizados.
-- **Requisitos:** RF-04; RN-05; RNF-04.
+- **Requisitos:** RF-04; RNF-04.
 
 ## UC-05 — Confirmar agendamento
 
 - **Ator:** Administrador.
 - **Pré-condição:** Administrador autenticado; aluno, profissional e serviço cadastrados.
-- **Fluxo principal:** Administrador informa serviço, profissional, intervalo e participantes; API valida payload, compatibilidade do profissional, disponibilidade, bloqueios, conflito e capacidade; persiste e confirma a sessão integralmente.
+- **Fluxo principal:** Administrador informa serviço, profissional, intervalo e participantes; API valida payload, compatibilidade do profissional, disponibilidade, bloqueios, conflitos de horário do profissional e dos alunos participantes e capacidade; persiste e confirma a sessão integralmente.
 - **Alternativas:** qualquer falha resulta em erro observável, sem persistir sessão parcial; concorrência não pode ultrapassar a capacidade.
 - **Pós-condição:** sessão confirmada e visível aos perfis autorizados.
-- **Requisitos:** RF-03, RF-05; RN-01 a RN-04 e RN-06; RNF-01, RNF-03, RNF-04.
+- **Requisitos:** RF-03, RF-05; RN-01 a RN-04, RN-06 e RN-07 (proposta); RNF-01, RNF-03, RNF-04.
 - **Diagrama:** [Confirmar agendamento](diagrama_de_sequencia.md#confirmar-agendamento).
 
 ## UC-06 — Registrar presença/falta
@@ -129,7 +139,7 @@ UC08 ..> UC04 : consulta pendência
 - **Fluxo principal:** Treinador cria um relatório associado à sessão, registra objetivo, exercícios executados, volume total com unidade e intensidade Borg CR10 (0–10), e pode salvá-lo como rascunho. Ao finalizar, a API valida os campos obrigatórios e associa o relatório à lista de participantes da sessão.
 - **Alternativas:** perfil sem permissão recebe 403; sessão inexistente recebe 404; payload incompleto/inválido impede a finalização e recebe 400; rascunhos podem permanecer incompletos; relatório finalizado não pode ser alterado.
 - **Pós-condição:** há no máximo um relatório por sessão; fica como rascunho ou finalizado e consultável por perfis autorizados.
-- **Requisitos:** RF-07; RN-05, RN-06; RNF-01, RNF-03, RNF-04.
+- **Requisitos:** RF-07; RN-05; RNF-01, RNF-04; RNF-06 (auditoria proposta).
 - **Diagrama:** [Finalizar relatório de treino](diagrama_de_sequencia.md#finalizar-relatorio-de-treino).
 
 ## UC-08 — Receber aviso por e-mail de sessão pendente
@@ -140,6 +150,33 @@ UC08 ..> UC04 : consulta pendência
 - **Alternativa:** sem e-mail, o envio é ignorado e registrado no log.
 - **Pós-condição:** aviso enviado uma única vez por sessão.
 - **Requisito:** RF-08. **Fora do escopo do cenário, mantido por recomendação do professor em 14/10/2026.**
+
+## UC-09 — Consultar pendências operacionais
+
+- **Ator:** Administrador.
+- **Pré-condição:** Administrador autenticado e autorizado.
+- **Fluxo principal:** Administrador consulta compromissos encerrados sem presença/falta registrada e sessões de Treino com relatório em rascunho, conforme a definição proposta no levantamento.
+- **Alternativas:** período inválido recebe 400; perfil sem permissão recebe 403.
+- **Pós-condição:** lista de pendências retornada sem alterar os compromissos.
+- **Requisito:** RF-09. **A definição de pendência depende de confirmação.**
+
+## UC-10 — Registrar compromisso ministrado
+
+- **Atores:** Treinador ou Profissional de Saúde responsável.
+- **Pré-condição:** compromisso atribuído ao profissional autenticado.
+- **Fluxo principal proposto:** profissional registra se a sessão ou o atendimento foi realizado ou não realizado.
+- **Alternativas:** usuário sem vínculo recebe 403; estado inválido recebe 400.
+- **Pós-condição:** situação do compromisso atualizada.
+- **Requisitos:** RF-10; RNF-04 e RNF-06 (auditoria proposta). **Confirmar se este registro é separado da presença/falta.**
+
+## UC-11 — Consultar dashboard simples
+
+- **Ator:** Administrador.
+- **Pré-condição:** Administrador autenticado e autorizado.
+- **Fluxo principal proposto:** Administrador consulta indicadores operacionais agregados.
+- **Alternativa:** perfil sem permissão recebe 403.
+- **Pós-condição:** visão somente de leitura exibida.
+- **Requisito:** RF-11. **Indicadores e critério de aceite ainda precisam ser definidos com o responsável pelo cenário.**
 
 ## Referências
 

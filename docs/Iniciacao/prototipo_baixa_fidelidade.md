@@ -12,9 +12,10 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 |---|---|---|---|
 | Acesso | Todos | RF-01 | Autenticar; apresentar acesso negado. |
 | Cadastros | Administrador | RF-02 | Manter aluno, profissional e serviço. |
-| Agenda e configuração | Administrador | RF-03, RF-04, RF-05 | Consultar disponibilidade/bloqueios e confirmar agendamento. |
-| Agenda pessoal | Treinador | RF-04 | Consultar sessões sob sua responsabilidade. |
-| Atendimentos | Profissional de Saúde | RF-04, RF-06 | Consultar apenas serviço e agenda atribuídos; registrar presença/falta dos alunos atendidos. |
+| Visão geral e pendências | Administrador | RF-04, RF-09, RF-11 (indicadores a confirmar) | Consultar a operação e as pendências; indicadores simples dependem de definição. |
+| Agenda e configuração | Administrador | RF-03, RF-04, RF-05 | Consultar disponibilidade/bloqueios e confirmar agendamento sem conflito do profissional ou do aluno. |
+| Agenda pessoal | Treinador | RF-04, RF-10 (proposta) | Consultar sessões sob sua responsabilidade e registrar se foram ministradas. |
+| Atendimentos | Profissional de Saúde | RF-04, RF-06, RF-10 (proposta) | Consultar serviço e agenda atribuídos; registrar presença/falta e, se confirmado, se o atendimento foi ministrado. |
 | Presença e relatório | Treinador; Profissional de Saúde (presença nos atendimentos) | RF-06, RF-07 | Registrar presença/falta em sessões e atendimentos; Treinador finaliza relatório de treino. |
 | Aviso de sessão pendente | Treinador | RF-08 (fora do escopo) | Receber o aviso excepcional por e-mail. |
 
@@ -51,6 +52,25 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 @endsalt
 ```
 
+## Visão geral e pendências — Administrador — RF-04, RF-09, RF-11
+
+```plantuml
+@startsalt
+{+
+  {* <b>GAAP — Visão geral}
+  [Consultar agenda] | [Consultar pendências]
+  <b>Pendências operacionais (RF-09)
+  Presença/falta | "Compromissos encerrados sem registro (proposta)"
+  Relatório | "Sessões de Treino com rascunho (proposta)"
+  ..
+  <b>Dashboard simples (RF-11)
+  Indicadores | "A definir com o responsável pelo cenário"
+}
+@endsalt
+```
+
+Os indicadores de RF-11 e a definição de pendência da RF-09 ainda precisam de confirmação.
+
 ## Agenda e confirmação — Administrador — RF-03, RF-04, RF-05
 
 ```plantuml
@@ -78,7 +98,9 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 @endsalt
 ```
 
-## Agenda do Treinador — RF-04, RF-06, RF-07
+Ao confirmar, a API também verifica se algum aluno participante já tem compromisso sobreposto e aplica o limite informado de 6 alunos por sessão. Essas verificações não são campos adicionais da tela.
+
+## Agenda do Treinador — RF-04, RF-06, RF-07, RF-10
 
 ```plantuml
 @startsalt
@@ -86,13 +108,14 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
   {* <b>GAAP — Minha agenda}
   Data inicial | "dd/mm/aaaa"
   Data final | "dd/mm/aaaa"
-  Serviço | "Todos os meus serviços"
+  Serviço | "Treino ou serviço vinculado (a confirmar)"
   [Consultar]
   ..
   <b>Sessões do período
   09:00 | "Sessão 01 — Treino — Agendada"
   10:00 | "Sessão 02 — Treino — Realizada"
   [Abrir sessão]
+  [Marcar realizada] | [Marcar não realizada]
   ..
   <b>Presença e relatório (sessão de Treino realizada)
   Presença do Aluno 01 | "Selecionar Presente ou Falta"
@@ -108,7 +131,9 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 @endsalt
 ```
 
-## Atendimentos do Profissional de Saúde — RF-04, RF-06
+As ações de registrar sessão ministrada (RF-10) são propostas; confirmar se constituem um registro separado da presença/falta.
+
+## Atendimentos do Profissional de Saúde — RF-04, RF-06, RF-10
 
 ```plantuml
 @startsalt
@@ -122,6 +147,7 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
   <b>Atendimentos do período
   13:00 | "Fisioterapia — Aluno 01 — Agendado"
   14:00 | "Fisioterapia — Aluno 02 — Agendado"
+  [Marcar realizado] | [Marcar não realizado]
   ..
   <b>Registrar presença/falta
   Aluno 01 | "Selecionar Presente ou Falta"
@@ -134,65 +160,84 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 @endsalt
 ```
 
+As ações de registrar atendimento ministrado (RF-10) dependem da mesma confirmação do fluxo do Treinador.
+
 ## Referência visual — protótipo de alta fidelidade
 
-As telas abaixo são os exports atuais de alta fidelidade. Os wireframes PlantUML acima continuam sendo a referência de baixa fidelidade; as imagens não alteram o escopo nem resolvem as decisões ainda pendentes. **Os exports ainda não mostram o registro de presença/falta nos atendimentos de saúde nem todos os campos e estados definidos para o relatório de treino.** O arquivo editável está no [Figma](https://www.figma.com/design/7a3PVqNYNlwLtSgN4sfiU4/GAAP-%E2%80%94-Prot%C3%B3tipo-de-alta-fidelidade).
+As telas abaixo são os exports atuais de alta fidelidade. Os wireframes PlantUML acima continuam sendo a referência de baixa fidelidade; as imagens não alteram o escopo nem resolvem as decisões ainda pendentes. Os exports mostram exemplos de presença/falta em atendimentos e os campos definidos para o relatório de treino, com ações de rascunho e finalização. Foi acrescentada uma variante de recusa de agendamento para desktop e mobile: ambas mostram indisponibilidade, conflito, bloqueio e incompatibilidade; o desktop também explicita capacidade excedida, enquanto o mobile mostra o limite de seis alunos por sessão. **Ainda faltam estados de sucesso/erro para outros fluxos, uma visualização separada do relatório finalizado somente para leitura e os fluxos propostos RF-10 e RF-11.** O arquivo editável está no [Figma](https://www.figma.com/design/7a3PVqNYNlwLtSgN4sfiU4/GAAP-%E2%80%94-Prot%C3%B3tipo-de-alta-fidelidade).
+
+| Export atual | IDs relacionados | Cobertura ainda necessária |
+|---|---|---|
+| Acesso | RF-01 | Estados de credencial inválida e acesso negado. |
+| Visão geral | RF-04, RF-09, RF-11 | Pendências conforme definição aprovada e indicadores simples ainda a confirmar. |
+| Cadastros | RF-02 | Formulário, validação e confirmação. |
+| Novo agendamento e recusa | RF-03, RF-05 | A variante desktop mostra capacidade excedida (7/6); ambas mostram indisponibilidade, bloqueio, conflito e incompatibilidade. A configuração de disponibilidade/bloqueios e o estado de sucesso ainda precisam de representação. |
+| Agenda do Treinador | RF-04, RF-06, RF-07, RF-10 | Estado finalizado somente para leitura e erros; registro de sessão ministrada a confirmar. |
+| Atendimentos de saúde | RF-04, RF-06, RF-10 | Estado salvo e erros da presença/falta; registro de atendimento ministrado a confirmar. |
 
 === "Desktop · 1920 × 1080"
 
-    ### Acesso
+    ### Acesso — RF-01
 
     ![Protótipo desktop — Acesso](<../assets/Prototipo/desktop/1920×1080 · · Acesso.png>){ width="100%" }
 
-    ### Visão geral
+    ### Visão geral — RF-04, RF-09, RF-11 (parcial)
 
     ![Protótipo desktop — Visão geral](<../assets/Prototipo/desktop/1920×1080 · · Visão geral.png>){ width="100%" }
 
-    ### Cadastros
+    ### Cadastros — RF-02 (parcial)
 
     ![Protótipo desktop — Cadastros](<../assets/Prototipo/desktop/1920×1080 · · Cadastros.png>){ width="100%" }
 
-    ### Novo agendamento
+    ### Novo agendamento — RF-03, RF-05
 
     ![Protótipo desktop — Novo agendamento](<../assets/Prototipo/desktop/1920×1080 · · Novo agendamento.png>){ width="100%" }
 
-    ### Agenda do treinador
+    ### Recusa do agendamento (variante)
+
+    ![Protótipo desktop — Recusa do agendamento](<../assets/Prototipo/desktop/1920×1080 · Agendamento recusado · RF-05.png>){ width="100%" }
+
+    ### Agenda do treinador — RF-04, RF-06, RF-07, RF-10 (parcial)
 
     ![Protótipo desktop — Agenda do treinador](<../assets/Prototipo/desktop/1920×1080 · · Agenda do treinador.png>){ width="100%" }
 
-    ### Atendimentos de saúde
+    ### Atendimentos de saúde — RF-04, RF-06, RF-10 (parcial)
 
     ![Protótipo desktop — Atendimentos de saúde](<../assets/Prototipo/desktop/1920×1080 · · Atendimentos de saúde.png>){ width="100%" }
 
 === "Mobile · 390 × 844"
 
-    ### Acesso
+    ### Acesso — RF-01
 
     ![Protótipo mobile — Acesso](<../assets/Prototipo/mobile/01 · Acesso · Mobile.png>){ width="390" }
 
-    ### Visão geral
+    ### Visão geral — RF-04, RF-09, RF-11 (parcial)
 
     ![Protótipo mobile — Visão geral](<../assets/Prototipo/mobile/02 · Visão geral · Mobile.png>){ width="390" }
 
-    ### Cadastros
+    ### Cadastros — RF-02 (parcial)
 
     ![Protótipo mobile — Cadastros](<../assets/Prototipo/mobile/03 · Cadastros · Mobile.png>){ width="390" }
 
-    ### Novo agendamento
+    ### Novo agendamento — RF-03, RF-05
 
     ![Protótipo mobile — Novo agendamento](<../assets/Prototipo/mobile/04 · Novo agendamento · Mobile.png>){ width="390" }
 
-    ### Agenda do treinador
+    ### Recusa do agendamento (variante)
+
+    ![Protótipo mobile — Recusa do agendamento](<../assets/Prototipo/mobile/07 · Agendamento recusado · Mobile · RF-05.png>){ width="390" }
+
+    ### Agenda do treinador — RF-04, RF-06, RF-07, RF-10 (parcial)
 
     ![Protótipo mobile — Agenda do treinador](<../assets/Prototipo/mobile/05 · Agenda treinador · Mobile.png>){ width="390" }
 
-    ### Atendimentos de saúde
+    ### Atendimentos de saúde — RF-04, RF-06, RF-10 (parcial)
 
     ![Protótipo mobile — Atendimentos de saúde](<../assets/Prototipo/mobile/06 · Atendimentos saúde · Mobile.png>){ width="390" }
 
 ## Decisões que afetam as telas
 
-- Definir onde a capacidade é configurada e se sessões comportam múltiplos alunos.
+- O professor informou capacidade máxima de 6 alunos por sessão, válida para qualquer serviço conforme esclarecimento de Pedro Lucas; no MVP, a validação usará uma constante no backend, sem configuração administrativa.
 - Após a finalização, o relatório fica bloqueado para edição; rascunhos podem ser alterados antes de finalizar.
 - A interface é representativa; a experiência visual não foi validada com usuários.
 - A notificação por e-mail é RF-08, uma exceção registrada fora do escopo no cenário GAAP.

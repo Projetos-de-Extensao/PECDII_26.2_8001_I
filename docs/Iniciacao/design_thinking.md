@@ -20,7 +20,7 @@ As necessidades abaixo foram derivadas do texto do cenário, não de entrevistas
 
 ## Ideação e escopo
 
-As funcionalidades selecionadas correspondem aos requisitos [RF-01 a RF-07](../Elaboracao/levreq.md). A notificação por e-mail é registrada como RF-08, exceção mantida fora do escopo do cenário por recomendação do professor em 14/10/2026. Ideias anteriores sobre responsável legal, espaço físico, aula experimental, cancelamento e remarcação ficam fora do MVP até validação.
+As funcionalidades selecionadas correspondem aos requisitos [RF-01 a RF-07 e RF-09](../Elaboracao/levreq.md). O registro de compromisso ministrado (RF-10), o dashboard simples (RF-11) e a auditoria (RNF-06) aguardam definição com o responsável pelo cenário. A notificação por e-mail é registrada como RF-08, exceção mantida fora do escopo do cenário por recomendação do professor em 14/10/2026. Ideias anteriores sobre responsável legal, espaço físico, aula experimental, cancelamento e remarcação ficam fora do MVP até validação.
 
 ## Prototipagem e teste
 
