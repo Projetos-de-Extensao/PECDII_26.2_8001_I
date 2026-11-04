@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django import forms
+from django.db.models import Count
 
 from app.models import Aluno, ProfissionalServico, Professor, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
@@ -111,10 +112,14 @@ class ServicoAdmin(admin.ModelAdmin):
     search_fields = ('nome',)
     ordering = ('nome',)
 
-    @admin.display(description='Profissionais')
+    def get_queryset(self, request):
+        """Conta os profissionais de todos os serviços numa única consulta."""
+        return super().get_queryset(request).annotate(total_profissionais=Count('vinculos'))
+
+    @admin.display(description='Profissionais', ordering='total_profissionais')
     def quantidade_de_profissionais(self, obj):
         """Mostra quantos profissionais atendem o serviço."""
-        return obj.vinculos.count()
+        return obj.total_profissionais
 
 
 @admin.register(Sessao)

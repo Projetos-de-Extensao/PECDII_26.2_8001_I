@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from app.telefones import normalizar_telefone
@@ -167,6 +168,23 @@ class Usuario(TelefoneMixin, models.Model):
         ordering = ['nome']
         verbose_name = 'usuário'
         verbose_name_plural = 'usuários'
+
+    def validar_perfil_com_vinculos(self):
+        """Impede que quem atende serviços passe a ter um perfil que não atende (RN-04)."""
+        if self.pk and self.perfil not in self.PERFIS_PROFISSIONAIS and self.vinculos.exists():
+            raise ValidationError({
+                'perfil': 'Este usuário atende serviços. Remova os vínculos antes de mudar o perfil para Administrador.',
+            })
+
+    def clean(self):
+        """Valida o perfil nos formulários, como o do Django Admin."""
+        super().clean()
+        self.validar_perfil_com_vinculos()
+
+    def save(self, *args, **kwargs):
+        """Repete a checagem do perfil, porque o save() não passa pelo clean()."""
+        self.validar_perfil_com_vinculos()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """Retorna o nome do usuário para exibição."""

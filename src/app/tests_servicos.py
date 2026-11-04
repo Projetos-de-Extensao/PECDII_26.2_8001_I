@@ -111,7 +111,8 @@ class ProfissionalServicoTests(TestCase):
     def criar_usuario(self, nome, perfil):
         login = nome.lower().replace(' ', '.')
         return Usuario.objects.create(
-            conta=get_user_model().objects.create_user(username=login, password='senha-de-teste'),
+            # Sem senha: nenhum destes testes faz login, e gerar o hash deixava a suíte lenta.
+            conta=get_user_model().objects.create_user(username=login),
             nome=nome,
             email=f'{login}@example.com',
             perfil=perfil,
@@ -198,3 +199,67 @@ class ProfissionalServicoTests(TestCase):
 
     def test_vinculos_aparecem_no_admin_do_servico(self):
         self.assertIn(ProfissionalServicoInline, admin.site.get_model_admin(Servico).inlines)
+
+    def test_admin_conta_profissionais_numa_unica_consulta(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.fisio)
+        ProfissionalServico.objects.create(profissional=self.fisioterapeuta, servico=self.fisio)
+        servico_admin = admin.site.get_model_admin(Servico)
+
+        with self.assertNumQueries(1):
+            totais = {
+                servico.nome: servico_admin.quantidade_de_profissionais(servico)
+                for servico in servico_admin.get_queryset(request=None)
+            }
+
+        self.assertEqual(totais, {'Fisioterapia esportiva': 2, 'Treino funcional': 0})
+
+
+class PerfilComVinculosTests(TestCase):
+    """Quem atende serviços não pode virar Administrador sem antes perder os vínculos."""
+
+    def setUp(self):
+        self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
+        self.treinador = Usuario.objects.create(
+            conta=get_user_model().objects.create_user(username='bruno.costa'),
+            nome='Bruno Costa',
+            email='bruno.costa@example.com',
+            perfil=Usuario.Perfil.TREINADOR,
+        )
+
+    def test_save_recusa_virar_administrador_com_vinculo(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
+        self.treinador.perfil = Usuario.Perfil.ADMINISTRADOR
+
+        with self.assertRaises(ValidationError) as contexto:
+            self.treinador.save()
+
+        self.assertIn('perfil', contexto.exception.message_dict)
+        self.treinador.refresh_from_db()
+        self.assertEqual(self.treinador.perfil, Usuario.Perfil.TREINADOR)
+
+    def test_validacao_do_admin_recusa_virar_administrador_com_vinculo(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
+        self.treinador.perfil = Usuario.Perfil.ADMINISTRADOR
+
+        with self.assertRaises(ValidationError) as contexto:
+            self.treinador.full_clean()
+
+        self.assertEqual(
+            contexto.exception.message_dict['perfil'],
+            ['Este usuário atende serviços. Remova os vínculos antes de mudar o perfil para Administrador.'],
+        )
+
+    def test_sem_vinculo_o_perfil_pode_mudar(self):
+        self.treinador.perfil = Usuario.Perfil.ADMINISTRADOR
+        self.treinador.save()
+
+        self.treinador.refresh_from_db()
+        self.assertEqual(self.treinador.perfil, Usuario.Perfil.ADMINISTRADOR)
+
+    def test_troca_entre_perfis_profissionais_continua_livre(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
+        self.treinador.perfil = Usuario.Perfil.PROFISSIONAL_SAUDE
+        self.treinador.save()
+
+        self.treinador.refresh_from_db()
+        self.assertEqual(self.treinador.perfil, Usuario.Perfil.PROFISSIONAL_SAUDE)
