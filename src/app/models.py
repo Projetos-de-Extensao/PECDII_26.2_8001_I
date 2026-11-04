@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from app.telefones import normalizar_telefone
@@ -137,3 +138,36 @@ class Sessao(models.Model):
     def __str__(self):
         """Retorna o título e o início da sessão para exibição."""
         return f'{self.titulo} — {self.inicio:%d/%m/%Y %H:%M}'
+
+
+class Usuario(TelefoneMixin, models.Model):
+    """Guarda o perfil GAAP da conta que acessa a API."""
+
+    class Perfil(models.TextChoices):
+        """Perfis de acesso previstos no GAAP."""
+
+        ADMINISTRADOR = 'ADMINISTRADOR', 'Administrador'
+        TREINADOR = 'TREINADOR', 'Treinador'
+        PROFISSIONAL_SAUDE = 'PROFISSIONAL_SAUDE', 'Profissional de Saúde'
+
+    # Perfis que atendem sessões e aparecem no cadastro de profissionais.
+    PERFIS_PROFISSIONAIS = [Perfil.TREINADOR, Perfil.PROFISSIONAL_SAUDE]
+
+    conta = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='usuario',
+    )
+    nome = models.CharField(max_length=150)
+    email = models.EmailField(unique=True)
+    telefone = models.CharField(max_length=20, blank=True)
+    perfil = models.CharField(max_length=20, choices=Perfil.choices)
+
+    class Meta:
+        ordering = ['nome']
+        verbose_name = 'usuário'
+        verbose_name_plural = 'usuários'
+
+    def __str__(self):
+        """Retorna o nome do usuário para exibição."""
+        return self.nome

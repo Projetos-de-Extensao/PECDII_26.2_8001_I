@@ -151,7 +151,12 @@ MAILERS = {
 }
 
 REST_FRAMEWORK = {
+    # Basic vem primeiro para que a API responda 401 sem autenticação.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
