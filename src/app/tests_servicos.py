@@ -1,12 +1,15 @@
+from datetime import timedelta
+
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.forms import modelform_factory
 from django.test import TestCase
+from django.utils import timezone
 
 from app.admin import ProfissionalServicoInline
-from app.models import ProfissionalServico, Servico, Usuario
+from app.models import ProfissionalServico, Servico, Sessao, Usuario
 
 
 class ServicoModelTests(TestCase):
@@ -258,6 +261,51 @@ class PerfilComVinculosTests(TestCase):
 
     def test_troca_entre_perfis_profissionais_continua_livre(self):
         ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
+        self.treinador.perfil = Usuario.Perfil.PROFISSIONAL_SAUDE
+        self.treinador.save()
+
+        self.treinador.refresh_from_db()
+        self.assertEqual(self.treinador.perfil, Usuario.Perfil.PROFISSIONAL_SAUDE)
+
+
+class PerfilComSessoesTests(TestCase):
+    """Quem é responsável por sessões não pode virar Administrador (#88)."""
+
+    def setUp(self):
+        self.treinador = Usuario.objects.create(
+            conta=get_user_model().objects.create_user(username='carla.dias'),
+            nome='Carla Dias',
+            email='carla.dias@example.com',
+            perfil=Usuario.Perfil.TREINADOR,
+        )
+        agora = timezone.now()
+        Sessao.objects.create(inicio=agora, fim=agora + timedelta(hours=1), profissional=self.treinador)
+
+    def test_save_recusa_virar_administrador_com_sessoes(self):
+        self.treinador.perfil = Usuario.Perfil.ADMINISTRADOR
+
+        with self.assertRaises(ValidationError) as contexto:
+            self.treinador.save()
+
+        self.assertIn('perfil', contexto.exception.message_dict)
+        self.treinador.refresh_from_db()
+        self.assertEqual(self.treinador.perfil, Usuario.Perfil.TREINADOR)
+
+    def test_validacao_do_admin_recusa_virar_administrador_com_sessoes(self):
+        self.treinador.perfil = Usuario.Perfil.ADMINISTRADOR
+
+        with self.assertRaises(ValidationError) as contexto:
+            self.treinador.full_clean()
+
+        self.assertEqual(
+            contexto.exception.message_dict['perfil'],
+            [
+                'Este usuário é responsável por sessões. Transfira as sessões para outro '
+                'profissional antes de mudar o perfil para Administrador.'
+            ],
+        )
+
+    def test_troca_entre_perfis_profissionais_com_sessoes_continua_livre(self):
         self.treinador.perfil = Usuario.Perfil.PROFISSIONAL_SAUDE
         self.treinador.save()
 

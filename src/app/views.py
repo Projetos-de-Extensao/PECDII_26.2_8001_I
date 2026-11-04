@@ -1,6 +1,8 @@
 from datetime import timedelta
 from django.utils import timezone
+from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -12,6 +14,14 @@ from app.serializers import (
     ServicoSerializer,
     SessaoSerializer,
 )
+
+
+class Conflito(APIException):
+    """Recusa uma operação que deixaria outros registros inconsistentes."""
+
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = 'A operação conflita com registros existentes.'
+    default_code = 'conflito'
 
 
 class AlunoViewSet(ModelViewSet):
@@ -26,6 +36,12 @@ class ProfissionalViewSet(ModelViewSet):
     permission_classes = [PodeAdministrarCadastros]
 
     def perform_destroy(self, instance):
+        # As sessões protegem o responsável; sem esta checagem o delete virava erro 500.
+        if instance.sessoes.exists():
+            raise Conflito(
+                'Este profissional é responsável por sessões. Transfira as sessões para outro '
+                'profissional antes de removê-lo.'
+            )
         # Apagar a conta encerra o acesso à API e remove o cadastro em cascata.
         instance.conta.delete()
 

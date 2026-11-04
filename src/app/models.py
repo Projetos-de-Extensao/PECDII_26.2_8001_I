@@ -154,10 +154,19 @@ class Usuario(TelefoneMixin, models.Model):
         verbose_name_plural = 'usuários'
 
     def validar_perfil_com_vinculos(self):
-        """Impede que quem atende serviços passe a ter um perfil que não atende (RN-04)."""
-        if self.pk and self.perfil not in self.PERFIS_PROFISSIONAIS and self.vinculos.exists():
+        """Impede que quem atende serviços ou sessões passe a ter um perfil que não atende (RN-04)."""
+        if not self.pk or self.perfil in self.PERFIS_PROFISSIONAIS:
+            return
+        if self.vinculos.exists():
             raise ValidationError({
                 'perfil': 'Este usuário atende serviços. Remova os vínculos antes de mudar o perfil para Administrador.',
+            })
+        if self.sessoes.exists():
+            raise ValidationError({
+                'perfil': (
+                    'Este usuário é responsável por sessões. Transfira as sessões para outro '
+                    'profissional antes de mudar o perfil para Administrador.'
+                ),
             })
 
     def clean(self):
