@@ -132,7 +132,7 @@ usuario ||--o{ registro_auditoria
 | profissional_servico **(proposta)** | Par `(profissional_id, servico_id)` único. Representa a habilitação do profissional para o serviço. | `(servico_id)` | RN-04 |
 | disponibilidade | `fim > inicio`. | `(profissional_id, inicio)` | RF-03, RN-03 |
 | bloqueio_agenda | `fim > inicio`. | `(profissional_id, inicio)` | RF-03, RN-03 |
-| sessao | `fim > inicio`; `situacao` restrita a AGENDADA, REALIZADA, NAO_REALIZADA e CANCELADA. | `(profissional_id, inicio)`, `(inicio)` | RF-04, RF-05, RN-01, RF-09 |
+| sessao | `fim > inicio`; `situacao` restrita a AGENDADA, REALIZADA, NAO_REALIZADA e CANCELADA. | `(profissional_id, inicio)`, `(inicio)` | RF-04, RF-05, RF-09, RF-10 (proposta), RF-11 (indicadores a definir), RN-01 |
 | participacao | Par `(sessao_id, aluno_id)` único; `situacao_presenca` nula até o registro, depois PRESENTE ou FALTA. | `(aluno_id)` | RF-05, RF-06, RN-02, RN-07 |
 | relatorio_treino | `sessao_id` único (um relatório por sessão); `intensidade` entre 0 e 10; `situacao` RASCUNHO ou FINALIZADO. | — | RF-07 |
 | registro_auditoria **(proposta)** | Somente inserção; a API não altera nem apaga registros. | `(entidade, entidade_id)` | RNF-06 |
@@ -142,7 +142,7 @@ usuario ||--o{ registro_auditoria
 - **usuario → sessao (1 : 0..N):** cada sessão tem exatamente um profissional responsável, e um profissional pode ter várias sessões. A restrição de perfil (Treinador ou Profissional de Saúde) é validada pela API, não pela chave.
 - **servico → sessao (1 : 0..N):** cada sessão é de um único serviço.
 - **usuario ↔ servico (N : N, via profissional_servico):** um profissional pode estar habilitado para vários serviços, e um serviço pode ter vários profissionais. Ver D-09.
-- **sessao ↔ aluno (N : N, via participacao):** a participação guarda a presença de cada aluno. Se a sessão admite um ou mais alunos depende da D-01.
+- **sessao ↔ aluno (N : N, via participacao):** a participação guarda a presença de cada aluno. O limite máximo é de 6 alunos por sessão para qualquer serviço (RN-02).
 - **sessao → relatorio_treino (1 : 0..1):** o relatório só existe para sessões de Treino, e a unicidade de `sessao_id` garante um por sessão.
 - **disponibilidade e bloqueio_agenda → usuario (N : 1):** os períodos são gerais por profissional, conforme a D-06.
 
@@ -156,7 +156,7 @@ usuario ||--o{ registro_auditoria
 
 | Decisão | Efeito no DER |
 |---|---|
-| D-01 capacidade | Falta a coluna de capacidade. Ela vai em `servico` ou em `sessao`, conforme a resposta do professor. |
+| D-01 capacidade | O limite de 6 alunos por sessão vale para qualquer serviço e será uma constante de validação no backend do MVP; não há coluna de capacidade em `servico` ou `sessao`. |
 | A3 habilitação profissional–serviço | `profissional_servico` é proposta até o diagrama de classes incluir a associação. |
 | D-08 relatório × Treinador | Hoje o relatório chega ao Treinador por `sessao.profissional_id`. Se o vínculo precisar ser direto, entra `relatorio_treino.treinador_id`. |
 | D-09 perfis | Se Treinador e Profissional de Saúde virarem especializações, `usuario` se divide em tabelas próprias. |

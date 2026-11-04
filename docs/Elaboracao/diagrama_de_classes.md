@@ -4,7 +4,7 @@ title: Diagrama de Classes
 ---
 # Modelo Conceitual do Domínio GAAP
 
-Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. Ele não descreve a implementação atual: o código ainda contém `Aluno`, `Professor` e `Sessao`, sem os cadastros de serviço, disponibilidade, bloqueios, presença individual ou relatório de treino. As cardinalidades e a localização da capacidade precisam de validação do responsável pelo cenário.
+Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. Ele não descreve a implementação atual: o código ainda contém `Aluno`, `Professor` e `Sessao`, sem os cadastros de serviço, disponibilidade, bloqueios, presença individual ou relatório de treino. O professor informou capacidade máxima de 6 alunos por sessão para qualquer serviço; no MVP, a validação usa uma constante no backend.
 
 ## Diagrama
 
@@ -85,10 +85,19 @@ class NotificacaoEmail {
   id
   enviadaEm
 }
+class RegistroAuditoria <<proposta>> {
+  id
+  operacao
+  entidade
+  entidadeId
+  registradoEm
+}
 
 Usuario "1" -- "0..*" Disponibilidade : possui
 Usuario "1" -- "0..*" BloqueioAgenda : define
 Usuario "1" -- "0..*" Sessao : profissional responsável
+Usuario "0..*" -- "0..*" Servico : habilitado para (proposta)
+Usuario "1" -- "0..*" RegistroAuditoria : realiza
 Servico "1" -- "0..*" Sessao : classifica
 Aluno "1" -- "0..*" Participacao
 Sessao "1" *-- "0..*" Participacao
@@ -103,9 +112,13 @@ note right of Usuario
   e registra presença nos atendimentos vinculados.
 end note
 note bottom of Sessao
-  A capacidade é obrigatória para validar o agendamento,
-  mas o cenário não informa se pertence ao Serviço,
-  à Sessão ou a outra configuração. Decisão pendente.
+  RN-02: máximo de 6 alunos por sessão para qualquer
+  serviço; constante de validação no backend do MVP.
+end note
+note bottom of RegistroAuditoria
+  RNF-06: confirmação de agendamento,
+  presença e relatório auditáveis.
+  Nível de detalhe a confirmar.
 end note
 @enduml
 ```
@@ -114,19 +127,21 @@ end note
 
 | Conceito | Responsabilidade | Requisitos | Casos de uso |
 |---|---|---|---|
-| Usuario | Identidade, perfil e autorização. | RF-01, RN-05, RNF-02, RNF-04 | UC-01, UC-04, UC-06, UC-07 |
-| Aluno | Pessoa atendida e participante de sessão. | RF-02, RF-05, RF-06 | UC-02, UC-05, UC-06 |
+| Usuario | Identidade, perfil, autorização e autoria das operações auditáveis. | RF-01, RN-05, RNF-02, RNF-04, RNF-06 (proposta) | UC-01, UC-04, UC-06, UC-07, UC-10 |
+| Aluno | Pessoa atendida e participante de sessão; seus compromissos são consultados para evitar sobreposição. | RF-02, RF-05, RF-06, RN-07 (proposta) | UC-02, UC-05, UC-06 |
 | Servico | Categoria Treino, Fisioterapia, Psicologia ou Nutrição. | RF-02, RF-05, RN-04 | UC-02, UC-05 |
 | Disponibilidade | Faixa geral da agenda do profissional, compartilhada entre seus serviços habilitados. | RF-03, RF-05, RN-03 | UC-03, UC-05 |
 | BloqueioAgenda | Intervalo geral indisponível em todos os serviços do profissional. | RF-03, RF-05, RN-03 | UC-03, UC-05 |
-| Sessao | Ocorrência agendada de um serviço. | RF-04, RF-05, RN-01 a RN-04, RN-06 | UC-04, UC-05 |
-| Participacao | Vínculo aluno–sessão/atendimento e presença/falta individual. | RF-05, RF-06, RN-02, RN-06 | UC-05, UC-06 |
-| RelatorioTreino | Um relatório imutável após finalização por sessão de Treino, associado ao Treinador e à lista de participantes da sessão. Registra objetivo, exercícios, volume (valor e unidade), intensidade Borg CR10 (0–10) e situação rascunho/finalizado; data, horário e local vêm da sessão. | RF-07, RN-05, RN-06 | UC-07 |
+| Sessao | Ocorrência agendada de um serviço, com situação realizada/não realizada; fonte das pendências e de futuros indicadores operacionais. | RF-04, RF-05, RF-09, RF-10 (proposta), RF-11 (indicadores a confirmar), RN-01 a RN-04, RN-06, RN-07 (proposta) | UC-04, UC-05, UC-09, UC-10, UC-11 |
+| Participacao | Vínculo aluno–sessão/atendimento e presença/falta individual; permite verificar conflito do aluno e pendências de presença. | RF-05, RF-06, RF-09, RN-02, RN-06, RN-07 (proposta) | UC-05, UC-06, UC-09 |
+| RelatorioTreino | Um relatório imutável após finalização por sessão de Treino, associado ao Treinador e à lista de participantes da sessão. Registra objetivo, exercícios, volume (valor e unidade), intensidade Borg CR10 (0–10) e situação rascunho/finalizado; data, horário e local vêm da sessão. | RF-07, RF-09, RN-05 | UC-07, UC-09 |
 | NotificacaoEmail | Marca o aviso excepcional enviado para a sessão. | RF-08 (fora do escopo) | UC-08 |
+| RegistroAuditoria | Registro somente de inclusão da autoria, operação, entidade e data/hora; detalhe sujeito a confirmação. | RNF-06 (proposta) | UC-05, UC-06, UC-07, UC-10 |
+
+O dashboard simples (RF-11) é uma consulta agregada; seus indicadores ainda não foram definidos, portanto não há uma classe de domínio específica para ele.
 
 ## Decisões pendentes
 
-- Definir a entidade e o nível de configuração da capacidade.
 - Definir a distinção entre Treinador e Profissional de Saúde no cadastro (perfil único com tipo ou especialização de usuário).
 
 ## Referências

@@ -12,6 +12,8 @@ Os IDs RF, RN e RNF são estáveis e devem ser usados nos demais artefatos. O re
 
 Na revisão de 28/10/2026, a comparação com as seções 3 e 7 do cenário encontrou itens citados sem requisito correspondente: consulta de pendências pelo Administrador, aula ministrada, dashboard simples e auditoria. Eles entraram como RF-09 a RF-11 e RNF-06. Também entrou a RN-07, para o conflito de horário do aluno, que a RN-01 não cobria.
 
+Em 30/10/2026, Pedro Lucas informou que o professor definiu a capacidade máxima de **6 alunos por sessão**. Pedro Lucas esclareceu que o limite vale para qualquer serviço e aceitou mantê-lo como constante de validação no backend, sem configuração administrativa no MVP.
+
 ## Stakeholders e perfis
 
 | Stakeholder/perfil | Interesse e responsabilidade no recorte inicial |
@@ -44,12 +46,12 @@ Prioridades: **Alta** = necessária para o aceite do MVP; **Média** = apoio ao 
 
 ## Regras de negócio
 
-As regras abaixo detalham as lacunas identificadas na issue #59. A regra de capacidade não diz onde o limite é configurado porque o cenário não define essa entidade; essa decisão está pendente de validação.
+As regras abaixo detalham as lacunas identificadas na issue #59. O limite de capacidade foi informado pelo professor, vale para qualquer serviço e será uma constante de validação no backend do MVP.
 
 | ID | Regra | Critério observável | Situação |
 |---|---|---|---|
 | RN-01 | Uma sessão não pode sobrepor outro compromisso do mesmo profissional; intervalos são tratados como `[início, fim)`. | Uma solicitação que sobrepõe sessão existente é recusada; horários contíguos podem ser aceitos. | Proposta a confirmar |
-| RN-02 | A quantidade de participantes ativos não pode ultrapassar a capacidade aplicável ao serviço/sessão. | A API aceita até o limite configurado e recusa o participante excedente. | Proposta a confirmar: definir onde o limite reside |
+| RN-02 | A capacidade máxima é de 6 alunos por sessão, para qualquer serviço. A quantidade de participantes ativos não pode ultrapassar esse limite. No MVP, a validação usa uma constante no backend, sem campo de configuração administrativa. | Em qualquer serviço, a API recusa integralmente uma solicitação com 7 alunos, sem gravar sessão ou participantes parcialmente; uma solicitação com até 6 passa pela validação das demais regras. | Valor comunicado por Pedro Lucas em 30/10/2026, atribuído ao professor; abrangência e forma de implementação definidas com Pedro Lucas |
 | RN-03 | A disponibilidade e os bloqueios são gerais por profissional e compartilhados por todos os serviços que ele pode atender. | Sessão de qualquer serviço é recusada se estiver fora da disponibilidade geral ou dentro de bloqueio; compatibilidade profissional-serviço continua sendo validada pela RN-04. | Decisão registrada |
 | RN-04 | O profissional designado deve estar habilitado para o serviço solicitado. | Serviço incompatível com o cadastro/vínculo do profissional é recusado. | Proposta a confirmar |
 | RN-05 | Somente o profissional responsável e autorizado pode registrar presença/falta no compromisso sob sua responsabilidade; somente o Treinador autorizado pode finalizar relatório de treino. | Treinador atua nas sessões de Treino atribuídas; Profissional de Saúde atua nos atendimentos vinculados ao seu serviço e agenda; usuário sem vínculo recebe acesso negado. | Regra definida para presença; autorização segue os vínculos do cenário |
@@ -69,16 +71,15 @@ As regras abaixo detalham as lacunas identificadas na issue #59. A regra de capa
 
 ## Pendências de validação
 
-1. Perguntar ao cliente/responsável pelo cenário qual é o limite de participantes, a que nível ele se aplica (serviço, sessão ou outro) e se sessões podem ser em grupo; a equipe não deve inventar esses valores.
-2. Confirmar formalmente com o professor a manutenção da notificação por e-mail como exceção já implementada, pois ela permanece fora do escopo descrito no cenário.
-3. Confirmar o que conta como pendência na RF-09 e se "aula ministrada" (RF-10) é um registro separado da presença/falta.
-4. Perguntar quais indicadores o dashboard simples da Construção 3 deve mostrar (RF-11).
-5. Confirmar o nível de detalhe esperado para a auditoria (RNF-06) e a regra de conflito do aluno (RN-07).
+1. Confirmar formalmente com o professor a manutenção da notificação por e-mail como exceção já implementada, pois ela permanece fora do escopo descrito no cenário.
+2. Confirmar o que conta como pendência na RF-09 e se "aula ministrada" (RF-10) é um registro separado da presença/falta.
+3. Perguntar quais indicadores o dashboard simples da Construção 3 deve mostrar (RF-11).
+4. Confirmar o nível de detalhe esperado para a auditoria (RNF-06) e a regra de conflito do aluno (RN-07).
 
 ## Pendências de artefatos
 
-- O cenário exige um diagrama entidade-relacionamento compatível com as migrações (seção 8). Ele ainda não existe e é a evidência do RNF-01.
-- Os IDs novos (RF-09 a RF-11, RN-07 e RNF-06) ainda precisam entrar na [rastreabilidade](rastreabilidade.md), nos casos de uso e no diagrama de sequência "Confirmar agendamento", que deve passar a validar a RN-07 (#62).
+- O [DER](der.md) descreve o modelo-alvo, mas sua compatibilidade com as migrações atuais ainda precisa ser verificada após a implementação da Construção 1 (RNF-01).
+- Os IDs RF-09 a RF-11, RN-07 e RNF-06 estão relacionados na [rastreabilidade](rastreabilidade.md), nos casos de uso e, quando aplicável, no diagrama de sequência "Confirmar agendamento". As representações visuais de alta fidelidade continuam parciais (#62).
 
 ## Referências
 

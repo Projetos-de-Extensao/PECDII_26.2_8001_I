@@ -11,7 +11,7 @@ Este glossário padroniza os termos dos requisitos, casos de uso, modelos e prot
 | GAAP | Gestão de Atletas de Alta Performance; nome do produto acadêmico. |
 | Administrador | Perfil que mantém alunos, profissionais, serviços, horários e bloqueios e consulta pendências operacionais. |
 | Treinador | Perfil que consulta a agenda sob sua responsabilidade, registra presença/falta e cria e finaliza relatórios de treino. |
-| Profissional de Saúde | Perfil que consulta atendimentos atribuídos ao seu serviço e à sua agenda. |
+| Profissional de Saúde | Perfil que consulta atendimentos atribuídos ao seu serviço e à sua agenda e registra presença/falta dos alunos atendidos sob sua responsabilidade. |
 | Aluno | Pessoa atendida pelo GAAP. É um registro administrado no recorte inicial, não um dos três perfis de acesso listados no cenário. |
 | Profissional | Pessoa que presta um serviço no GAAP. Pode atuar como Treinador ou Profissional de Saúde conforme seu perfil e vínculo de serviço. |
 | Serviço | Categoria de atendimento oferecida: Treino, Fisioterapia, Psicologia ou Nutrição. |
@@ -21,7 +21,7 @@ Este glossário padroniza os termos dos requisitos, casos de uso, modelos e prot
 | Disponibilidade | Faixa geral de data/horário em que um profissional pode receber sessões de qualquer serviço para o qual esteja habilitado. |
 | Bloqueio de agenda | Intervalo geral em que um profissional não pode receber sessões de nenhum serviço. |
 | Conflito de horário | Sobreposição entre a sessão solicitada e outro compromisso ou bloqueio aplicável. |
-| Capacidade | Limite de participantes permitido para uma sessão/serviço; o cenário não especifica onde esse limite é cadastrado, decisão pendente de confirmação. |
+| Capacidade | Limite máximo de 6 alunos por sessão, válido para qualquer serviço, conforme informação do professor comunicada por Pedro Lucas em 30/10/2026. No MVP, é uma constante de validação no backend, sem cadastro ou configuração administrativa. |
 | Presença/falta | Situação de participação de cada aluno em sessão de Treino ou atendimento de saúde, registrada pelo profissional responsável e autorizado. |
 | Volume de treino | Quantidade executada expressa como valor e unidade compatíveis com a modalidade; no treino resistido, volume-carga pode usar séries × repetições × carga (kg). Não há uma unidade única válida para modalidades diferentes. |
 | Intensidade da sessão | Percepção de esforço do treino registrada pelo Treinador na escala Borg CR10, de 0 a 10. |

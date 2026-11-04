@@ -28,21 +28,25 @@ Entregar uma API funcional, testada e documentada para sustentar a operação de
 
 - Organizar os dados de alunos, profissionais e serviços necessários à operação (RF-02).
 - Apoiar a consulta e a gestão da agenda, incluindo horários e bloqueios (RF-03, RF-04).
-- Evitar a confirmação de agendamentos conflitantes, bloqueados ou acima da capacidade (RF-05; RN-01 a RN-04).
+- Evitar a confirmação de agendamentos conflitantes para profissionais e alunos, bloqueados ou acima da capacidade (RF-05; RN-01 a RN-04, RN-07).
 - Permitir o registro de presença/falta e a criação e finalização de relatórios de treino por profissionais autorizados (RF-06, RF-07; RN-05).
-- Entregar uma API com autenticação, autorização e persistência relacional, testada e documentada (RF-01; RNF-01 a RNF-05).
+- Permitir ao Administrador consultar pendências operacionais da agenda (RF-09; definição de pendência a confirmar).
+- Avaliar com o responsável pelo cenário o registro de sessão/atendimento ministrado (RF-10) e os indicadores do dashboard simples (RF-11).
+- Entregar uma API com autenticação, autorização e persistência relacional, testada e documentada (RF-01; RNF-01 a RNF-05); confirmar o detalhamento da auditoria proposta em RNF-06.
 
 ## Perfis de Usuário
 
 | Perfil | Responsabilidades iniciais |
 |---|---|
-| Administrador | Mantém alunos, profissionais, serviços, horários e bloqueios; consulta pendências (RF-02 a RF-05). |
-| Treinador | Consulta a agenda sob sua responsabilidade, registra presença/falta e cria/finaliza relatórios de treino (RF-04, RF-06, RF-07). |
-| Profissional de Saúde | Consulta somente os atendimentos atribuídos ao seu serviço e à sua agenda e registra presença/falta dos alunos atendidos sob sua responsabilidade (RF-04, RF-06). |
+| Administrador | Mantém alunos, profissionais, serviços, horários e bloqueios; consulta pendências operacionais e, após definição dos indicadores, o dashboard simples (RF-02 a RF-05, RF-09, RF-11). |
+| Treinador | Consulta a agenda sob sua responsabilidade, registra presença/falta e cria/finaliza relatórios de treino; o registro de sessão ministrada está proposto para confirmação (RF-04, RF-06, RF-07, RF-10). |
+| Profissional de Saúde | Consulta somente os atendimentos atribuídos ao seu serviço e à sua agenda e registra presença/falta dos alunos atendidos; o registro de atendimento ministrado está proposto para confirmação (RF-04, RF-06, RF-10). |
 
 ## Escopo do MVP
 
-O MVP contempla uma API back-end com autenticação e autorização por perfil; cadastro dos dados de base e configuração de ao menos um serviço; gestão de horários e bloqueios; consulta de agenda; validação de conflitos e capacidade nos agendamentos; registro de presença/falta; e criação e finalização de relatórios de treino por profissionais autorizados (RF-01 a RF-07; RN-01 a RN-06).
+O MVP contempla uma API back-end com autenticação e autorização por perfil; cadastro dos dados de base e configuração de ao menos um serviço; gestão de horários e bloqueios; consulta de agenda e pendências operacionais; validação de conflitos e capacidade nos agendamentos; registro de presença/falta; e criação e finalização de relatórios de treino por profissionais autorizados (RF-01 a RF-07, RF-09; RN-01 a RN-07). A regra de conflito do aluno (RN-07) e a definição de pendência da RF-09 são propostas a confirmar.
+
+O registro de sessão/atendimento ministrado (RF-10), os indicadores do dashboard simples (RF-11) e o nível de detalhe da auditoria (RNF-06) são citados no cenário, mas dependem de esclarecimento antes de integrar o recorte aprovado.
 
 O cenário recebido deixa em branco quatro itens da lista de funcionalidades iniciais, não enumera as entidades mínimas e não detalha as regras RN01–RN03 nem os requisitos não funcionais. Os itens acima se limitam ao que está descrito no contexto, nos perfis e nos critérios de aceite do cenário. Regras e detalhes adicionais devem ser confirmados antes de serem assumidos como requisitos.
 
@@ -87,3 +91,4 @@ O cenário lista notificações por e-mail entre os itens fora do escopo. A equi
 | 21/10/2026 | 2.1 | Registro da manutenção das notificações automáticas por e-mail como funcionalidade implementada fora do escopo | Equipe |
 | 28/10/2026 | 2.2 | Rastreabilidade dos objetivos, perfis e escopo aos requisitos; registro explícito da RF-08 como exceção implementada fora do escopo | Pedro Lucas |
 | 28/10/2026 | 2.3 | Alinhamento das responsabilidades do Profissional de Saúde à RF-06 para presença/falta nos atendimentos | Pedro Lucas |
+| 28/10/2026 | 2.4 | Alinhamento da visão aos IDs RF-09 a RF-11, RN-07 e RNF-06 introduzidos no levantamento | Pedro Lucas |
