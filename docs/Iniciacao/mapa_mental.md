@@ -25,11 +25,11 @@ skinparam NodeFontSize 14
 **** RF-04 agenda sob responsabilidade
 **** RF-06 presença/falta
 **** RF-07 relatório de treino
-**** RF-10 registro de sessão ministrada (proposta)
+**** RF-10 registra realizado/não realizado após o horário previsto, separadamente da presença
 *** Profissional de Saúde
-**** RF-04 consulta de atendimentos do serviço e agenda atribuídos
+**** RF-04 consulta atendimentos dos serviços e agenda vinculados
 **** RF-06 presença/falta no atendimento
-**** RF-10 registro de atendimento ministrado (proposta)
+**** RF-10 registra realizado/não realizado após o horário previsto, separadamente da presença
 ** Domínio
 *** Aluno
 *** Profissional

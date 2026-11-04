@@ -12,7 +12,7 @@ Este documento usa exclusivamente os perfis do cenário GAAP e rastreia os requi
 |---|---|
 | Administrador | Mantém cadastros, serviços, horários e bloqueios, consulta pendências e solicita confirmação de sessões. |
 | Treinador | Consulta agenda própria, registra presença/falta e cria/finaliza relatórios de treino. |
-| Profissional de Saúde | Consulta atendimentos do seu serviço e agenda atribuída; registra presença/falta dos alunos desses atendimentos. |
+| Profissional de Saúde | Consulta atendimentos dos serviços e da agenda atribuídos; registra presença/falta dos alunos desses atendimentos. |
 
 ## Casos de uso e rastreabilidade
 
@@ -27,7 +27,7 @@ Este documento usa exclusivamente os perfis do cenário GAAP e rastreia os requi
 | UC-07 | Criar e finalizar relatório de treino | Treinador | RF-07 |
 | UC-08 | Receber aviso de sessão pendente por e-mail | Treinador | RF-08 (fora do escopo) |
 | UC-09 | Consultar pendências operacionais | Administrador | RF-09 (definição de pendência a confirmar) |
-| UC-10 | Registrar compromisso ministrado | Treinador ou Profissional de Saúde responsável | RF-10 (proposta a confirmar) |
+| UC-10 | Registrar compromisso ministrado | Treinador ou Profissional de Saúde responsável | RF-10 |
 | UC-11 | Consultar dashboard simples | Administrador | RF-11 (indicadores a confirmar) |
 
 ## Diagrama de casos de uso
@@ -108,7 +108,7 @@ UC05 ..> VALID : <<include>>
 
 - **Atores:** Administrador, Treinador e Profissional de Saúde.
 - **Pré-condição:** usuário autenticado.
-- **Fluxo principal:** usuário consulta um período; API restringe a resposta ao escopo do perfil: administrador consulta a operação, treinador consulta sessões sob sua responsabilidade e profissional de saúde consulta atendimentos de seu serviço e agenda.
+- **Fluxo principal:** usuário consulta um período; API restringe a resposta ao escopo do perfil: administrador consulta a operação, treinador consulta sessões sob sua responsabilidade e serviços a ele vinculados, e profissional de saúde consulta atendimentos dos serviços e agenda a ele vinculados.
 - **Alternativas:** período inválido recebe 400; usuário não pode ampliar o escopo de acesso alterando filtros.
 - **Pós-condição:** API retorna apenas registros autorizados.
 - **Requisitos:** RF-04; RNF-04.
@@ -136,7 +136,7 @@ UC05 ..> VALID : <<include>>
 
 - **Ator:** Treinador responsável pela sessão.
 - **Pré-condição:** sessão de Treino realizada e Treinador autorizado.
-- **Fluxo principal:** Treinador cria um relatório associado à sessão, registra objetivo, exercícios executados, volume total com unidade e intensidade Borg CR10 (0–10), e pode salvá-lo como rascunho. Ao finalizar, a API valida os campos obrigatórios e associa o relatório à lista de participantes da sessão.
+- **Fluxo principal:** Treinador responsável cria um relatório associado somente à sessão, registra objetivo, exercícios executados, volume total com unidade e intensidade Borg CR10 (0–10), e pode salvá-lo como rascunho. Ao finalizar, a API valida os campos obrigatórios e associa o relatório à lista de participantes da sessão. Se a sessão for reatribuída enquanto o relatório for rascunho, o responsável atual passa a poder editá-lo; o vínculo do relatório à sessão não muda.
 - **Alternativas:** perfil sem permissão recebe 403; sessão inexistente recebe 404; payload incompleto/inválido impede a finalização e recebe 400; rascunhos podem permanecer incompletos; relatório finalizado não pode ser alterado.
 - **Pós-condição:** há no máximo um relatório por sessão; fica como rascunho ou finalizado e consultável por perfis autorizados.
 - **Requisitos:** RF-07; RN-05; RNF-01, RNF-04; RNF-06 (auditoria proposta).
@@ -164,10 +164,10 @@ UC05 ..> VALID : <<include>>
 
 - **Atores:** Treinador ou Profissional de Saúde responsável.
 - **Pré-condição:** compromisso atribuído ao profissional autenticado.
-- **Fluxo principal proposto:** profissional registra se a sessão ou o atendimento foi realizado ou não realizado.
+- **Fluxo principal:** depois do horário previsto, o profissional responsável registra se a sessão ou o atendimento foi realizado ou não realizado. Essa informação é independente da presença/falta dos participantes.
 - **Alternativas:** usuário sem vínculo recebe 403; estado inválido recebe 400.
 - **Pós-condição:** situação do compromisso atualizada.
-- **Requisitos:** RF-10; RNF-04 e RNF-06 (auditoria proposta). **Confirmar se este registro é separado da presença/falta.**
+- **Requisitos:** RF-10; RNF-04 e RNF-06 (auditoria proposta).
 
 ## UC-11 — Consultar dashboard simples
 

@@ -10,10 +10,10 @@ Este glossário padroniza os termos dos requisitos, casos de uso, modelos e prot
 |---|---|
 | GAAP | Gestão de Atletas de Alta Performance; nome do produto acadêmico. |
 | Administrador | Perfil que mantém alunos, profissionais, serviços, horários e bloqueios e consulta pendências operacionais. |
-| Treinador | Perfil que consulta a agenda sob sua responsabilidade, registra presença/falta e cria e finaliza relatórios de treino. |
-| Profissional de Saúde | Perfil que consulta atendimentos atribuídos ao seu serviço e à sua agenda e registra presença/falta dos alunos atendidos sob sua responsabilidade. |
+| Treinador | Perfil que consulta a agenda sob sua responsabilidade, registra presença/falta e cria e finaliza relatórios de treino. Pode atuar em mais de um serviço, consultando os serviços vinculados ao seu perfil. |
+| Profissional de Saúde | Perfil que consulta atendimentos dos serviços e da agenda vinculados ao seu usuário e registra presença/falta dos alunos atendidos sob sua responsabilidade. |
 | Aluno | Pessoa atendida pelo GAAP. É um registro administrado no recorte inicial, não um dos três perfis de acesso listados no cenário. |
-| Profissional | Pessoa que presta um serviço no GAAP. Pode atuar como Treinador ou Profissional de Saúde conforme seu perfil e vínculo de serviço. |
+| Profissional | Pessoa que presta um ou mais serviços no GAAP. Pode atuar como Treinador ou Profissional de Saúde conforme o perfil registrado no usuário e os serviços a ele vinculados. |
 | Serviço | Categoria de atendimento oferecida: Treino, Fisioterapia, Psicologia ou Nutrição. |
 | Sessão | Ocorrência agendada, com serviço, início, fim, profissional responsável e participantes quando aplicável. É o termo genérico do domínio. |
 | Atendimento | Sessão associada a um serviço de saúde (Fisioterapia, Psicologia ou Nutrição). Não implica prontuário clínico. |

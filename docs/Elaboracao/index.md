@@ -25,6 +25,6 @@
 - [Protótipo de alta fidelidade — registro de lacunas](prototipo_alta_fidelidade.md)
 - [Rastreabilidade requisito × artefato](rastreabilidade.md)
 - [Viabilidade e iterações](viabilidade_mvp.md)
-- [Checklist de revisão cruzada](revisao_cruzada.md)
+- [Revisão do escopo GAAP](revisao_cruzada.md)
 
 Requisitos e regras indicados como propostas dependem de validação do responsável pelo cenário, conforme as pendências documentadas no LevReq.

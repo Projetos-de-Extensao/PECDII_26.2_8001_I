@@ -14,8 +14,8 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 | Cadastros | Administrador | RF-02 | Manter aluno, profissional e serviço. |
 | Visão geral e pendências | Administrador | RF-04, RF-09, RF-11 (indicadores a confirmar) | Consultar a operação e as pendências; indicadores simples dependem de definição. |
 | Agenda e configuração | Administrador | RF-03, RF-04, RF-05 | Consultar disponibilidade/bloqueios e confirmar agendamento sem conflito do profissional ou do aluno. |
-| Agenda pessoal | Treinador | RF-04, RF-10 (proposta) | Consultar sessões sob sua responsabilidade e registrar se foram ministradas. |
-| Atendimentos | Profissional de Saúde | RF-04, RF-06, RF-10 (proposta) | Consultar serviço e agenda atribuídos; registrar presença/falta e, se confirmado, se o atendimento foi ministrado. |
+| Agenda pessoal | Treinador | RF-04, RF-10 | Consultar sessões sob sua responsabilidade e serviços vinculados; registrar se foram ministradas após o horário previsto. |
+| Atendimentos | Profissional de Saúde | RF-04, RF-06, RF-10 | Consultar serviços e agenda atribuídos; registrar presença/falta por aluno e se o atendimento foi ministrado, em ações separadas. |
 | Presença e relatório | Treinador; Profissional de Saúde (presença nos atendimentos) | RF-06, RF-07 | Registrar presença/falta em sessões e atendimentos; Treinador finaliza relatório de treino. |
 | Aviso de sessão pendente | Treinador | RF-08 (fora do escopo) | Receber o aviso excepcional por e-mail. |
 
@@ -108,14 +108,14 @@ Ao confirmar, a API também verifica se algum aluno participante já tem comprom
   {* <b>GAAP — Minha agenda}
   Data inicial | "dd/mm/aaaa"
   Data final | "dd/mm/aaaa"
-  Serviço | "Treino ou serviço vinculado (a confirmar)"
+  Serviço | "Todos os serviços vinculados"
   [Consultar]
   ..
   <b>Sessões do período
   09:00 | "Sessão 01 — Treino — Agendada"
   10:00 | "Sessão 02 — Treino — Realizada"
   [Abrir sessão]
-  [Marcar realizada] | [Marcar não realizada]
+  [Marcar realizada] | [Marcar não realizada] (após o horário previsto)
   ..
   <b>Presença e relatório (sessão de Treino realizada)
   Presença do Aluno 01 | "Selecionar Presente ou Falta"
@@ -131,7 +131,7 @@ Ao confirmar, a API também verifica se algum aluno participante já tem comprom
 @endsalt
 ```
 
-As ações de registrar sessão ministrada (RF-10) são propostas; confirmar se constituem um registro separado da presença/falta.
+O registro de sessão ministrada é separado da presença/falta e só fica disponível após o horário previsto.
 
 ## Atendimentos do Profissional de Saúde — RF-04, RF-06, RF-10
 
@@ -147,7 +147,7 @@ As ações de registrar sessão ministrada (RF-10) são propostas; confirmar se 
   <b>Atendimentos do período
   13:00 | "Fisioterapia — Aluno 01 — Agendado"
   14:00 | "Fisioterapia — Aluno 02 — Agendado"
-  [Marcar realizado] | [Marcar não realizado]
+  [Marcar realizado] | [Marcar não realizado] (após o horário previsto)
   ..
   <b>Registrar presença/falta
   Aluno 01 | "Selecionar Presente ou Falta"
@@ -160,7 +160,7 @@ As ações de registrar sessão ministrada (RF-10) são propostas; confirmar se 
 @endsalt
 ```
 
-As ações de registrar atendimento ministrado (RF-10) dependem da mesma confirmação do fluxo do Treinador.
+O registro de atendimento ministrado é separado da presença/falta e só fica disponível após o horário previsto.
 
 ## Referência visual — protótipo de alta fidelidade
 
@@ -172,8 +172,8 @@ As telas abaixo são os exports atuais de alta fidelidade. Os wireframes PlantUM
 | Visão geral | RF-04, RF-09, RF-11 | Pendências conforme definição aprovada e indicadores simples ainda a confirmar. |
 | Cadastros | RF-02 | Formulário, validação e confirmação. |
 | Novo agendamento e recusa | RF-03, RF-05 | A variante desktop mostra capacidade excedida (7/6); ambas mostram indisponibilidade, bloqueio, conflito e incompatibilidade. A configuração de disponibilidade/bloqueios e o estado de sucesso ainda precisam de representação. |
-| Agenda do Treinador | RF-04, RF-06, RF-07, RF-10 | Estado finalizado somente para leitura e erros; registro de sessão ministrada a confirmar. |
-| Atendimentos de saúde | RF-04, RF-06, RF-10 | Estado salvo e erros da presença/falta; registro de atendimento ministrado a confirmar. |
+| Agenda do Treinador | RF-04, RF-06, RF-07, RF-10 | Estado finalizado somente para leitura e erros; representação de realizado/não realizado separada da presença ainda falta. |
+| Atendimentos de saúde | RF-04, RF-06, RF-10 | Estado salvo e erros da presença/falta; representação de realizado/não realizado separada da presença ainda falta. |
 
 === "Desktop · 1920 × 1080"
 

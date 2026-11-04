@@ -21,8 +21,8 @@ Em 30/10/2026, o aviso de capacidade da tela "Novo agendamento" foi atualizado n
 | Visão geral e pendências | Administrador | RF-04, RF-09, RF-11 | Pendências com definição a confirmar; indicadores simples a definir com o responsável pelo cenário. |
 | Agenda, disponibilidade e bloqueios | Administrador | RF-03, RF-04 | Agenda vazia, resultado, bloqueio e erro de intervalo. |
 | Confirmação de agendamento | Administrador | RF-05 | Sucesso, conflito do profissional ou do aluno, bloqueio, capacidade excedida e serviço incompatível. |
-| Agenda de sessões | Treinador | RF-04, RF-10 (proposta) | Somente compromissos sob responsabilidade do Treinador; registrar se a sessão foi ministrada, após confirmação da regra. |
-| Agenda de atendimentos | Profissional de Saúde | RF-04, RF-06, RF-10 (proposta) | Somente serviço e agenda atribuídos; presença/falta do aluno e estado ministrado, se confirmado. |
+| Agenda de sessões | Treinador | RF-04, RF-10 | Somente compromissos sob responsabilidade do Treinador e serviços vinculados; registrar realizado/não realizado após o horário previsto, separado da presença. |
+| Agenda de atendimentos | Profissional de Saúde | RF-04, RF-06, RF-10 | Somente serviços e agenda atribuídos; registrar realizado/não realizado separado da presença/falta dos alunos. |
 | Presença e relatório de treino | Treinador | RF-06, RF-07 | Presente/falta por aluno; um relatório por sessão, rascunho/finalizado, volume com unidade e intensidade Borg CR10 (0–10). |
 | Notificação de sessão pendente | Treinador | RF-08 (fora do escopo) | Aviso por e-mail; classificado como exceção já implementada. |
 
@@ -36,8 +36,8 @@ Em 30/10/2026, o aviso de capacidade da tela "Novo agendamento" foi atualizado n
 - Ainda faltam a configuração de horários e bloqueios e os estados de sucesso do agendamento; atualmente há apenas atalhos e um resumo das validações.
 - A variante mostra a recusa por conflito de horário do aluno; essa verificação segue pendente de confirmação.
 - Mostrar os estados salvo/erro da presença nos atendimentos e uma tela do relatório finalizado somente para leitura. Os exemplos atuais já mostram presença/falta, campos do relatório por sessão, rascunho, volume com unidade e intensidade Borg CR10.
-- Revisar o filtro “Todos os serviços” na agenda do Treinador; mostrar apenas serviços vinculados ao perfil, conforme a decisão pendente D-09.
-- Ajustar a visão geral para RF-09 e RF-11 e os estados ministrado/não ministrado (RF-10) apenas depois de confirmar as definições pendentes do cenário.
+- O filtro “Todos os serviços” da agenda do Treinador pode reunir mais de um serviço, conforme esclarecimento de Pedro Lucas em 03/11/2026; deve incluir somente os serviços vinculados ao profissional.
+- Representar os estados realizado/não realizado de RF-10 nas agendas de Treinador e Profissional de Saúde, separadamente da presença/falta. RF-09 e RF-11 continuam dependendo das definições de pendências e indicadores.
 - Validar a experiência com usuários; não há resultados de teste registrados.
 
 ## Dependências
