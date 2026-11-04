@@ -39,12 +39,12 @@ Entregar uma API funcional, testada e documentada para sustentar a operação de
 | Perfil | Responsabilidades iniciais |
 |---|---|
 | Administrador | Mantém alunos, profissionais, serviços, horários e bloqueios; consulta pendências operacionais e, após definição dos indicadores, o dashboard simples (RF-02 a RF-05, RF-09, RF-11). |
-| Treinador | Consulta a agenda sob sua responsabilidade, registra presença/falta e cria/finaliza relatórios de treino; o registro de sessão ministrada está proposto para confirmação (RF-04, RF-06, RF-07, RF-10). |
-| Profissional de Saúde | Consulta somente os atendimentos atribuídos ao seu serviço e à sua agenda e registra presença/falta dos alunos atendidos; o registro de atendimento ministrado está proposto para confirmação (RF-04, RF-06, RF-10). |
+| Treinador | Consulta a agenda sob sua responsabilidade e os serviços vinculados, registra presença/falta, registra realizado/não realizado após o horário previsto e cria/finaliza relatórios de treino (RF-04, RF-06, RF-07, RF-10). |
+| Profissional de Saúde | Consulta somente os atendimentos dos serviços e da agenda vinculados ao seu usuário e registra presença/falta dos alunos atendidos; após o horário previsto, registra separadamente se o atendimento foi realizado (RF-04, RF-06, RF-10). |
 
 ## Escopo do MVP
 
-O MVP contempla uma API back-end com autenticação e autorização por perfil; cadastro dos dados de base e configuração de ao menos um serviço; gestão de horários e bloqueios; consulta de agenda e pendências operacionais; validação de conflitos e capacidade nos agendamentos; registro de presença/falta; e criação e finalização de relatórios de treino por profissionais autorizados (RF-01 a RF-07, RF-09; RN-01 a RN-07). A regra de conflito do aluno (RN-07) e a definição de pendência da RF-09 são propostas a confirmar.
+O MVP contempla uma API back-end com autenticação e autorização por perfil; cadastro dos dados de base e configuração de ao menos um serviço; gestão de horários e bloqueios; consulta de agenda e pendências operacionais; validação de conflitos e capacidade nos agendamentos; registro de presença/falta e do estado realizado/não realizado dos compromissos; e criação e finalização de relatórios de treino por profissionais autorizados (RF-01 a RF-07, RF-09 e RF-10; RN-01 a RN-07). A regra de conflito do aluno (RN-07) e a definição de pendência da RF-09 são propostas a confirmar.
 
 O registro de sessão/atendimento ministrado (RF-10), os indicadores do dashboard simples (RF-11) e o nível de detalhe da auditoria (RNF-06) são citados no cenário, mas dependem de esclarecimento antes de integrar o recorte aprovado.
 

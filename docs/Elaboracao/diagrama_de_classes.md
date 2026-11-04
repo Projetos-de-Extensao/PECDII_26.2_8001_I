@@ -96,7 +96,7 @@ class RegistroAuditoria <<proposta>> {
 Usuario "1" -- "0..*" Disponibilidade : possui
 Usuario "1" -- "0..*" BloqueioAgenda : define
 Usuario "1" -- "0..*" Sessao : profissional responsável
-Usuario "0..*" -- "0..*" Servico : habilitado para (proposta)
+Usuario "0..*" -- "0..*" Servico : habilitado para
 Usuario "1" -- "0..*" RegistroAuditoria : realiza
 Servico "1" -- "0..*" Sessao : classifica
 Aluno "1" -- "0..*" Participacao
@@ -132,17 +132,13 @@ end note
 | Servico | Categoria Treino, Fisioterapia, Psicologia ou Nutrição. | RF-02, RF-05, RN-04 | UC-02, UC-05 |
 | Disponibilidade | Faixa geral da agenda do profissional, compartilhada entre seus serviços habilitados. | RF-03, RF-05, RN-03 | UC-03, UC-05 |
 | BloqueioAgenda | Intervalo geral indisponível em todos os serviços do profissional. | RF-03, RF-05, RN-03 | UC-03, UC-05 |
-| Sessao | Ocorrência agendada de um serviço, com situação realizada/não realizada; fonte das pendências e de futuros indicadores operacionais. | RF-04, RF-05, RF-09, RF-10 (proposta), RF-11 (indicadores a confirmar), RN-01 a RN-04, RN-06, RN-07 (proposta) | UC-04, UC-05, UC-09, UC-10, UC-11 |
+| Sessao | Ocorrência agendada de um serviço, com situação realizada/não realizada; fonte das pendências e de futuros indicadores operacionais. | RF-04, RF-05, RF-09, RF-10, RF-11 (indicadores a confirmar), RN-01 a RN-04, RN-06, RN-07 (proposta) | UC-04, UC-05, UC-09, UC-10, UC-11 |
 | Participacao | Vínculo aluno–sessão/atendimento e presença/falta individual; permite verificar conflito do aluno e pendências de presença. | RF-05, RF-06, RF-09, RN-02, RN-06, RN-07 (proposta) | UC-05, UC-06, UC-09 |
-| RelatorioTreino | Um relatório imutável após finalização por sessão de Treino, associado ao Treinador e à lista de participantes da sessão. Registra objetivo, exercícios, volume (valor e unidade), intensidade Borg CR10 (0–10) e situação rascunho/finalizado; data, horário e local vêm da sessão. | RF-07, RF-09, RN-05 | UC-07, UC-09 |
+| RelatorioTreino | Um relatório por sessão de Treino, imutável após finalização e ligado à sessão, não diretamente ao usuário. O Treinador responsável atual edita o rascunho; reatribuições não movem o relatório. Registra participantes, objetivo, exercícios, volume (valor e unidade), intensidade Borg CR10 (0–10) e situação; data, horário e local vêm da sessão. | RF-07, RF-09, RN-05 | UC-07, UC-09 |
 | NotificacaoEmail | Marca o aviso excepcional enviado para a sessão. | RF-08 (fora do escopo) | UC-08 |
 | RegistroAuditoria | Registro somente de inclusão da autoria, operação, entidade e data/hora; detalhe sujeito a confirmação. | RNF-06 (proposta) | UC-05, UC-06, UC-07, UC-10 |
 
 O dashboard simples (RF-11) é uma consulta agregada; seus indicadores ainda não foram definidos, portanto não há uma classe de domínio específica para ele.
-
-## Decisões pendentes
-
-- Definir a distinção entre Treinador e Profissional de Saúde no cadastro (perfil único com tipo ou especialização de usuário).
 
 ## Referências
 

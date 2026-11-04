@@ -129,10 +129,10 @@ usuario ||--o{ registro_auditoria
 | usuario | `email` único; `perfil` restrito a ADMINISTRADOR, TREINADOR e PROFISSIONAL_SAUDE; senha guardada só como hash. | — | RF-01, RNF-02 |
 | aluno | Campos compatíveis com o modelo `Aluno` atual. | — | RF-02 |
 | servico | `nome` único; `categoria` restrita a TREINO, FISIOTERAPIA, PSICOLOGIA e NUTRICAO. | — | RF-02 |
-| profissional_servico **(proposta)** | Par `(profissional_id, servico_id)` único. Representa a habilitação do profissional para o serviço. | `(servico_id)` | RN-04 |
+| profissional_servico | Par `(profissional_id, servico_id)` único. Representa os serviços aos quais o profissional está vinculado. | `(servico_id)` | RN-04 |
 | disponibilidade | `fim > inicio`. | `(profissional_id, inicio)` | RF-03, RN-03 |
 | bloqueio_agenda | `fim > inicio`. | `(profissional_id, inicio)` | RF-03, RN-03 |
-| sessao | `fim > inicio`; `situacao` restrita a AGENDADA, REALIZADA, NAO_REALIZADA e CANCELADA. | `(profissional_id, inicio)`, `(inicio)` | RF-04, RF-05, RF-09, RF-10 (proposta), RF-11 (indicadores a definir), RN-01 |
+| sessao | `fim > inicio`; `situacao` restrita a AGENDADA, REALIZADA, NAO_REALIZADA e CANCELADA. | `(profissional_id, inicio)`, `(inicio)` | RF-04, RF-05, RF-09, RF-10, RF-11 (indicadores a definir), RN-01 |
 | participacao | Par `(sessao_id, aluno_id)` único; `situacao_presenca` nula até o registro, depois PRESENTE ou FALTA. | `(aluno_id)` | RF-05, RF-06, RN-02, RN-07 |
 | relatorio_treino | `sessao_id` único (um relatório por sessão); `intensidade` entre 0 e 10; `situacao` RASCUNHO ou FINALIZADO. | — | RF-07 |
 | registro_auditoria **(proposta)** | Somente inserção; a API não altera nem apaga registros. | `(entidade, entidade_id)` | RNF-06 |
@@ -141,7 +141,7 @@ usuario ||--o{ registro_auditoria
 
 - **usuario → sessao (1 : 0..N):** cada sessão tem exatamente um profissional responsável, e um profissional pode ter várias sessões. A restrição de perfil (Treinador ou Profissional de Saúde) é validada pela API, não pela chave.
 - **servico → sessao (1 : 0..N):** cada sessão é de um único serviço.
-- **usuario ↔ servico (N : N, via profissional_servico):** um profissional pode estar habilitado para vários serviços, e um serviço pode ter vários profissionais. Ver D-09.
+- **usuario ↔ servico (N : N, via profissional_servico):** usuários com perfil profissional podem ter vários serviços vinculados; um serviço pode ter vários profissionais. Pedro Lucas confirmou em 03/11/2026 que o Treinador pode atuar em mais de um serviço. O perfil do usuário é um campo enumerado em `usuario`; não há tabelas de especialização.
 - **sessao ↔ aluno (N : N, via participacao):** a participação guarda a presença de cada aluno. O limite máximo é de 6 alunos por sessão para qualquer serviço (RN-02).
 - **sessao → relatorio_treino (1 : 0..1):** o relatório só existe para sessões de Treino, e a unicidade de `sessao_id` garante um por sessão.
 - **disponibilidade e bloqueio_agenda → usuario (N : 1):** os períodos são gerais por profissional, conforme a D-06.
@@ -152,14 +152,13 @@ usuario ||--o{ registro_auditoria
 - **Concorrência (RNF-03):** o projeto usa SQLite. No SQLite, o Django ignora o `select_for_update`, e a escrita bloqueia o banco inteiro. Isso evita a gravação simultânea, mas precisa ser comprovado pelo teste concorrente do RNF-03. Se o banco mudar para PostgreSQL, intervalos sobrepostos podem ser barrados por uma *exclusion constraint*.
 - **Imutabilidade do relatório finalizado (RF-07):** é validada pela API, não por restrição de banco.
 
-## Decisões pendentes que afetam o DER
+## Decisões de modelagem registradas no DER
 
 | Decisão | Efeito no DER |
 |---|---|
 | D-01 capacidade | O limite de 6 alunos por sessão vale para qualquer serviço e será uma constante de validação no backend do MVP; não há coluna de capacidade em `servico` ou `sessao`. |
-| A3 habilitação profissional–serviço | `profissional_servico` é proposta até o diagrama de classes incluir a associação. |
-| D-08 relatório × Treinador | Hoje o relatório chega ao Treinador por `sessao.profissional_id`. Se o vínculo precisar ser direto, entra `relatorio_treino.treinador_id`. |
-| D-09 perfis | Se Treinador e Profissional de Saúde virarem especializações, `usuario` se divide em tabelas próprias. |
+| D-08 relatório × Treinador | `relatorio_treino` pertence somente à sessão. O responsável profissional atual controla o rascunho; reatribuir a sessão não move o relatório. |
+| D-09 perfis e serviços | `usuario.perfil` distingue os três perfis; profissionais podem ter vários serviços por meio de `profissional_servico`. |
 | RNF-06 auditoria | `registro_auditoria` é proposta até a confirmação do nível de detalhe. |
 
 ## Desvios em relação às migrações atuais
