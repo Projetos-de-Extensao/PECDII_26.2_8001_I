@@ -38,7 +38,7 @@ Este glossário padroniza os termos dos requisitos, casos de uso, modelos e prot
 | Termo encontrado em artefatos anteriores | Decisão atual |
 |---|---|
 | Coordenação/coordenador | Substituir por **Administrador** quando indicar perfil de acesso do produto. Manter apenas em registros históricos de pesquisa ou brainstorm, identificados como anteriores ao cenário. |
-| Professor/instrutor | Usar **Treinador** para o perfil do cenário. O código atual ainda contém o modelo `Professor`; esse nome técnico é legado e deve ser migrado em trabalho de implementação próprio, sem alterar o significado do ator nos artefatos atuais. |
+| Professor/instrutor | Usar **Treinador** para o perfil do cenário. O nome `Professor` permanece apenas nas migrações históricas e nos registros da migração de dados; a API e o modelo atual usam `Usuario` com perfil `TREINADOR`. |
 | Atividade/modalidade | Usar **Serviço** para uma das quatro categorias do cenário. Preservar “atividade” somente em citação histórica ou quando se referir a outro conceito validado. |
 | Espaço/sala | Não tratar como entidade ou regra do MVP sem validação: o cenário atual não lista espaço entre perfis, funcionalidades iniciais ou critérios de aceite. |
 | Responsável legal/consentimento | Não tratar como perfil ou fluxo do MVP: não aparece entre os três perfis do cenário. Menções nos artefatos históricos ficam identificadas como legado. |

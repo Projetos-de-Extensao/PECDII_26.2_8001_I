@@ -2,7 +2,6 @@ from rest_framework.routers import DefaultRouter
 
 from app.views import (
     AlunoViewSet,
-    ProfessorViewSet,
     ProfissionalViewSet,
     ServicoViewSet,
     SessaoViewSet,
@@ -12,7 +11,6 @@ from app.views import (
 # Registra os endpoints REST de cada recurso da API.
 router = DefaultRouter()
 router.register('alunos', AlunoViewSet, basename='aluno')
-router.register('professores', ProfessorViewSet, basename='professor')
 router.register('profissionais', ProfissionalViewSet, basename='profissional')
 router.register('servicos', ServicoViewSet, basename='servico')
 router.register('sessoes', SessaoViewSet, basename='sessao')
