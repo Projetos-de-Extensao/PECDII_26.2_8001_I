@@ -4,7 +4,7 @@ title: Diagrama Entidade-Relacionamento
 ---
 # Diagrama Entidade-Relacionamento do GAAP
 
-Este DER traduz o [modelo conceitual](diagrama_de_classes.md) e o [levantamento de requisitos](levreq.md) em tabelas relacionais, como exige a seção 8 do [cenário](../Iniciacao/cenario.md). As migrações 0009–0012 criam o catálogo de serviços, usuários e vínculos profissional-serviço, e convertem os antigos professores em usuários com perfil Treinador. A migração 0012 também transfere a responsabilidade pelas sessões para `Usuario`; o modelo e a tabela `Professor` deixam de ser usados. A migração é interrompida se houver conflito de e-mail ou do login interno, para não associar registros à conta errada. A compatibilidade deve ser conferida antes do merge da Construção 1. As escolhas de modelagem seguem o [registro de decisões](revisao_cruzada.md#registro-de-decisoes-e-duvidas).
+Este DER traduz o [modelo conceitual](diagrama_de_classes.md) e o [levantamento de requisitos](levreq.md) em tabelas relacionais, como exige a seção 8 do [cenário](../Iniciacao/cenario.md). As migrações 0009–0012 criam o catálogo de serviços, usuários e vínculos profissional-serviço, e convertem os antigos professores em usuários com perfil Treinador. A migração 0012 também transfere a responsabilidade pelas sessões para `Usuario`; o modelo e a tabela `Professor` deixam de ser usados. A migração é interrompida se houver conflito de e-mail ou do login interno, para não associar registros à conta errada. A compatibilidade com as migrações foi conferida ao fim da Construção 1 (#88), e as diferenças que restam estão em [Desvios em relação às migrações atuais](#desvios-em-relacao-as-migracoes-atuais). As escolhas de modelagem seguem o [registro de decisões](revisao_cruzada.md#registro-de-decisoes-e-duvidas).
 
 ## Diagrama
 
@@ -178,6 +178,10 @@ usuario ||--o{ registro_auditoria
 |---|---|
 | `Professor` com nome, e-mail e telefone | Migração 0012 converte cada registro em `usuario` com perfil Treinador, preserva contato e redireciona as sessões. A conta recebe login interno `gaap-migrado-professor-{id}` e senha inutilizável até um Administrador definir uma. |
 | `Sessao.titulo`, `descricao`, `observacoes` e `tipo` (TREINAMENTO/AVALIACAO) | O tipo dá lugar a `servico_id`; os demais campos não aparecem nos requisitos atuais. |
+| `Sessao.profissional` opcional (migração 0012) | No DER-alvo, `profissional_id` é obrigatório. A coluna ficou opcional porque `Sessao.professor` também era, e pode haver sessões antigas sem responsável. A API já exige o profissional ao criar a sessão e no `PUT`. A coluna passa a ser obrigatória quando a sessão for refeita na Construção 2, depois de tratar as sessões sem responsável. |
+| `Sessao.status` sem a coluna `local` | O DER chama a coluna de `situacao` e prevê `local`. Os valores são os mesmos: AGENDADA, REALIZADA, NAO_REALIZADA e CANCELADA. |
+| Restrições `CHECK` de `usuario.perfil`, `sessao.situacao` e `fim > inicio` | Nas migrações, o perfil e o status são validados pelas opções do modelo no Django, e `fim > inicio` pelo serializer da sessão; o banco não tem essas restrições. Só `servico.categoria` tem restrição no banco (migração 0009). |
+| Profissional com sessões (#88) | Como `Sessao.profissional` é `PROTECT`, a API recusa com `409` a remoção de um profissional responsável por sessões, e o modelo recusa mudar o perfil dele para Administrador. As sessões precisam ser transferidas antes. |
 | `Servico` com `nome` único e categoria restrita às quatro áreas (migração 0009) | Igual à tabela `servico` do DER. |
 | `ProfissionalServico` com o par `(profissional_id, servico_id)` único (migração 0011) | Igual à tabela `profissional_servico` do DER. A restrição de perfil (só Treinador e Profissional de Saúde) é validada pela aplicação, não pelo banco, porque o perfil fica em outra tabela. |
 | Sem tabelas de disponibilidade, bloqueio, participação ou relatório | Permanecem pendentes para as iterações seguintes. |
