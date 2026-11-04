@@ -43,6 +43,51 @@ class Professor(TelefoneMixin, models.Model):
         return self.nome
 
 
+class Servico(models.Model):
+    """Serviço oferecido pela escola, como um treino ou uma consulta."""
+
+    class Categoria(models.TextChoices):
+        """Áreas de atendimento previstas no cenário GAAP."""
+
+        TREINO = 'TREINO', 'Treino'
+        FISIOTERAPIA = 'FISIOTERAPIA', 'Fisioterapia'
+        PSICOLOGIA = 'PSICOLOGIA', 'Psicologia'
+        NUTRICAO = 'NUTRICAO', 'Nutrição'
+
+    nome = models.CharField(
+        max_length=100,
+        unique=True,
+        error_messages={'unique': 'Já existe um serviço com este nome.'},
+    )
+    categoria = models.CharField(max_length=20, choices=Categoria.choices)
+
+    class Meta:
+        ordering = ['nome']
+        verbose_name = 'serviço'
+        verbose_name_plural = 'serviços'
+        constraints = [
+            # Garante a categoria também em gravações que não passam pela validação do Django.
+            models.CheckConstraint(
+                condition=models.Q(categoria__in=['TREINO', 'FISIOTERAPIA', 'PSICOLOGIA', 'NUTRICAO']),
+                name='servico_categoria_valida',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        """Remove espaços nas pontas para que 'Pilates ' e 'Pilates' não convivam."""
+        self.nome = (self.nome or '').strip()
+        super().save(*args, **kwargs)
+
+    def clean_fields(self, exclude=None):
+        """Limpa o nome antes das validações, para que um nome só de espaços conte como vazio."""
+        self.nome = (self.nome or '').strip()
+        super().clean_fields(exclude)
+
+    def __str__(self):
+        """Retorna o nome do serviço para exibição."""
+        return self.nome
+
+
 class Sessao(models.Model):
     """Representa um treinamento ou avaliação agendada."""
 

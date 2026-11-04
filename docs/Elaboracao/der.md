@@ -4,7 +4,7 @@ title: Diagrama Entidade-Relacionamento
 ---
 # Diagrama Entidade-Relacionamento do GAAP
 
-Este DER traduz o [modelo conceitual](diagrama_de_classes.md) e o [levantamento de requisitos](levreq.md) em tabelas relacionais, como exige a seção 8 do [cenário](../Iniciacao/cenario.md). Ele descreve o **modelo-alvo**: as migrações atuais ainda são do domínio anterior (`Aluno`, `Professor`, `Sessao`), e a compatibilidade com as migrações será verificada quando a Construção 1 for implementada. Elementos marcados **(proposta)** dependem de decisões ainda abertas no [registro de decisões](revisao_cruzada.md#registro-de-decisoes-e-duvidas).
+Este DER traduz o [modelo conceitual](diagrama_de_classes.md) e o [levantamento de requisitos](levreq.md) em tabelas relacionais, como exige a seção 8 do [cenário](../Iniciacao/cenario.md). Ele descreve o **modelo-alvo**. As migrações ainda são, em grande parte, do domínio anterior (`Aluno`, `Professor`, `Sessao`); a tabela `servico` já existe desde a migração 0009. A compatibilidade completa com as migrações será verificada ao fim da Construção 1. As escolhas de modelagem seguem o [registro de decisões](revisao_cruzada.md#registro-de-decisoes-e-duvidas).
 
 ## Diagrama
 
@@ -37,7 +37,7 @@ entity servico {
   * categoria : varchar(20) <<CHECK>>
 }
 
-entity profissional_servico <<proposta>> {
+entity profissional_servico {
   * id : PK
   --
   * profissional_id : FK
@@ -174,11 +174,12 @@ usuario ||--o{ registro_auditoria
 
 ## Desvios em relação às migrações atuais
 
-| Modelo atual (migrações 0001–0008) | DER-alvo |
+| Modelo atual (migrações 0001–0009) | DER-alvo |
 |---|---|
 | `Professor` com nome, e-mail e telefone | Substituído por `usuario` com perfil; a migração de dados é tarefa da Construção 1 (risco R-03). |
 | `Sessao.titulo`, `descricao`, `observacoes` e `tipo` (TREINAMENTO/AVALIACAO) | O tipo dá lugar a `servico_id`; os demais campos não aparecem nos requisitos atuais. |
-| Sem tabelas de serviço, disponibilidade, bloqueio, participação ou relatório | Criadas no DER-alvo. |
+| `Servico` com `nome` único e categoria restrita às quatro áreas (migração 0009) | Igual à tabela `servico` do DER. O vínculo `profissional_servico` entra depois do modelo de usuário (#78). |
+| Sem tabelas de disponibilidade, bloqueio, participação ou relatório | Criadas no DER-alvo. |
 | `Sessao.notificacao_enviada_em` (RF-08) | A implementação atual usa essa coluna. O modelo-alvo a substitui pela tabela `notificacao_email`, que registra cada tipo de aviso e evita duplicidade também para RF-12. |
 
 ## Referências

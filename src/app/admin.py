@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 
-from app.models import Aluno, Professor, Sessao
+from app.models import Aluno, Professor, Servico, Sessao
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -82,6 +82,16 @@ class AlunoAdmin(admin.ModelAdmin):
     def telefone_formatado(self, obj):
         """Exibe o telefone do aluno conforme o país do DDI."""
         return formatar_telefone(obj.telefone)
+
+
+@admin.register(Servico)
+class ServicoAdmin(admin.ModelAdmin):
+    """Permite ao administrador manter o catálogo de serviços."""
+
+    list_display = ('nome', 'categoria')
+    list_filter = ('categoria',)
+    search_fields = ('nome',)
+    ordering = ('nome',)
 
 
 @admin.register(Sessao)
