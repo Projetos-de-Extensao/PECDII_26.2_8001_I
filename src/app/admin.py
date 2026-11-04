@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 
-from app.models import Aluno, Professor, Servico, Sessao, Usuario
+from app.models import Aluno, ProfissionalServico, Professor, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -92,14 +92,29 @@ class AlunoAdmin(admin.ModelAdmin):
         return formatar_telefone(obj.telefone)
 
 
+class ProfissionalServicoInline(admin.TabularInline):
+    """Lista, dentro do serviço, os profissionais habilitados a atendê-lo."""
+
+    model = ProfissionalServico
+    extra = 1
+    verbose_name = 'profissional habilitado'
+    verbose_name_plural = 'profissionais habilitados'
+
+
 @admin.register(Servico)
 class ServicoAdmin(admin.ModelAdmin):
     """Permite ao administrador manter o catálogo de serviços."""
 
-    list_display = ('nome', 'categoria')
+    inlines = [ProfissionalServicoInline]
+    list_display = ('nome', 'categoria', 'quantidade_de_profissionais')
     list_filter = ('categoria',)
     search_fields = ('nome',)
     ordering = ('nome',)
+
+    @admin.display(description='Profissionais')
+    def quantidade_de_profissionais(self, obj):
+        """Mostra quantos profissionais atendem o serviço."""
+        return obj.vinculos.count()
 
 
 @admin.register(Sessao)

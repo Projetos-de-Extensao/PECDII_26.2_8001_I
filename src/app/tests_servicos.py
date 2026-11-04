@@ -1,9 +1,12 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.forms import modelform_factory
 from django.test import TestCase
 
-from app.models import Servico
+from app.admin import ProfissionalServicoInline
+from app.models import ProfissionalServico, Servico, Usuario
 
 
 class ServicoModelTests(TestCase):
@@ -93,3 +96,105 @@ class ServicoModelTests(TestCase):
 
     def test_servico_aparece_no_django_admin(self):
         self.assertTrue(admin.site.is_registered(Servico))
+
+
+class ProfissionalServicoTests(TestCase):
+    """Verifica o vínculo entre profissionais e serviços (issue #79, RN-04)."""
+
+    def setUp(self):
+        self.treino = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
+        self.fisio = Servico.objects.create(nome='Fisioterapia esportiva', categoria=Servico.Categoria.FISIOTERAPIA)
+        self.treinador = self.criar_usuario('Bruno Costa', Usuario.Perfil.TREINADOR)
+        self.fisioterapeuta = self.criar_usuario('Carla Dias', Usuario.Perfil.PROFISSIONAL_SAUDE)
+        self.administrador = self.criar_usuario('Ana Souza', Usuario.Perfil.ADMINISTRADOR)
+
+    def criar_usuario(self, nome, perfil):
+        login = nome.lower().replace(' ', '.')
+        return Usuario.objects.create(
+            conta=get_user_model().objects.create_user(username=login, password='senha-de-teste'),
+            nome=nome,
+            email=f'{login}@example.com',
+            perfil=perfil,
+        )
+
+    def test_treinador_e_profissional_de_saude_podem_ser_vinculados(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.treino)
+        ProfissionalServico.objects.create(profissional=self.fisioterapeuta, servico=self.fisio)
+
+        self.assertEqual(ProfissionalServico.objects.count(), 2)
+
+    def test_profissional_pode_atender_varios_servicos(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.treino)
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.fisio)
+
+        self.assertQuerySetEqual(
+            Servico.objects.filter(vinculos__profissional=self.treinador),
+            [self.fisio, self.treino],
+        )
+
+    def test_servico_pode_ter_varios_profissionais(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.fisio)
+        ProfissionalServico.objects.create(profissional=self.fisioterapeuta, servico=self.fisio)
+
+        self.assertQuerySetEqual(
+            Usuario.objects.filter(vinculos__servico=self.fisio),
+            [self.treinador, self.fisioterapeuta],
+        )
+
+    def test_administrador_nao_pode_ser_vinculado(self):
+        with self.assertRaises(ValidationError) as contexto:
+            ProfissionalServico.objects.create(profissional=self.administrador, servico=self.treino)
+
+        self.assertEqual(
+            contexto.exception.message_dict['profissional'],
+            ['Apenas Treinador ou Profissional de Saúde podem ser vinculados a um serviço.'],
+        )
+        self.assertFalse(ProfissionalServico.objects.exists())
+
+    def test_vinculo_repetido_e_rejeitado_na_validacao(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.treino)
+
+        with self.assertRaises(ValidationError) as contexto:
+            ProfissionalServico.objects.create(profissional=self.treinador, servico=self.treino)
+
+        self.assertIn(
+            'Este profissional já está vinculado a este serviço.',
+            contexto.exception.messages,
+        )
+
+    def test_vinculo_repetido_e_barrado_pelo_banco(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.treino)
+
+        # bulk_create não passa pelo save(), então quem barra aqui é a restrição do banco.
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                ProfissionalServico.objects.bulk_create(
+                    [ProfissionalServico(profissional=self.treinador, servico=self.treino)]
+                )
+
+    def test_remover_servico_remove_seus_vinculos(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.treino)
+
+        self.treino.delete()
+
+        self.assertFalse(ProfissionalServico.objects.exists())
+        self.assertTrue(Usuario.objects.filter(pk=self.treinador.pk).exists())
+
+    def test_remover_profissional_remove_seus_vinculos(self):
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.treino)
+
+        self.treinador.delete()
+
+        self.assertFalse(ProfissionalServico.objects.exists())
+        self.assertTrue(Servico.objects.filter(pk=self.treino.pk).exists())
+
+    def test_admin_oferece_apenas_perfis_profissionais(self):
+        formulario = modelform_factory(ProfissionalServico, fields=['profissional', 'servico'])()
+        opcoes = formulario.fields['profissional'].queryset
+
+        self.assertIn(self.treinador, opcoes)
+        self.assertIn(self.fisioterapeuta, opcoes)
+        self.assertNotIn(self.administrador, opcoes)
+
+    def test_vinculos_aparecem_no_admin_do_servico(self):
+        self.assertIn(ProfissionalServicoInline, admin.site.get_model_admin(Servico).inlines)

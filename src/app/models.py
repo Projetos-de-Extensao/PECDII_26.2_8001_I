@@ -171,3 +171,45 @@ class Usuario(TelefoneMixin, models.Model):
     def __str__(self):
         """Retorna o nome do usuário para exibição."""
         return self.nome
+
+
+class ProfissionalServico(models.Model):
+    """Indica que um profissional está habilitado a atender um serviço (RN-04)."""
+
+    profissional = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='vinculos',
+        # Só Treinador e Profissional de Saúde atendem; o Administrador não tem serviço.
+        limit_choices_to={'perfil__in': [perfil.value for perfil in Usuario.PERFIS_PROFISSIONAIS]},
+        error_messages={
+            'invalid': 'Apenas Treinador ou Profissional de Saúde podem ser vinculados a um serviço.',
+        },
+    )
+    servico = models.ForeignKey(
+        Servico,
+        on_delete=models.CASCADE,
+        related_name='vinculos',
+        verbose_name='serviço',
+    )
+
+    class Meta:
+        ordering = ['servico__nome', 'profissional__nome']
+        verbose_name = 'vínculo profissional-serviço'
+        verbose_name_plural = 'vínculos profissional-serviço'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['profissional', 'servico'],
+                name='profissional_servico_unico',
+                violation_error_message='Este profissional já está vinculado a este serviço.',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        """Valida o perfil e a duplicidade antes de gravar, mesmo fora do admin."""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        """Retorna o par profissional e serviço para exibição."""
+        return f'{self.profissional} — {self.servico}'
