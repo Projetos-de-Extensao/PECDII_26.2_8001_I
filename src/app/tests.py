@@ -611,5 +611,5 @@ class MigrarProfessorParaUsuarioTests(TransactionTestCase):
         self.assertEqual(perfil.telefone, '+5521912345678')
         self.assertEqual(perfil.perfil, 'TREINADOR')
         self.assertEqual(perfil.conta.username, f'gaap-migrado-professor-{self.professor_id}')
-        self.assertFalse(perfil.conta.has_usable_password())
+        self.assertTrue(perfil.conta.password.startswith('!'))
         self.assertEqual(sessao.profissional_id, perfil.pk)
