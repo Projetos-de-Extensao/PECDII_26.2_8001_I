@@ -346,6 +346,19 @@ class ProfissionalApiTests(TestCase):
         self.assertFalse(Usuario.objects.filter(pk=profissional.pk).exists())
         self.assertFalse(get_user_model().objects.filter(username='bruno').exists())
 
+    def test_remocao_de_profissional_com_sessoes_e_recusada(self):
+        self.cadastrar()
+        profissional = Usuario.objects.get(email='bruno@example.com')
+        agora = timezone.now()
+        Sessao.objects.create(inicio=agora, fim=agora + timedelta(hours=1), profissional=profissional)
+
+        response = self.client.delete(f'/api/profissionais/{profissional.pk}/')
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn('Transfira as sessões', response.data['detail'])
+        self.assertTrue(Usuario.objects.filter(pk=profissional.pk).exists())
+        self.assertTrue(get_user_model().objects.filter(username='bruno').exists())
+
     def test_listagem_traz_apenas_perfis_profissionais(self):
         self.cadastrar()
 
