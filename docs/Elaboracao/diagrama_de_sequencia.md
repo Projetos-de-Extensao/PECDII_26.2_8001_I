@@ -8,7 +8,7 @@ Os diagramas usam os perfis e IDs definidos no [levantamento de requisitos](levr
 
 ## Confirmar agendamento
 
-**Ator:** Administrador. **Requisitos:** RF-03, RF-05. **Regras:** RN-01 a RN-04, RN-06 e RN-07 (proposta). **Resultado:** a sessão é confirmada integralmente ou a operação é recusada sem persistência parcial.
+**Ator:** Administrador. **Requisitos:** RF-03, RF-05. **Regras:** RN-01 a RN-04, RN-06 e RN-07. **Resultado:** a sessão é confirmada integralmente ou a operação é recusada sem persistência parcial.
 
 ```plantuml
 @startuml confirmar_agendamento
@@ -43,7 +43,7 @@ end
 @enduml
 ```
 
-O bloco de validação cobre os campos obrigatórios e intervalo (400), compatibilidade do profissional (RN-04), bloqueios e disponibilidade (RN-03), sobreposição de horários do profissional (RN-01) e dos alunos participantes (RN-07, proposta), além da capacidade máxima informada de 6 alunos (RN-02). Uma falha informa o motivo específico e não grava uma sessão parcial. A confirmação usa transação para impedir que solicitações concorrentes ultrapassem a capacidade (RN-06).
+O bloco de validação cobre os campos obrigatórios e intervalo (400), compatibilidade do profissional (RN-04), bloqueios e disponibilidade (RN-03), sobreposição de horários do profissional (RN-01) e dos alunos participantes (RN-07), além da capacidade máxima informada de 6 alunos (RN-02). Conflitos retornam mensagem clara para o profissional ou aluno e não gravam sessão. A confirmação usa transação para impedir que solicitações concorrentes ultrapassem a capacidade (RN-06).
 
 **Regra definida:** a validação de capacidade aplica o máximo de 6 alunos por sessão a qualquer serviço, por meio de uma constante no backend do MVP. A disponibilidade e os bloqueios são gerais por profissional, compartilhados entre serviços; a compatibilidade do profissional com cada serviço é verificada separadamente.
 
@@ -96,5 +96,5 @@ end
 
 | Fluxo | Casos de Uso | Requisitos | Regras |
 |---|---|---|---|
-| Confirmar agendamento | UC-05 | RF-03, RF-05 | RN-01, RN-02, RN-03, RN-04, RN-06, RN-07 (proposta) |
+| Confirmar agendamento | UC-05 | RF-03, RF-05 | RN-01, RN-02, RN-03, RN-04, RN-06, RN-07 |
 | Finalizar relatório de treino | UC-07 | RF-01, RF-07 | RN-05 |

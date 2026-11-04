@@ -16,19 +16,20 @@ Esta matriz liga os requisitos estáveis do [levantamento](levreq.md) aos docume
 | RF-06 | Objetivos/perfis | UC-06 | Participacao | — (registro separado do relatório; sem sequência própria) | Presença no Treino e no atendimento | Minha agenda (Treino); presença/falta exemplificada nos atendimentos, ainda sem estado salvo ou erro |
 | RF-07 | Objetivos/perfis | UC-07 | RelatorioTreino | Finalizar relatório | Relatório de treino | Minha agenda; campos, métricas e ações de rascunho/finalização exemplificados; falta tela finalizada somente para leitura |
 | RF-08 (fora do escopo) | Fora do escopo | UC-08 | NotificacaoEmail | — | Mapa de telas; sem wireframe do e-mail | Aviso por e-mail não representado nos exports |
-| RF-09 | Objetivos/perfis/MVP | UC-09 | Sessao, Participacao, RelatorioTreino | — | Visão geral e pendências | Visão geral: resumo; definição de pendência a confirmar |
+| RF-09 | Objetivos/perfis/MVP | UC-09 | Sessao, Participacao, RelatorioTreino | — | Visão geral e pendências | Visão geral: resumo; critério de pendência definido, mas estados visuais ainda precisam ser completados |
 | RF-10 | Objetivos/perfis | UC-10 | Sessao.situacao | — | Agenda do Treinador e atendimentos | Registro realizado/não realizado definido; representação nos exports ainda pendente |
-| RF-11 (a confirmar) | Objetivos/perfis | UC-11 | Consulta agregada de Sessao; sem classe própria | — | Visão geral: indicadores a definir | Visão geral: números exemplificativos, não validados |
+| RF-11 | Objetivos/perfis | UC-11 | Consulta agregada de Sessao por serviço e situação; sem classe própria | — | Visão geral: contagens por serviço/situação | Indicadores definidos; representação visual ainda precisa ser atualizada |
+| RF-12 | Objetivos/perfis | UC-12 | Sessao, RelatorioTreino, NotificacaoEmail | — | E-mail de lembrete | Lembrete 24h após fim se relatório ausente/rascunho; fluxo ainda não representado no protótipo |
 | RN-01 a RN-04 | Escopo do MVP | UC-05 | Sessao, Serviço, Disponibilidade, BloqueioAgenda | Confirmar agendamento | Agenda/confirmação | Novo agendamento e variante de recusa para indisponibilidade, bloqueio, conflito e incompatibilidade; configuração e estado de sucesso pendentes |
 | RN-05 | Perfis | UC-06, UC-07 | Usuario, Participacao, RelatorioTreino | Finalizar relatório (Treino); presença sem sequência própria | Minha agenda e atendimentos | Presença no atendimento exemplificada; falta estado salvo e erro |
 | RN-06 | Escopo do MVP | UC-05 | Sessao, Participacao | Confirmar agendamento | Resultado da confirmação; atomicidade interna à API | Novo agendamento; atomicidade interna à API |
-| RN-07 (proposta) | Objetivos/MVP | UC-05 | Aluno, Participacao, Sessao; DER participacao | Confirmar agendamento | Agenda/confirmação; validação interna | Variante de recusa exemplifica conflito do aluno; regra segue proposta a confirmar |
+| RN-07 | Objetivos/MVP | UC-05 | Aluno, Participacao, Sessao; DER participacao | Confirmar agendamento | Agenda/confirmação; validação interna | Variante de recusa exemplifica conflito do aluno; regra decidida para o MVP |
 | RNF-01 | Restrições | UC-02, UC-05, UC-07 | Modelo relacional | Ambos (persistência) | — | — (modelo de dados interno à API) |
 | RNF-02 | Restrições | UC-01 | Usuario | — | — (hash de senha interno à API) | — (hash de senha interno à API) |
 | RNF-03 | Escopo/qualidade | UC-05 | Sessao, Participacao | Confirmar agendamento | — (concorrência e atomicidade internas à API) | — (concorrência e atomicidade internas à API) |
 | RNF-04 | Restrições | UC-01 a UC-07, UC-09 a UC-11 | Usuario | Ambos | Erro de acesso/dados | Login; outros estados de erro pendentes nos exports |
 | RNF-05 | Restrições | UC-01 a UC-07, UC-09 | Todos | Ambos | — (testes e documentação fora da interface) | — (testes e documentação fora da interface) |
-| RNF-06 (proposta) | Objetivos/qualidade | UC-05, UC-06, UC-07, UC-10 | RegistroAuditoria; DER registro_auditoria | — (auditoria a detalhar) | — (registro interno à API) | — (registro interno à API) |
+| RNF-06 | Objetivos/qualidade | UC-02, UC-05, UC-06, UC-07, UC-10 | RegistroAuditoria com mensagem legível; DER registro_auditoria | — | Registro interno à API | Registro interno à API |
 
 ## Lacunas de rastreabilidade
 
