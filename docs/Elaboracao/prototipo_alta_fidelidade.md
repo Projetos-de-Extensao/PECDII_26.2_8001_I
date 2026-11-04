@@ -18,13 +18,14 @@ Em 30/10/2026, o aviso de capacidade da tela "Novo agendamento" foi atualizado n
 |---|---|---|---|
 | Login | Todos | RF-01 | Sucesso, credenciais inválidas, perfil sem autorização. |
 | Cadastros de aluno, profissional e serviço | Administrador | RF-02 | Lista, formulário, validação de campos e confirmação. |
-| Visão geral e pendências | Administrador | RF-04, RF-09, RF-11 | Pendências com definição a confirmar; indicadores simples a definir com o responsável pelo cenário. |
+| Visão geral e pendências | Administrador | RF-04, RF-09, RF-11 | Incluir filtros por tipo de pendência, contador no menu e atalhos de consulta; dashboard com período visível, contagens por serviço/situação, ordenação por total e zeros explícitos ainda precisa ser refletido integralmente no protótipo. Destaque de cor é opcional. |
 | Agenda, disponibilidade e bloqueios | Administrador | RF-03, RF-04 | Agenda vazia, resultado, bloqueio e erro de intervalo. |
 | Confirmação de agendamento | Administrador | RF-05 | Sucesso, conflito do profissional ou do aluno, bloqueio, capacidade excedida e serviço incompatível. |
 | Agenda de sessões | Treinador | RF-04, RF-10 | Somente compromissos sob responsabilidade do Treinador e serviços vinculados; registrar realizado/não realizado após o horário previsto, separado da presença. |
 | Agenda de atendimentos | Profissional de Saúde | RF-04, RF-06, RF-10 | Somente serviços e agenda atribuídos; registrar realizado/não realizado separado da presença/falta dos alunos. |
 | Presença e relatório de treino | Treinador | RF-06, RF-07 | Presente/falta por aluno; um relatório por sessão, rascunho/finalizado, volume com unidade e intensidade Borg CR10 (0–10). |
 | Notificação de sessão pendente | Treinador | RF-08 (fora do escopo) | Aviso por e-mail; classificado como exceção já implementada. |
+| Lembrete de relatório pendente | Treinador responsável | RF-12 | E-mail enviado uma vez após 24 horas se o relatório não existir ou seguir em rascunho; fluxo ainda não representado no protótipo. |
 
 ## Regras de consistência visual
 
@@ -34,10 +35,10 @@ Em 30/10/2026, o aviso de capacidade da tela "Novo agendamento" foi atualizado n
 - Manter a distinção entre regra proposta e decisão confirmada; consultar as pendências do [levantamento de requisitos](levreq.md).
 - A variante de recusa do agendamento foi acrescentada em desktop e mobile, com indisponibilidade, bloqueio, conflito do aluno e incompatibilidade. O desktop também mostra a capacidade excedida (7/6); no mobile aparece o limite geral de 6 alunos por sessão.
 - Ainda faltam a configuração de horários e bloqueios e os estados de sucesso do agendamento; atualmente há apenas atalhos e um resumo das validações.
-- A variante mostra a recusa por conflito de horário do aluno; essa verificação segue pendente de confirmação.
+- A variante mostra a recusa por conflito de horário do aluno, conforme RN-07 decidida para o MVP.
 - Mostrar os estados salvo/erro da presença nos atendimentos e uma tela do relatório finalizado somente para leitura. Os exemplos atuais já mostram presença/falta, campos do relatório por sessão, rascunho, volume com unidade e intensidade Borg CR10.
 - O filtro “Todos os serviços” da agenda do Treinador pode reunir mais de um serviço, conforme esclarecimento de Pedro Lucas em 03/11/2026; deve incluir somente os serviços vinculados ao profissional.
-- Representar os estados realizado/não realizado de RF-10 nas agendas de Treinador e Profissional de Saúde, separadamente da presença/falta. RF-09 e RF-11 continuam dependendo das definições de pendências e indicadores.
+- Representar os estados realizado/não realizado de RF-10 nas agendas de Treinador e Profissional de Saúde, separadamente da presença/falta. Atualizar a visão geral para refletir as contagens da RF-11 por período, serviço e situação.
 - Validar a experiência com usuários; não há resultados de teste registrados.
 
 ## Dependências

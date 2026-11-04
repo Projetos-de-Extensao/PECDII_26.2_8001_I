@@ -73,8 +73,16 @@ entity sessao {
   * fim : datetime
   local : varchar(150)
   * situacao : varchar(15) <<CHECK>>
-  notificacao_enviada_em : datetime
   <<CHECK>> fim > inicio
+}
+
+entity notificacao_email {
+  * id : PK
+  --
+  * sessao_id : FK
+  * tipo : varchar(30) <<CHECK>>
+  * enviada_em : datetime
+  <<UK>> (sessao_id, tipo)
 }
 
 entity participacao {
@@ -99,13 +107,14 @@ entity relatorio_treino {
   finalizado_em : datetime
 }
 
-entity registro_auditoria <<proposta>> {
+entity registro_auditoria {
   * id : PK
   --
   * usuario_id : FK
   * operacao : varchar(50)
   * entidade : varchar(50)
   * entidade_id : integer
+  * mensagem : text
   * registrado_em : datetime
 }
 
@@ -118,6 +127,7 @@ servico ||--o{ sessao
 sessao ||--o{ participacao
 aluno ||--o{ participacao
 sessao ||--o| relatorio_treino
+sessao ||--o{ notificacao_email
 usuario ||--o{ registro_auditoria
 @enduml
 ```
@@ -132,10 +142,11 @@ usuario ||--o{ registro_auditoria
 | profissional_servico | Par `(profissional_id, servico_id)` único. Representa os serviços aos quais o profissional está vinculado. | `(servico_id)` | RN-04 |
 | disponibilidade | `fim > inicio`. | `(profissional_id, inicio)` | RF-03, RN-03 |
 | bloqueio_agenda | `fim > inicio`. | `(profissional_id, inicio)` | RF-03, RN-03 |
-| sessao | `fim > inicio`; `situacao` restrita a AGENDADA, REALIZADA, NAO_REALIZADA e CANCELADA. | `(profissional_id, inicio)`, `(inicio)` | RF-04, RF-05, RF-09, RF-10, RF-11 (indicadores a definir), RN-01 |
-| participacao | Par `(sessao_id, aluno_id)` único; `situacao_presenca` nula até o registro, depois PRESENTE ou FALTA. | `(aluno_id)` | RF-05, RF-06, RN-02, RN-07 |
+| sessao | `fim > inicio`; `situacao` restrita a AGENDADA, REALIZADA, NAO_REALIZADA e CANCELADA. | `(profissional_id, inicio, fim)`, `(inicio, fim)` | RF-04, RF-05, RF-09, RF-10, RF-11, RF-12, RN-01, RN-07 |
+| notificacao_email | Par `(sessao_id, tipo)` único para evitar duplicidade por tipo de aviso. Tipos previstos: pendência de status (RF-08) e relatório de treino pendente (RF-12). | `(sessao_id, tipo)` | RF-08 (exceção fora do escopo), RF-12 |
+| participacao | Par `(sessao_id, aluno_id)` único; `situacao_presenca` nula até o registro, depois PRESENTE ou FALTA. | `(aluno_id, sessao_id)` | RF-05, RF-06, RN-02, RN-07 |
 | relatorio_treino | `sessao_id` único (um relatório por sessão); `intensidade` entre 0 e 10; `situacao` RASCUNHO ou FINALIZADO. | — | RF-07 |
-| registro_auditoria **(proposta)** | Somente inserção; a API não altera nem apaga registros. | `(entidade, entidade_id)` | RNF-06 |
+| registro_auditoria | Somente inserção; a API não altera nem apaga registros. Mensagem legível por pessoas; sem senhas ou credenciais. | `(entidade, entidade_id)`, `(registrado_em)` | RNF-06 |
 
 ## Cardinalidades
 
@@ -148,7 +159,7 @@ usuario ||--o{ registro_auditoria
 
 ## Regras que o banco não garante sozinho
 
-- **Sobreposição de horário (RN-01, RN-07) e bloqueios (RN-03):** uma restrição de unicidade não detecta intervalos que se sobrepõem. A verificação fica na API, dentro da mesma transação que grava a sessão (RN-06).
+- **Sobreposição de horário (RN-01, RN-07) e bloqueios (RN-03):** uma restrição de unicidade não detecta intervalos que se sobrepõem. A API consulta e valida conflitos antes de gravar, na mesma transação, e retorna mensagem clara (por exemplo, “O profissional já possui um compromisso neste horário” ou “O aluno já possui um compromisso neste horário”). O índice composto `(profissional_id, inicio, fim)` apoia a busca profissional; para alunos, `(aluno_id, sessao_id)` em `participacao` e `(inicio, fim)` em `sessao` apoiam o join e os filtros de horário. O ganho real depende do banco e deve ser confirmado pelo plano de execução e medição. Em PostgreSQL, uma *exclusion constraint* pode também garantir a regra do profissional no banco.
 - **Concorrência (RNF-03):** o projeto usa SQLite. No SQLite, o Django ignora o `select_for_update`, e a escrita bloqueia o banco inteiro. Isso evita a gravação simultânea, mas precisa ser comprovado pelo teste concorrente do RNF-03. Se o banco mudar para PostgreSQL, intervalos sobrepostos podem ser barrados por uma *exclusion constraint*.
 - **Imutabilidade do relatório finalizado (RF-07):** é validada pela API, não por restrição de banco.
 
@@ -159,7 +170,7 @@ usuario ||--o{ registro_auditoria
 | D-01 capacidade | O limite de 6 alunos por sessão vale para qualquer serviço e será uma constante de validação no backend do MVP; não há coluna de capacidade em `servico` ou `sessao`. |
 | D-08 relatório × Treinador | `relatorio_treino` pertence somente à sessão. O responsável profissional atual controla o rascunho; reatribuir a sessão não move o relatório. |
 | D-09 perfis e serviços | `usuario.perfil` distingue os três perfis; profissionais podem ter vários serviços por meio de `profissional_servico`. |
-| RNF-06 auditoria | `registro_auditoria` é proposta até a confirmação do nível de detalhe. |
+| RNF-06 auditoria | `registro_auditoria` registra cadastro de usuário, confirmação de agendamento, alteração de presença/falta e finalização de relatório, com autoria, operação, entidade, data/hora e mensagem humana. É append-only e não armazena senhas ou credenciais. |
 
 ## Desvios em relação às migrações atuais
 
@@ -168,7 +179,7 @@ usuario ||--o{ registro_auditoria
 | `Professor` com nome, e-mail e telefone | Substituído por `usuario` com perfil; a migração de dados é tarefa da Construção 1 (risco R-03). |
 | `Sessao.titulo`, `descricao`, `observacoes` e `tipo` (TREINAMENTO/AVALIACAO) | O tipo dá lugar a `servico_id`; os demais campos não aparecem nos requisitos atuais. |
 | Sem tabelas de serviço, disponibilidade, bloqueio, participação ou relatório | Criadas no DER-alvo. |
-| `Sessao.notificacao_enviada_em` (RF-08) | Mantida como coluna, compatível com a migração atual. O diagrama de classes representa o mesmo dado como a classe `NotificacaoEmail`. |
+| `Sessao.notificacao_enviada_em` (RF-08) | A implementação atual usa essa coluna. O modelo-alvo a substitui pela tabela `notificacao_email`, que registra cada tipo de aviso e evita duplicidade também para RF-12. |
 
 ## Referências
 
