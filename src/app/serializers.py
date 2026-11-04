@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as ValidacaoDjango
 from rest_framework import serializers
 
-from app.models import Aluno, Professor, Servico, Sessao, Usuario
+from app.models import Aluno, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -35,17 +35,6 @@ class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = ['id', 'nome', 'data_nascimento', 'telefone']
-        read_only_fields = ['id']
-
-
-class ProfessorSerializer(serializers.ModelSerializer):
-    """Converte professores entre modelos Django e JSON."""
-
-    telefone = TelefoneField(required=False, allow_blank=True)
-
-    class Meta:
-        model = Professor
-        fields = ['id', 'nome', 'email', 'telefone']
         read_only_fields = ['id']
 
 
@@ -147,10 +136,14 @@ class ProfissionalSerializer(serializers.ModelSerializer):
 class SessaoSerializer(serializers.ModelSerializer):
     """Valida e converte sessões para a API REST."""
 
+    profissional = serializers.PrimaryKeyRelatedField(
+        queryset=Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS),
+    )
+
     class Meta:
         model = Sessao
         fields = [
-            'id', 'titulo', 'tipo', 'descricao', 'observacoes', 'inicio', 'fim', 'professor', 'status',
+            'id', 'titulo', 'tipo', 'descricao', 'observacoes', 'inicio', 'fim', 'profissional', 'status',
             'notificacao_enviada_em',
         ]
         read_only_fields = ['id', 'notificacao_enviada_em']
@@ -160,7 +153,7 @@ class SessaoSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        """Valida horários e exige professor ao criar uma sessão."""
+        """Valida horários e exige profissional ao criar uma sessão."""
         inicio = attrs.get('inicio', getattr(self.instance, 'inicio', None))
         fim = attrs.get('fim', getattr(self.instance, 'fim', None))
 
@@ -169,9 +162,9 @@ class SessaoSerializer(serializers.ModelSerializer):
                 'fim': 'O fim da sessão deve ser posterior ao início.'
             })
 
-        if not self.instance and not attrs.get('professor'):
+        if not self.instance and not attrs.get('profissional'):
             raise serializers.ValidationError({
-                'professor': 'Informe o professor responsável pela sessão.'
+                'profissional': 'Informe o profissional responsável pela sessão.'
             })
 
         return attrs

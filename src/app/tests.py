@@ -3,11 +3,13 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from app.models import Aluno, Professor, Servico, Sessao, Usuario
+from app.models import Aluno, Servico, Sessao, Usuario
 
 
 def criar_usuario(perfil, login):
@@ -52,13 +54,16 @@ class TelefoneApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['telefone'], '+55 11 98765-4321')
 
-    def test_professor_telefone_com_ddi_e_mascara_e_normalizado(self):
+    def test_profissional_telefone_com_ddi_e_mascara_e_normalizado(self):
         response = self.client.post(
-            '/api/professores/',
+            '/api/profissionais/',
             {
                 'nome': 'Bruno Costa',
                 'email': 'bruno@example.com',
                 'telefone': '+55 21 91234-5678',
+                'perfil': Usuario.Perfil.TREINADOR,
+                'login': 'bruno-costa',
+                'senha': 'SenhaForte2026',
             },
             format='json',
         )
@@ -255,17 +260,23 @@ class PermissaoCadastroTests(TestCase):
         self.assertEqual(criacao.status_code, 403)
         self.assertEqual(Aluno.objects.count(), 1)
 
-    def test_treinador_nao_administra_professores(self):
+    def test_treinador_nao_administra_profissionais(self):
         client = cliente_autenticado(Usuario.Perfil.TREINADOR, 'treinador-professor')
 
         response = client.post(
-            '/api/professores/',
-            {'nome': 'Bruno Costa', 'email': 'bruno@example.com'},
+            '/api/profissionais/',
+            {
+                'nome': 'Bruno Costa',
+                'email': 'bruno@example.com',
+                'perfil': Usuario.Perfil.TREINADOR,
+                'login': 'bruno-costa',
+                'senha': 'SenhaForte2026',
+            },
             format='json',
         )
 
         self.assertEqual(response.status_code, 403)
-        self.assertFalse(Professor.objects.exists())
+        self.assertFalse(Usuario.objects.filter(email='bruno@example.com').exists())
 
 
 class ProfissionalApiTests(TestCase):
@@ -391,10 +402,8 @@ class SessaoApiTests(TestCase):
 
     def setUp(self):
         self.client = cliente_autenticado(Usuario.Perfil.TREINADOR, 'teste-api-sessao')
-        self.professor = Professor.objects.create(
-            nome='Bruno Costa',
-            email='bruno@example.com',
-        )
+        self.profissional_conta = criar_usuario(Usuario.Perfil.TREINADOR, 'responsavel-sessao')
+        self.profissional = self.profissional_conta.usuario
 
     def criar_sessao(self, **overrides):
         agora = timezone.now()
@@ -403,12 +412,12 @@ class SessaoApiTests(TestCase):
             'tipo': Sessao.Tipo.TREINAMENTO,
             'inicio': agora - timedelta(hours=2),
             'fim': agora - timedelta(hours=1),
-            'professor': self.professor,
+            'profissional': self.profissional,
         }
         dados.update(overrides)
         return Sessao.objects.create(**dados)
 
-    def test_cria_sessao_com_professor_tipo_e_descricao(self):
+    def test_cria_sessao_com_profissional_tipo_e_descricao(self):
         inicio = timezone.now() + timedelta(days=1)
         response = self.client.post(
             '/api/sessoes/',
@@ -418,7 +427,7 @@ class SessaoApiTests(TestCase):
                 'descricao': 'Avaliação de mobilidade e força.',
                 'inicio': inicio.isoformat(),
                 'fim': (inicio + timedelta(minutes=60)).isoformat(),
-                'professor': self.professor.pk,
+                'profissional': self.profissional.pk,
             },
             format='json',
         )
@@ -426,9 +435,9 @@ class SessaoApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['tipo'], Sessao.Tipo.AVALIACAO)
         self.assertEqual(response.data['descricao'], 'Avaliação de mobilidade e força.')
-        self.assertEqual(response.data['professor'], self.professor.pk)
+        self.assertEqual(response.data['profissional'], self.profissional.pk)
 
-    def test_criacao_sem_professor_e_rejeitada(self):
+    def test_criacao_sem_profissional_e_rejeitada(self):
         inicio = timezone.now() + timedelta(days=1)
         response = self.client.post(
             '/api/sessoes/',
@@ -442,7 +451,7 @@ class SessaoApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn('professor', response.data)
+        self.assertIn('profissional', response.data)
 
     def test_fim_anterior_ao_inicio_e_rejeitado(self):
         inicio = timezone.now() + timedelta(days=1)
@@ -453,7 +462,7 @@ class SessaoApiTests(TestCase):
                 'tipo': Sessao.Tipo.TREINAMENTO,
                 'inicio': inicio.isoformat(),
                 'fim': (inicio - timedelta(minutes=1)).isoformat(),
-                'professor': self.professor.pk,
+                'profissional': self.profissional.pk,
             },
             format='json',
         )
@@ -512,17 +521,15 @@ class NotificacaoSessaoTests(TestCase):
     """Verifica avisos para sessões que continuam agendadas após o horário."""
 
     def setUp(self):
-        self.professor = Professor.objects.create(
-            nome='Bruno Costa',
-            email='bruno@example.com',
-        )
+        self.profissional_conta = criar_usuario(Usuario.Perfil.TREINADOR, 'responsavel-notificacao')
+        self.profissional = self.profissional_conta.usuario
         agora = timezone.now()
         self.sessao = Sessao.objects.create(
             titulo='Avaliação inicial',
             tipo=Sessao.Tipo.AVALIACAO,
             inicio=agora - timedelta(hours=2),
             fim=agora - timedelta(minutes=31),
-            professor=self.professor,
+            profissional=self.profissional,
         )
 
     def test_envia_email_e_marca_notificacao(self):
@@ -530,7 +537,7 @@ class NotificacaoSessaoTests(TestCase):
 
         self.sessao.refresh_from_db()
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, ['bruno@example.com'])
+        self.assertEqual(mail.outbox[0].to, ['responsavel-notificacao@example.com'])
         self.assertIsNotNone(self.sessao.notificacao_enviada_em)
 
     def test_nao_envia_email_duplicado(self):
@@ -554,3 +561,55 @@ class NotificacaoSessaoTests(TestCase):
         call_command('notificar_sessoes_pendentes')
 
         self.assertEqual(len(mail.outbox), 0)
+
+
+class MigrarProfessorParaUsuarioTests(TransactionTestCase):
+    """Confere a migração de dados da Construção 1 com o schema histórico."""
+
+    migrate_from = [('app', '0011_profissional_servico')]
+    migrate_to = [('app', '0012_migrar_professor_para_usuario')]
+
+    def setUp(self):
+        super().setUp()
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.migrate_from)
+        apps_anteriores = executor.loader.project_state(self.migrate_from).apps
+
+        ProfessorAntigo = apps_anteriores.get_model('app', 'Professor')
+        SessaoAntiga = apps_anteriores.get_model('app', 'Sessao')
+        professor = ProfessorAntigo.objects.create(
+            nome='Bruno Costa',
+            email='bruno-legado@example.com',
+            telefone='+5521912345678',
+        )
+        sessao = SessaoAntiga.objects.create(
+            titulo='Treino legado',
+            tipo='TREINAMENTO',
+            inicio=timezone.now() + timedelta(days=1),
+            fim=timezone.now() + timedelta(days=1, minutes=60),
+            professor_id=professor.pk,
+        )
+        self.professor_id = professor.pk
+        self.sessao_id = sessao.pk
+
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.migrate_to)
+        self.apps_migradas = executor.loader.project_state(self.migrate_to).apps
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+        super().tearDown()
+
+    def test_mantem_contato_e_sessao_e_cria_treinador_sem_senha_utilizavel(self):
+        UsuarioMigrado = self.apps_migradas.get_model('app', 'Usuario')
+        SessaoMigrada = self.apps_migradas.get_model('app', 'Sessao')
+        perfil = UsuarioMigrado.objects.get(email='bruno-legado@example.com')
+        sessao = SessaoMigrada.objects.get(pk=self.sessao_id)
+
+        self.assertEqual(perfil.nome, 'Bruno Costa')
+        self.assertEqual(perfil.telefone, '+5521912345678')
+        self.assertEqual(perfil.perfil, 'TREINADOR')
+        self.assertEqual(perfil.conta.username, f'gaap-migrado-professor-{self.professor_id}')
+        self.assertTrue(perfil.conta.password.startswith('!'))
+        self.assertEqual(sessao.profissional_id, perfil.pk)

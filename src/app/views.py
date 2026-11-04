@@ -4,11 +4,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from app.models import Aluno, Professor, Servico, Sessao, Usuario
+from app.models import Aluno, Servico, Sessao, Usuario
 from app.permissoes import PodeAdministrarCadastros
 from app.serializers import (
     AlunoSerializer,
-    ProfessorSerializer,
     ProfissionalSerializer,
     ServicoSerializer,
     SessaoSerializer,
@@ -18,12 +17,6 @@ from app.serializers import (
 class AlunoViewSet(ModelViewSet):
     queryset = Aluno.objects.all()
     serializer_class = AlunoSerializer
-    permission_classes = [PodeAdministrarCadastros]
-
-
-class ProfessorViewSet(ModelViewSet):
-    queryset = Professor.objects.all()
-    serializer_class = ProfessorSerializer
     permission_classes = [PodeAdministrarCadastros]
 
 

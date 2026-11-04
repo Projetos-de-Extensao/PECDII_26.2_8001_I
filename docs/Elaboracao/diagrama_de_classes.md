@@ -4,7 +4,7 @@ title: Diagrama de Classes
 ---
 # Modelo Conceitual do Domínio GAAP
 
-Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. Ele não descreve a implementação atual: o código ainda contém `Aluno`, `Professor` e `Sessao`, sem os cadastros de serviço, disponibilidade, bloqueios, presença individual ou relatório de treino. O professor informou capacidade máxima de 6 alunos por sessão para qualquer serviço; no MVP, a validação usa uma constante no backend.
+Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. A implementação da Construção 1 já inclui `Aluno`, `Usuario`, `Servico`, `ProfissionalServico` e `Sessao`; as classes de disponibilidade, bloqueios, presença individual e relatório de treino ainda são propostas para iterações seguintes. O professor informou capacidade máxima de 6 alunos por sessão para qualquer serviço; no MVP, a validação usa uma constante no backend.
 
 ## Diagrama
 

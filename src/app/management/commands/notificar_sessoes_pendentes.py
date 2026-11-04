@@ -8,9 +8,9 @@ from app.models import Sessao
 
 
 class Command(BaseCommand):
-    """Notifica professores sobre sessões ainda marcadas como agendadas."""
+    """Notifica profissionais sobre sessões ainda marcadas como agendadas."""
 
-    help = 'Notifica professores sobre sessões agendadas após o horário previsto.'
+    help = 'Notifica profissionais sobre sessões agendadas após o horário previsto.'
 
     def handle(self, *args, **options):
         """Notifica uma vez cada sessão agendada após 30 minutos do fim."""
@@ -19,13 +19,13 @@ class Command(BaseCommand):
             status=Sessao.Status.AGENDADA,
             notificacao_enviada_em__isnull=True,
             fim__lte=limite,
-            professor__isnull=False,
-        ).select_related('professor')
+            profissional__isnull=False,
+        ).select_related('profissional')
 
         notificadas = 0
         for sessao in sessoes:
-            if not sessao.professor.email:
-                self.stderr.write(f'Sessão {sessao.pk}: professor sem e-mail; aviso ignorado.')
+            if not sessao.profissional.email:
+                self.stderr.write(f'Sessão {sessao.pk}: profissional sem e-mail; aviso ignorado.')
                 continue
 
             send_mail(
@@ -35,7 +35,7 @@ class Command(BaseCommand):
                     'e ainda está marcada como agendada. Atualize o status da sessão na API.'
                 ),
                 from_email=None,
-                recipient_list=[sessao.professor.email],
+                recipient_list=[sessao.profissional.email],
             )
             sessao.notificacao_enviada_em = timezone.now()
             sessao.save(update_fields=['notificacao_enviada_em'])

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db.models import Count
 
-from app.models import Aluno, ProfissionalServico, Professor, Servico, Sessao, Usuario
+from app.models import Aluno, ProfissionalServico, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -30,14 +30,6 @@ class AlunoAdminForm(TelefoneAdminFormMixin, forms.ModelForm):
         fields = '__all__'
 
 
-class ProfessorAdminForm(TelefoneAdminFormMixin, forms.ModelForm):
-    """Formulário de professor com telefone internacional validado."""
-
-    class Meta:
-        model = Professor
-        fields = '__all__'
-
-
 class UsuarioAdminForm(TelefoneAdminFormMixin, forms.ModelForm):
     """Formulário de usuário com telefone internacional validado."""
 
@@ -61,21 +53,6 @@ class SessaoAdminForm(forms.ModelForm):
             'status': 'Situação',
             'notificacao_enviada_em': 'Notificação enviada em',
         }
-
-
-@admin.register(Professor)
-class ProfessorAdmin(admin.ModelAdmin):
-    """Configura contatos e busca de professores no admin."""
-
-    form = ProfessorAdminForm
-    list_display = ('nome', 'email', 'telefone_formatado')
-    search_fields = ('nome', 'email', 'telefone')
-    ordering = ('nome',)
-
-    @admin.display(description='Telefone')
-    def telefone_formatado(self, obj):
-        """Exibe o telefone do professor conforme o país do DDI."""
-        return formatar_telefone(obj.telefone)
 
 
 @admin.register(Aluno)
@@ -128,7 +105,7 @@ class SessaoAdmin(admin.ModelAdmin):
 
     form = SessaoAdminForm
     readonly_fields = ('notificacao_enviada_em',)
-    list_display = ('__str__', 'tipo', 'professor', 'inicio', 'fim', 'status')
+    list_display = ('__str__', 'tipo', 'profissional', 'inicio', 'fim', 'status')
     list_filter = ('tipo', 'status')
     ordering = ('inicio',)
 

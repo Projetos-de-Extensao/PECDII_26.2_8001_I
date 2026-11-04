@@ -28,23 +28,6 @@ class Aluno(TelefoneMixin, models.Model):
         return self.nome
 
 
-class Professor(TelefoneMixin, models.Model):
-    """Armazena o contato do professor responsável pelas sessões."""
-
-    nome = models.CharField(max_length=150)
-    email = models.EmailField(unique=True)
-    telefone = models.CharField(max_length=20, blank=True)
-
-    class Meta:
-        ordering = ['nome']
-        verbose_name = 'Professor'
-        verbose_name_plural = 'Professores'
-
-    def __str__(self):
-        """Retorna o nome do professor para exibição."""
-        return self.nome
-
-
 class Servico(models.Model):
     """Serviço oferecido pela escola, como um treino ou uma consulta."""
 
@@ -117,10 +100,11 @@ class Sessao(models.Model):
     )
     inicio = models.DateTimeField()
     fim = models.DateTimeField()
-    professor = models.ForeignKey(
-        Professor,
+    profissional = models.ForeignKey(
+        'Usuario',
         on_delete=models.PROTECT,
         related_name='sessoes',
+        limit_choices_to={'perfil__in': ['TREINADOR', 'PROFISSIONAL_SAUDE']},
         null=True,
         blank=True,
     )
