@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 
-from app.models import Aluno, Professor, Servico, Sessao
+from app.models import Aluno, Professor, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -34,6 +34,14 @@ class ProfessorAdminForm(TelefoneAdminFormMixin, forms.ModelForm):
 
     class Meta:
         model = Professor
+        fields = '__all__'
+
+
+class UsuarioAdminForm(TelefoneAdminFormMixin, forms.ModelForm):
+    """Formulário de usuário com telefone internacional validado."""
+
+    class Meta:
+        model = Usuario
         fields = '__all__'
 
 
@@ -116,3 +124,19 @@ class SessaoAdmin(admin.ModelAdmin):
         if obj is None:
             campos_excluidos.append('notificacao_enviada_em')
         return campos_excluidos
+
+
+@admin.register(Usuario)
+class UsuarioAdmin(admin.ModelAdmin):
+    """Configura perfis, contato e busca de usuários no admin."""
+
+    form = UsuarioAdminForm
+    list_display = ('nome', 'email', 'perfil', 'telefone_formatado')
+    list_filter = ('perfil',)
+    search_fields = ('nome', 'email')
+    ordering = ('nome',)
+
+    @admin.display(description='Telefone')
+    def telefone_formatado(self, obj):
+        """Exibe o telefone do usuário conforme o país do DDI."""
+        return formatar_telefone(obj.telefone)
