@@ -26,5 +26,6 @@
 - [Rastreabilidade requisito × artefato](rastreabilidade.md)
 - [Viabilidade e iterações](viabilidade_mvp.md)
 - [Revisão do escopo GAAP](revisao_cruzada.md)
+- [Estudo do clone PKZ & One to One](estudo_clone_pkz.md)
 
 Requisitos e regras indicados como propostas dependem de validação do responsável pelo cenário, conforme as pendências documentadas no LevReq.
