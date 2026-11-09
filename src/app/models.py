@@ -168,6 +168,13 @@ class Usuario(TelefoneMixin, models.Model):
                     'profissional antes de mudar o perfil para Administrador.'
                 ),
             })
+        if self.disponibilidades.exists() or self.bloqueios_agenda.exists():
+            raise ValidationError({
+                'perfil': (
+                    'Este usuário possui disponibilidade ou bloqueio de agenda. Remova esses '
+                    'períodos antes de mudar o perfil para Administrador.'
+                ),
+            })
 
     def clean(self):
         """Valida o perfil nos formulários, como o do Django Admin."""
@@ -224,3 +231,90 @@ class ProfissionalServico(models.Model):
     def __str__(self):
         """Retorna o par profissional e serviço para exibição."""
         return f'{self.profissional} — {self.servico}'
+
+
+class Disponibilidade(models.Model):
+    """Faixa em que um profissional pode atender, válida para todos os serviços."""
+
+    profissional = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='disponibilidades',
+        limit_choices_to={'perfil__in': [perfil.value for perfil in Usuario.PERFIS_PROFISSIONAIS]},
+    )
+    inicio = models.DateTimeField()
+    fim = models.DateTimeField()
+
+    class Meta:
+        ordering = ['inicio']
+        verbose_name = 'disponibilidade'
+        verbose_name_plural = 'disponibilidades'
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(fim__gt=models.F('inicio')),
+                name='disponibilidade_fim_apos_inicio',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['profissional', 'inicio'], name='disp_prof_inicio_idx'),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.profissional_id and self.profissional.perfil not in Usuario.PERFIS_PROFISSIONAIS:
+            raise ValidationError({
+                'profissional': 'A disponibilidade deve pertencer a um Treinador ou Profissional de Saúde.'
+            })
+        if self.inicio and self.fim and self.fim <= self.inicio:
+            raise ValidationError({'fim': 'O fim da disponibilidade deve ser posterior ao início.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.profissional} — {self.inicio:%d/%m/%Y %H:%M} a {self.fim:%d/%m/%Y %H:%M}'
+
+
+class BloqueioAgenda(models.Model):
+    """Faixa bloqueada na agenda geral de um profissional."""
+
+    profissional = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='bloqueios_agenda',
+        limit_choices_to={'perfil__in': [perfil.value for perfil in Usuario.PERFIS_PROFISSIONAIS]},
+    )
+    inicio = models.DateTimeField()
+    fim = models.DateTimeField()
+    motivo = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ['inicio']
+        verbose_name = 'bloqueio de agenda'
+        verbose_name_plural = 'bloqueios de agenda'
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(fim__gt=models.F('inicio')),
+                name='bloqueio_fim_apos_inicio',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['profissional', 'inicio'], name='bloq_prof_inicio_idx'),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.profissional_id and self.profissional.perfil not in Usuario.PERFIS_PROFISSIONAIS:
+            raise ValidationError({
+                'profissional': 'O bloqueio deve pertencer a um Treinador ou Profissional de Saúde.'
+            })
+        if self.inicio and self.fim and self.fim <= self.inicio:
+            raise ValidationError({'fim': 'O fim do bloqueio deve ser posterior ao início.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.profissional} — {self.inicio:%d/%m/%Y %H:%M} a {self.fim:%d/%m/%Y %H:%M}'

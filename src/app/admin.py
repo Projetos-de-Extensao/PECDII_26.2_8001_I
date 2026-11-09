@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db.models import Count
 
-from app.models import Aluno, ProfissionalServico, Servico, Sessao, Usuario
+from app.models import Aluno, BloqueioAgenda, Disponibilidade, ProfissionalServico, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -137,3 +137,18 @@ class UsuarioAdmin(admin.ModelAdmin):
     def telefone_formatado(self, obj):
         """Exibe o telefone do usuário conforme o país do DDI."""
         return formatar_telefone(obj.telefone)
+
+
+@admin.register(Disponibilidade)
+class DisponibilidadeAdmin(admin.ModelAdmin):
+    list_display = ('profissional', 'inicio', 'fim')
+    list_filter = ('profissional',)
+    ordering = ('inicio',)
+
+
+@admin.register(BloqueioAgenda)
+class BloqueioAgendaAdmin(admin.ModelAdmin):
+    list_display = ('profissional', 'inicio', 'fim', 'motivo')
+    list_filter = ('profissional',)
+    search_fields = ('motivo', 'profissional__nome')
+    ordering = ('inicio',)

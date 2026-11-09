@@ -6,10 +6,12 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from app.models import Aluno, Servico, Sessao, Usuario
+from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
 from app.permissoes import PodeAdministrarCadastros
 from app.serializers import (
     AlunoSerializer,
+    BloqueioAgendaSerializer,
+    DisponibilidadeSerializer,
     ProfissionalSerializer,
     ServicoSerializer,
     SessaoSerializer,
@@ -65,3 +67,19 @@ class SessaoViewSet(ModelViewSet):
         )
         serializer = self.get_serializer(sessoes, many=True)
         return Response(serializer.data)
+
+
+class DisponibilidadeViewSet(ModelViewSet):
+    """Gerencia períodos de disponibilidade com leitura autenticada e escrita administrativa."""
+
+    queryset = Disponibilidade.objects.select_related('profissional').all()
+    serializer_class = DisponibilidadeSerializer
+    permission_classes = [PodeAdministrarCadastros]
+
+
+class BloqueioAgendaViewSet(ModelViewSet):
+    """Gerencia bloqueios com leitura autenticada e escrita administrativa."""
+
+    queryset = BloqueioAgenda.objects.select_related('profissional').all()
+    serializer_class = BloqueioAgendaSerializer
+    permission_classes = [PodeAdministrarCadastros]

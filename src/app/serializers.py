@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as ValidacaoDjango
 from rest_framework import serializers
 
-from app.models import Aluno, Servico, Sessao, Usuario
+from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -168,3 +168,43 @@ class SessaoSerializer(serializers.ModelSerializer):
             })
 
         return attrs
+
+
+class FaixaAgendaSerializer(serializers.ModelSerializer):
+    """Valida faixas da agenda e restringe o responsável a perfis profissionais."""
+
+    profissional = serializers.PrimaryKeyRelatedField(
+        queryset=Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS),
+    )
+
+    def validate(self, attrs):
+        inicio = attrs.get('inicio', getattr(self.instance, 'inicio', None))
+        fim = attrs.get('fim', getattr(self.instance, 'fim', None))
+        if inicio is not None and fim is not None and fim <= inicio:
+            raise serializers.ValidationError({
+                'fim': f'O fim de {self.label_da_faixa} deve ser posterior ao início.'
+            })
+        return attrs
+
+
+class DisponibilidadeSerializer(FaixaAgendaSerializer):
+    """Converte períodos de disponibilidade para a API."""
+
+    label_da_faixa = 'disponibilidade'
+
+    class Meta:
+        model = Disponibilidade
+        fields = ['id', 'profissional', 'inicio', 'fim']
+        read_only_fields = ['id']
+
+
+class BloqueioAgendaSerializer(FaixaAgendaSerializer):
+    """Converte períodos bloqueados para a API."""
+
+    label_da_faixa = 'bloqueio'
+
+    class Meta:
+        model = BloqueioAgenda
+        fields = ['id', 'profissional', 'inicio', 'fim', 'motivo']
+        read_only_fields = ['id']
+        extra_kwargs = {'motivo': {'required': False, 'allow_blank': True}}
