@@ -16,6 +16,7 @@ A API oferece operações REST para:
 - **Alunos**: cadastro, consulta, edição e remoção; telefones internacionais são validados pelo DDI e formatados conforme o país. Números sem DDI assumem o Brasil.
 - **Profissionais**: cadastro dos Treinadores e Profissionais de Saúde do GAAP, junto com a conta usada para acessar a API. A senha é guardada somente como hash.
 - **Serviços**: catálogo com as categorias Treino, Fisioterapia, Psicologia e Nutrição. O nome do serviço é único.
+- **Disponibilidade e bloqueios**: períodos gerais por profissional, compartilhados entre os serviços; intervalos inválidos são recusados.
 - **Sessões**: agendamento de treinamento ou avaliação, vínculo a um profissional, descrição, observações, horários e estado de realização.
 
 Se uma sessão continuar com status `AGENDADA` 30 minutos após o horário de término, um timer do `systemd` verifica isso a cada minuto e notifica o profissional responsável. O profissional registra o desfecho atualizando o status para `REALIZADA` ou `NAO_REALIZADA` e pode editar as observações. Cada sessão é notificada uma única vez. O backend padrão é o console do Django; para enviar e-mails na VPS, configure o SMTP no arquivo `src/.env`.
@@ -40,12 +41,26 @@ Os endpoints ficam sob `/api/`:
 | Serviços | `/api/servicos/` |
 | Sessões | `/api/sessoes/` |
 | Sessões ainda agendadas 30 minutos após o fim | `/api/sessoes/pendentes-status/` |
+| Disponibilidades | `/api/disponibilidades/` |
+| Bloqueios da agenda | `/api/bloqueios-agenda/` |
+
+Disponibilidade e bloqueio aceitam `GET`, `POST`, `PUT`, `PATCH` e `DELETE` no recurso e em `/api/disponibilidades/{id}/` ou `/api/bloqueios-agenda/{id}/`. O payload da disponibilidade contém `profissional`, `inicio` e `fim`; o bloqueio também aceita `motivo` (opcional, até 200 caracteres). Os horários usam data/hora ISO 8601, por exemplo:
+
+```json
+{
+  "profissional": 12,
+  "inicio": "2026-11-10T09:00:00-03:00",
+  "fim": "2026-11-10T12:00:00-03:00"
+}
+```
+
+O fim precisa ser posterior ao início. A API responde `400` ao intervalo inválido ou profissional que não seja Treinador/Profissional de Saúde, `401` sem autenticação e `403` se um perfil não administrador tentar alterar dados. Qualquer perfil autenticado pode consultar esses períodos, conforme a regra de leitura usada nos demais cadastros.
 
 ### Perfis e acesso
 
 Toda a API exige autenticação: sem credenciais, a resposta é `401`. Cada conta tem um dos três perfis do GAAP — Administrador, Treinador ou Profissional de Saúde.
 
-Nos cadastros de alunos, profissionais e serviços, qualquer perfil autenticado consulta, mas só o Administrador cria, edita e remove; os demais recebem `403`. O superusuário do Django é tratado como Administrador, o que permite administrar o sistema antes de existir qualquer cadastro. As sessões continuam acessíveis a qualquer perfil autenticado. A responsabilidade da sessão é enviada no campo `profissional` com o ID do cadastro em `/api/profissionais/`; o antigo campo `professor` e o endpoint `/api/professores/` foram removidos.
+Nos cadastros de alunos, profissionais, serviços, disponibilidades e bloqueios, qualquer perfil autenticado consulta, mas só o Administrador cria, edita e remove; os demais recebem `403`. O superusuário do Django é tratado como Administrador, o que permite administrar o sistema antes de existir qualquer cadastro. As sessões continuam acessíveis a qualquer perfil autenticado. A responsabilidade da sessão é enviada no campo `profissional` com o ID do cadastro em `/api/profissionais/`; o antigo campo `professor` e o endpoint `/api/professores/` foram removidos.
 
 O perfil fica no modelo `Usuario`, ligado por `conta` ao usuário do Django, que guarda o login e o hash da senha. Cadastre o primeiro Administrador pelo painel `/admin/`, ou use um superusuário.
 
