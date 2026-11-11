@@ -215,6 +215,22 @@ class SessaoSerializer(serializers.ModelSerializer):
         return confirmar_sessao(validated_data, alunos)
 
 
+class PeriodoConsultaSerializer(serializers.Serializer):
+    """Valida os limites opcionais usados na consulta da agenda."""
+
+    inicio = serializers.DateTimeField(required=False)
+    fim = serializers.DateTimeField(required=False)
+
+    def validate(self, attrs):
+        inicio = attrs.get('inicio')
+        fim = attrs.get('fim')
+        if inicio is not None and fim is not None and fim <= inicio:
+            raise serializers.ValidationError({
+                'fim': 'O fim do período deve ser posterior ao início.'
+            })
+        return attrs
+
+
 class FaixaAgendaSerializer(serializers.ModelSerializer):
     """Valida faixas da agenda e restringe o responsável a perfis profissionais."""
 

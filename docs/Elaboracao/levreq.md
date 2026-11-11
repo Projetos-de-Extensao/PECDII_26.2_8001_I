@@ -14,6 +14,8 @@ Na revisão de 28/10/2026, a comparação com as seções 3 e 7 do cenário enco
 
 Em 30/10/2026, Pedro Lucas informou que o professor definiu a capacidade máxima de **6 alunos por sessão**. Pedro Lucas esclareceu que o limite vale para qualquer serviço e aceitou mantê-lo como constante de validação no backend, sem configuração administrativa no MVP.
 
+Em 11/11/2026, o plano do grupo foi ampliado para incluir um cliente web responsivo em desktop e mobile, consumindo a API do MVP e tomando o protótipo de alta fidelidade como referência. Essa é uma extensão do cenário acadêmico, que descreve uma entrega de backend/API; não inclui aplicativo nativo. A extensão está registrada em RNF-07 e deve ser confirmada com o responsável pelo cenário.
+
 ## Stakeholders e perfis
 
 | Stakeholder/perfil | Interesse e responsabilidade no recorte inicial |
@@ -21,7 +23,7 @@ Em 30/10/2026, Pedro Lucas informou que o professor definiu a capacidade máxima
 | Administrador | Mantém cadastros, serviços, horários e bloqueios; consulta pendências operacionais. |
 | Treinador | Consulta a própria agenda, registra presença/falta e cria e finaliza relatórios de treino. |
 | Profissional de Saúde | Consulta somente atendimentos vinculados ao seu serviço e à sua agenda; registra presença/falta dos alunos atendidos sob sua responsabilidade. |
-| Equipe desenvolvedora | Modela, implementa, testa e documenta a API. |
+| Equipe desenvolvedora | Modela, implementa, testa e documenta a API e o cliente web responsivo do MVP. |
 | Responsável pelo cenário/professor | Esclarece as lacunas do enunciado e valida o recorte proposto. |
 
 Aluno é pessoa atendida e dado gerenciado pela API; o cenário não o define como perfil de acesso inicial.
@@ -69,6 +71,7 @@ As regras abaixo detalham as lacunas identificadas na issue #59. O limite de cap
 | RNF-04 | A API deve validar entrada e restringir dados/operações por perfil e vínculo. | Testes cobrem payload inválido, perfil sem permissão e acesso fora da própria agenda; erros retornam códigos HTTP apropriados. | Alta |
 | RNF-05 | Regras prioritárias devem ter testes automatizados e a documentação deve refletir o comportamento implementado. | Pipeline executa testes de conflito, capacidade, bloqueio, autorização, presença e relatório; documentação e modelos correspondem às migrações. | Alta |
 | RNF-06 | Operações críticas devem gerar registros de auditoria com mensagem legível por pessoas. | O log registra criação de usuário, confirmação de agendamento, alteração de presença/falta e finalização de relatório. Cada evento guarda o autor, a operação, a entidade, a data/hora e uma mensagem em linguagem humana. O registro não pode ser alterado pela API; senhas e credenciais não são incluídas. | Média; decisão do grupo (04/11/2026) |
+| RNF-07 | O MVP deve oferecer um cliente web responsivo para os fluxos definidos, em desktop e mobile. | Os três perfis acessam pela interface os fluxos correspondentes aos RFs implementados, nas larguras de referência de 1920 × 1080 e 390 × 844. A interface consome a API; autorização e validações permanecem no backend. Sucessos, erros de validação e acesso negado são apresentados de forma clara. | Alta para a extensão do MVP do grupo; confirmar com o responsável pelo cenário |
 
 ## Pendências de validação
 
