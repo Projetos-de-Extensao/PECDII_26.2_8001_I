@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as ValidacaoDjango
 from rest_framework import serializers
 
+from app.agendamento import confirmar_sessao
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
@@ -139,12 +140,22 @@ class SessaoSerializer(serializers.ModelSerializer):
     profissional = serializers.PrimaryKeyRelatedField(
         queryset=Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS),
     )
+    servico = serializers.PrimaryKeyRelatedField(
+        queryset=Servico.objects.all(),
+        required=False,
+    )
+    # Os alunos são informados na confirmação e gravados junto com a sessão (RN-06).
+    participantes = serializers.PrimaryKeyRelatedField(
+        queryset=Aluno.objects.all(),
+        many=True,
+        required=False,
+    )
 
     class Meta:
         model = Sessao
         fields = [
-            'id', 'titulo', 'tipo', 'descricao', 'observacoes', 'inicio', 'fim', 'profissional', 'status',
-            'notificacao_enviada_em',
+            'id', 'titulo', 'tipo', 'descricao', 'observacoes', 'inicio', 'fim', 'servico', 'profissional',
+            'participantes', 'status', 'notificacao_enviada_em',
         ]
         read_only_fields = ['id', 'notificacao_enviada_em']
         extra_kwargs = {
@@ -152,8 +163,14 @@ class SessaoSerializer(serializers.ModelSerializer):
             'tipo': {'required': True},
         }
 
+    def to_representation(self, instance):
+        """Lista os participantes pelo ID do aluno, como foram enviados."""
+        dados = super().to_representation(instance)
+        dados['participantes'] = [participacao.aluno_id for participacao in instance.participacoes.all()]
+        return dados
+
     def validate(self, attrs):
-        """Valida horários e exige profissional ao criar uma sessão."""
+        """Valida horários e exige serviço, profissional e participantes ao confirmar."""
         inicio = attrs.get('inicio', getattr(self.instance, 'inicio', None))
         fim = attrs.get('fim', getattr(self.instance, 'fim', None))
 
@@ -162,12 +179,35 @@ class SessaoSerializer(serializers.ModelSerializer):
                 'fim': 'O fim da sessão deve ser posterior ao início.'
             })
 
-        if not self.instance and not attrs.get('profissional'):
+        if self.instance:
+            if 'participantes' in attrs:
+                raise serializers.ValidationError({
+                    'participantes': 'Os participantes são definidos na confirmação e não podem ser alterados.'
+                })
+            return attrs
+
+        faltando = {}
+        if not attrs.get('servico'):
+            faltando['servico'] = 'Informe o serviço da sessão.'
+        if not attrs.get('profissional'):
+            faltando['profissional'] = 'Informe o profissional responsável pela sessão.'
+        if not attrs.get('participantes'):
+            faltando['participantes'] = 'Informe ao menos um aluno participante.'
+        if faltando:
+            raise serializers.ValidationError(faltando)
+
+        alunos = attrs['participantes']
+        if len({aluno.pk for aluno in alunos}) != len(alunos):
             raise serializers.ValidationError({
-                'profissional': 'Informe o profissional responsável pela sessão.'
+                'participantes': 'O mesmo aluno foi informado mais de uma vez.'
             })
 
         return attrs
+
+    def create(self, validated_data):
+        """Confirma a sessão e os participantes numa única transação."""
+        alunos = validated_data.pop('participantes')
+        return confirmar_sessao(validated_data, alunos)
 
 
 class FaixaAgendaSerializer(serializers.ModelSerializer):

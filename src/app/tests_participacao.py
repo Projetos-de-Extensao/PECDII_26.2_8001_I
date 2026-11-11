@@ -165,3 +165,6 @@ class ParticipacaoAdminTests(TestCase):
     def test_participantes_aparecem_no_admin_da_sessao(self):
         self.assertIn(ParticipacaoInline, SessaoAdmin.inlines)
         self.assertIsInstance(admin.site._registry[Sessao], SessaoAdmin)
+
+    def test_admin_limita_os_participantes_a_capacidade_da_sessao(self):
+        self.assertEqual(ParticipacaoInline.max_num, 6)

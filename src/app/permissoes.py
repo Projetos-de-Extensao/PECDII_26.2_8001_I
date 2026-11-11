@@ -26,3 +26,9 @@ class PodeAdministrarCadastros(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         return perfil_da_conta(request.user) == Usuario.Perfil.ADMINISTRADOR
+
+
+class PodeConfirmarAgendamento(PodeAdministrarCadastros):
+    """Libera a confirmação de agendamento só ao Administrador (RF-05, UC-05)."""
+
+    message = 'Apenas o perfil Administrador pode confirmar agendamentos.'
