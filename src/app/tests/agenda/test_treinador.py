@@ -43,10 +43,6 @@ class AgendaAdministradorETreinadorApiTests(TestCase):
             'Fisioterapia', self.treinador, self.fisioterapia,
             self.base + timedelta(hours=2),
         )
-        self.sessao_sem_servico = self.criar_sessao(
-            'Sessão antiga sem serviço', self.treinador, None,
-            self.base + timedelta(hours=3),
-        )
         self.sessao_servico_nao_vinculado = self.criar_sessao(
             'Serviço não vinculado', self.treinador, self.nutricao,
             self.base + timedelta(hours=4),
@@ -80,7 +76,6 @@ class AgendaAdministradorETreinadorApiTests(TestCase):
                 self.sessao_outro_treinador.pk,
                 self.sessao_treino.pk,
                 self.sessao_fisioterapia.pk,
-                self.sessao_sem_servico.pk,
                 self.sessao_servico_nao_vinculado.pk,
             ],
         )
@@ -94,7 +89,6 @@ class AgendaAdministradorETreinadorApiTests(TestCase):
             [
                 self.sessao_treino.pk,
                 self.sessao_fisioterapia.pk,
-                self.sessao_sem_servico.pk,
                 self.sessao_servico_nao_vinculado.pk,
             ],
         )

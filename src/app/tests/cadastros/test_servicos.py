@@ -269,7 +269,10 @@ class PerfilComSessoesTests(TestCase):
             Usuario.Perfil.TREINADOR, 'carla.dias', nome='Carla Dias'
         )
         agora = timezone.now()
-        Sessao.objects.create(inicio=agora, fim=agora + timedelta(hours=1), profissional=self.treinador)
+        servico = Servico.objects.create(nome='Treino com sessão', categoria=Servico.Categoria.TREINO)
+        Sessao.objects.create(
+            inicio=agora, fim=agora + timedelta(hours=1), servico=servico, profissional=self.treinador
+        )
 
     def test_save_recusa_virar_administrador_com_sessoes(self):
         self.treinador.perfil = Usuario.Perfil.ADMINISTRADOR

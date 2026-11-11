@@ -328,7 +328,10 @@ class ProfissionalApiTests(TestCase):
         self.cadastrar()
         profissional = Usuario.objects.get(email='bruno@example.com')
         agora = timezone.now()
-        Sessao.objects.create(inicio=agora, fim=agora + timedelta(hours=1), profissional=profissional)
+        servico = Servico.objects.create(nome='Treino do profissional', categoria=Servico.Categoria.TREINO)
+        Sessao.objects.create(
+            inicio=agora, fim=agora + timedelta(hours=1), servico=servico, profissional=profissional
+        )
 
         response = self.client.delete(f'/api/profissionais/{profissional.pk}/')
 

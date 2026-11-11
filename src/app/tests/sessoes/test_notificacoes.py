@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from app.models import Sessao, Usuario
+from app.models import Servico, Sessao, Usuario
 from app.tests.helpers import criar_usuario
 
 
@@ -16,12 +16,14 @@ class NotificacaoSessaoTests(TestCase):
     def setUp(self):
         self.profissional_conta = criar_usuario(Usuario.Perfil.TREINADOR, 'responsavel-notificacao')
         self.profissional = self.profissional_conta.usuario
+        servico = Servico.objects.create(nome='Avaliação física', categoria=Servico.Categoria.TREINO)
         agora = timezone.now()
         self.sessao = Sessao.objects.create(
             titulo='Avaliação inicial',
             tipo=Sessao.Tipo.AVALIACAO,
             inicio=agora - timedelta(hours=2),
             fim=agora - timedelta(minutes=31),
+            servico=servico,
             profissional=self.profissional,
         )
 
