@@ -29,6 +29,17 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+CSRF_TRUSTED_ORIGINS = [
+    origem.strip()
+    for origem in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origem.strip()
+]
+if DEBUG:
+    # Permite a porta de desenvolvimento do cliente React, mantendo a lista configurável em produção.
+    CSRF_TRUSTED_ORIGINS.extend([
+        'http://127.0.0.1:5173',
+        'http://localhost:5173',
+    ])
 
 
 # Application definition

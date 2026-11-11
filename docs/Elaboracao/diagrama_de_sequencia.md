@@ -49,7 +49,7 @@ O bloco de validação cobre os campos obrigatórios e intervalo (400), compatib
 
 ## Finalizar relatório de treino
 
-**Ator:** Treinador responsável. **Requisitos:** RF-01, RF-07. **Regra:** RN-05. **Resultado:** relatório associado à sessão de Treino é finalizado apenas pelo Treinador autorizado e com os dados obrigatórios válidos. O registro de presença/falta é uma operação separada (RF-06, UC-06), tanto para Treino quanto para atendimentos de saúde.
+**Ator:** Treinador responsável. **Requisitos:** RF-01, RF-07. **Regra:** RN-05. **Resultado:** relatório associado à sessão de Treino é finalizado apenas pelo Treinador autorizado, depois do fim previsto e com os dados obrigatórios válidos. O registro de presença/falta é uma operação separada (RF-06, UC-06), tanto para Treino quanto para atendimentos de saúde.
 
 ```plantuml
 @startuml finalizar_relatorio_treino
@@ -59,38 +59,45 @@ control "Autorização" as Auth
 control "RelatorioTreinoService" as Relatorio
 database "Banco relacional" as DB
 
-Treinador -> API: PUT /sessoes/{id}/relatorio (relatório)
-API -> Auth: validar token e perfil
-alt não autenticado ou perfil diferente de Treinador
+Treinador -> API: POST /api/sessoes/{id}/relatorio (criar rascunho)
+API -> Auth: validar sessão e perfil
+alt não autenticado ou não é o Treinador responsável
   Auth --> API: acesso negado
   API --> Treinador: 401/403
-else treinador autenticado
+else Treinador responsável autenticado
   Auth --> API: autorizado
-  API -> Relatorio: finalizar(sessaoId, treinador, dados)
-  Relatorio -> DB: carregar sessão, vínculo e relatório existente
-  Relatorio -> Relatorio: validar sessão, vínculo, estado e campos
-  alt sessão inexistente ou sem permissão
-    Relatorio --> API: 404/403 + motivo
+  API -> Relatorio: criar rascunho(sessaoId, treinador, dados)
+  Relatorio -> DB: carregar sessão e relatório existente
+  Relatorio -> Relatorio: validar serviço Treino, sessão realizada e fim previsto
+  alt sessão inválida ou relatório já existe
+    Relatorio --> API: 409 + motivo
     API --> Treinador: mostrar erro e motivo
-  else relatório já finalizado
-    Relatorio --> API: 409 + relatório imutável
-    API --> Treinador: mostrar que não pode corrigir relatório finalizado
-  else dados inválidos ou incompletos
-    Relatorio --> API: 400 + campos inválidos
-    API --> Treinador: mostrar erros de validação
-  else sessão, vínculo, estado e dados válidos
-    Relatorio -> DB: iniciar transação
-    Relatorio -> DB: persistir relatório
-    Relatorio -> DB: marcar relatório como finalizado
-    Relatorio -> DB: commit
-    Relatorio --> API: relatório finalizado
-    API --> Treinador: 200 + relatório
+  else rascunho criado
+    Relatorio -> DB: persistir rascunho
+    Relatorio --> API: 201 + relatório
+    API --> Treinador: mostrar rascunho
+    Treinador -> API: PATCH /api/sessoes/{id}/relatorio (editar rascunho)
+    API -> Relatorio: salvar alterações
+    Relatorio --> API: 200 + rascunho atualizado
+    API --> Treinador: mostrar rascunho atualizado
+    Treinador -> API: POST /api/sessoes/{id}/relatorio/finalizar
+    API -> Relatorio: validar campos obrigatórios e finalizar
+    alt dados inválidos ou incompletos
+      Relatorio --> API: 400 + campos inválidos
+      API --> Treinador: mostrar erros de validação
+    else dados válidos
+      Relatorio -> DB: bloquear sessão e relatório em transação
+      Relatorio -> DB: persistir dados e marcar FINALIZADO
+      Relatorio -> DB: commit
+      Relatorio --> API: 200 + relatório finalizado
+      API --> Treinador: mostrar relatório finalizado
+    end
   end
 end
 @enduml
 ```
 
-**Definições:** um relatório por sessão, com participantes vinculados à sessão; pode ser salvo como rascunho e finalizado após validação. Registra objetivo, exercícios executados, volume como valor + unidade e intensidade da sessão pela escala Borg CR10 (0–10). Para treino resistido, volume-carga pode ser calculado como séries × repetições × carga em kg; modalidades diferentes mantêm suas próprias unidades, sem somar medidas incompatíveis. Após finalização, o relatório é imutável e qualquer tentativa de edição deve ser recusada com 409. Presença/falta é registrada separadamente pelo profissional responsável no UC-06.
+**Definições:** um relatório por sessão, com participantes vinculados à sessão; pode ser salvo como rascunho e finalizado após validação. Registra data, horário, local, objetivo, exercícios executados, volume como valor + unidade e intensidade da sessão pela escala Borg CR10 (0–10). Para treino resistido, volume-carga pode ser calculado como séries × repetições × carga em kg; modalidades diferentes mantêm suas próprias unidades, sem somar medidas incompatíveis. Após finalização, o relatório é imutável e qualquer tentativa de edição deve ser recusada com 409. Presença/falta é registrada separadamente pelo profissional responsável no UC-06.
 
 ## Rastreabilidade
 

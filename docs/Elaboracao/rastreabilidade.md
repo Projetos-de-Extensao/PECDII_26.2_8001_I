@@ -4,7 +4,7 @@ title: Rastreabilidade Requisito × Artefato
 ---
 # Rastreabilidade Requisito × Artefato
 
-Esta matriz liga os requisitos estáveis do [levantamento](levreq.md) aos documentos em que são definidos, modelados ou representados. O [DER](der.md) complementa o modelo de classes com as tabelas propostas. As células indicam quando uma representação visual é parcial ou pendente. Uma referência não significa que a funcionalidade já esteja implementada; o [plano de viabilidade](viabilidade_mvp.md) registra o estado atual do código. RF-04 já está implementado em `/api/sessoes/`: Administrador consulta a agenda operacional; Treinador e Profissional de Saúde veem apenas os compromissos do próprio escopo e podem filtrar por serviço vinculado ao perfil.
+Esta matriz liga os requisitos estáveis do [levantamento](levreq.md) aos documentos em que são definidos, modelados ou representados. O [DER](der.md) complementa o modelo de classes com as tabelas previstas e indica diferenças da implementação. As células indicam quando uma representação visual é parcial ou pendente. Uma referência não significa que a funcionalidade já esteja implementada; o [plano de viabilidade](viabilidade_mvp.md) registra o estado atual do código. RF-04 está implementado em `/api/sessoes/`: Administrador consulta a agenda operacional; Treinador e Profissional de Saúde veem apenas os compromissos do próprio escopo e podem filtrar por serviço vinculado ao perfil. A issue #110 acrescentou um cliente React responsivo com login, cadastros administrativos e consulta da agenda; presença e relatório ainda não têm telas no cliente.
 
 | ID | Visão | Caso de uso | Classes/domínio | Sequência | Protótipo baixa | Protótipo alta |
 |---|---|---|---|---|---|---|
@@ -30,7 +30,7 @@ Esta matriz liga os requisitos estáveis do [levantamento](levreq.md) aos docume
 | RNF-04 | Restrições | UC-01 a UC-07, UC-09 a UC-11 | Usuario | Ambos | Erro de acesso/dados | Login; outros estados de erro pendentes nos exports |
 | RNF-05 | Restrições | UC-01 a UC-07, UC-09 | Todos | Ambos | — (testes e documentação fora da interface) | — (testes e documentação fora da interface) |
 | RNF-06 | Objetivos/qualidade | UC-02, UC-05, UC-06, UC-07, UC-10 | RegistroAuditoria com mensagem legível; DER registro_auditoria | — | Registro interno à API | Registro interno à API |
-| RNF-07 | Escopo adicional do MVP do grupo | Fluxos RF-01 a RF-12 conforme perfil | Cliente web responsivo; backend continua como autoridade | Integração cliente–API | Não se aplica | Telas desktop e mobile existentes; cobertura parcial e pendências descritas no [registro de revisão](prototipo_alta_fidelidade.md#revisao-de-aderencia-para-o-front-end) |
+| RNF-07 | Escopo adicional do MVP do grupo | Fluxos RF-01 a RF-12 conforme perfil | Cliente web responsivo; backend continua como autoridade | Integração cliente–API | Não se aplica | Cliente funcional em React para login, cadastros administrativos e consulta da agenda; protótipo de alta fidelidade tem cobertura visual parcial e pendências descritas no [registro de revisão](prototipo_alta_fidelidade.md#revisao-de-aderencia-para-o-front-end) |
 
 ## Lacunas de rastreabilidade
 

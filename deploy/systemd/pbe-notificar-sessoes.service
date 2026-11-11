@@ -5,5 +5,5 @@ After=network.target
 [Service]
 Type=oneshot
 User=ubuntu
-WorkingDirectory=/home/ubuntu/PECDII_26.2_8001_I/src
-ExecStart=/home/ubuntu/PECDII_26.2_8001_I/src/.venv/bin/python manage.py notificar_sessoes_pendentes
+WorkingDirectory=/home/ubuntu/PECDII_26.2_8001_I/backend/src
+ExecStart=/home/ubuntu/PECDII_26.2_8001_I/backend/src/.venv/bin/python manage.py notificar_sessoes_pendentes
