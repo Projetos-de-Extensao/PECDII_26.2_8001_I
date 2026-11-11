@@ -419,6 +419,9 @@ class SessaoApiTests(TestCase):
         self.admin_client = cliente_autenticado(Usuario.Perfil.ADMINISTRADOR, 'admin-api-sessao')
         self.profissional_conta = criar_usuario(Usuario.Perfil.TREINADOR, 'responsavel-sessao')
         self.profissional = self.profissional_conta.usuario
+        # Só o responsável registra se a sessão foi ministrada (RN-05, RF-10).
+        self.responsavel_client = APIClient()
+        self.responsavel_client.force_authenticate(user=self.profissional_conta)
         self.servico = Servico.objects.create(nome='Avaliação física', categoria=Servico.Categoria.TREINO)
         self.aluno = Aluno.objects.create(nome='Aluno da sessão', data_nascimento='2010-01-01')
 
@@ -514,7 +517,7 @@ class SessaoApiTests(TestCase):
     def test_atualiza_status_para_realizada_e_salva_observacoes(self):
         sessao = self.criar_sessao()
 
-        response = self.client.patch(
+        response = self.responsavel_client.patch(
             f'/api/sessoes/{sessao.pk}/',
             {'status': Sessao.Status.REALIZADA, 'observacoes': 'Treino de força concluído.'},
             format='json',
@@ -528,7 +531,7 @@ class SessaoApiTests(TestCase):
     def test_atualiza_status_para_nao_realizada(self):
         sessao = self.criar_sessao()
 
-        response = self.client.patch(
+        response = self.responsavel_client.patch(
             f'/api/sessoes/{sessao.pk}/',
             {'status': Sessao.Status.NAO_REALIZADA},
             format='json',

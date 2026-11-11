@@ -83,11 +83,26 @@ O limite é de 6 alunos por sessão, para qualquer serviço (RN-02). Os particip
 
 Duas confirmações simultâneas não validam a mesma agenda: o SQLite está configurado com `transaction_mode` `IMMEDIATE`, que reserva a escrita no início da transação, e a segunda confirmação espera a primeira terminar (até 20 segundos) antes de validar (RNF-03).
 
+### Registrar presença ou falta
+
+O `PATCH /api/sessoes/{id}/presencas/` registra a presença de cada aluno participante (RF-06). Só o profissional responsável pela sessão registra; outro profissional e o Administrador recebem `403` (RN-05). O registro pode ser parcial e corrigido depois:
+
+```json
+{
+  "presencas": [
+    {"aluno": 5, "situacao": "PRESENTE"},
+    {"aluno": 8, "situacao": "FALTA"}
+  ]
+}
+```
+
+Os registros são gravados juntos: se algum falhar, nenhum é gravado. A resposta `200` traz a sessão, e a consulta de qualquer sessão mostra `presencas`, com `situacao_presenca` nula enquanto não houver registro. Aluno que não participa da sessão, aluno repetido, lista vazia ou situação diferente de `PRESENTE`/`FALTA` recebem `400`; sessão cancelada recebe `409`.
+
 ### Perfis e acesso
 
 Toda a API exige autenticação: sem credenciais, a resposta é `401`. Cada conta tem um dos três perfis do GAAP — Administrador, Treinador ou Profissional de Saúde.
 
-Nos cadastros de alunos, profissionais, serviços, disponibilidades e bloqueios, qualquer perfil autenticado consulta, mas só o Administrador cria, edita e remove; os demais recebem `403`. O superusuário do Django é tratado como Administrador, o que permite administrar o sistema antes de existir qualquer cadastro. Só o Administrador confirma sessões (`POST /api/sessoes/`); a consulta e a atualização das sessões continuam acessíveis a qualquer perfil autenticado. A responsabilidade da sessão é enviada no campo `profissional` com o ID do cadastro em `/api/profissionais/`; o antigo campo `professor` e o endpoint `/api/professores/` foram removidos.
+Nos cadastros de alunos, profissionais, serviços, disponibilidades e bloqueios, qualquer perfil autenticado consulta, mas só o Administrador cria, edita e remove; os demais recebem `403`. O superusuário do Django é tratado como Administrador, o que permite administrar o sistema antes de existir qualquer cadastro. Nas sessões, qualquer perfil autenticado consulta. Só o Administrador confirma (`POST /api/sessoes/`) e remove sessões. Alterar uma sessão (`PUT`/`PATCH`) é permitido ao Administrador e ao profissional responsável por ela; o responsável muda apenas `status` e `observacoes` (RF-10). Outro profissional recebe `403`. A responsabilidade da sessão é enviada no campo `profissional` com o ID do cadastro em `/api/profissionais/`; o antigo campo `professor` e o endpoint `/api/professores/` foram removidos.
 
 O perfil fica no modelo `Usuario`, ligado por `conta` ao usuário do Django, que guarda o login e o hash da senha. Cadastre o primeiro Administrador pelo painel `/admin/`, ou use um superusuário.
 

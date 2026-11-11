@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError as ValidacaoDjango
 from rest_framework import serializers
 
 from app.agendamento import confirmar_sessao
-from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
+from app.models import Aluno, BloqueioAgenda, Disponibilidade, Participacao, Servico, Sessao, Usuario
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -164,9 +164,14 @@ class SessaoSerializer(serializers.ModelSerializer):
         }
 
     def to_representation(self, instance):
-        """Lista os participantes pelo ID do aluno, como foram enviados."""
+        """Lista os participantes pelo ID do aluno, como foram enviados, e a presença de cada um."""
         dados = super().to_representation(instance)
-        dados['participantes'] = [participacao.aluno_id for participacao in instance.participacoes.all()]
+        participacoes = list(instance.participacoes.all())
+        dados['participantes'] = [participacao.aluno_id for participacao in participacoes]
+        dados['presencas'] = [
+            {'aluno': participacao.aluno_id, 'situacao_presenca': participacao.situacao_presenca}
+            for participacao in participacoes
+        ]
         return dados
 
     def validate(self, attrs):
@@ -248,3 +253,32 @@ class BloqueioAgendaSerializer(FaixaAgendaSerializer):
         fields = ['id', 'profissional', 'inicio', 'fim', 'motivo']
         read_only_fields = ['id']
         extra_kwargs = {'motivo': {'required': False, 'allow_blank': True}}
+
+
+class PresencaSerializer(serializers.Serializer):
+    """Presença ou falta de um aluno participante."""
+
+    aluno = serializers.IntegerField()
+    situacao = serializers.ChoiceField(
+        choices=Participacao.SituacaoPresenca.choices,
+        error_messages={'invalid_choice': 'Informe PRESENTE ou FALTA.'},
+    )
+
+
+class RegistroPresencaSerializer(serializers.Serializer):
+    """Valida o registro de presença de uma sessão (RF-06)."""
+
+    presencas = PresencaSerializer(many=True, allow_empty=False)
+
+    def validate_presencas(self, value):
+        """Aceita só alunos da sessão, cada um uma vez."""
+        alunos = [item['aluno'] for item in value]
+        if len(set(alunos)) != len(alunos):
+            raise serializers.ValidationError('O mesmo aluno foi informado mais de uma vez.')
+        participantes = set(self.context['sessao'].participacoes.values_list('aluno_id', flat=True))
+        fora_da_sessao = sorted(set(alunos) - participantes)
+        if fora_da_sessao:
+            raise serializers.ValidationError(
+                f'Aluno(s) que não participam desta sessão: {", ".join(map(str, fora_da_sessao))}.'
+            )
+        return value
