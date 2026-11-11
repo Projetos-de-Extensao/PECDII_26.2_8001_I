@@ -9,7 +9,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from app.agendamento import RegraDeAgendamentoViolada
+from app.agendamento import (
+    AgendaComSessaoConfirmada,
+    RegraDeAgendamentoViolada,
+    alterar_agenda,
+    validar_bloqueio,
+    validar_saida_de_disponibilidade,
+)
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
 from app.operacao import mes_atual, pendencias_operacionais, resumo_por_servico
 from app.permissoes import (
@@ -197,20 +203,82 @@ class SessaoViewSet(ModelViewSet):
         return Response(serializer.data)
 
 
+def _conflito_de_agenda(erro):
+    conflito = Conflito()
+    # Atribuído depois do construtor, que converteria o ID da sessão em texto.
+    conflito.detail = {'regra': erro.regra, 'detail': erro.mensagem, 'sessao': erro.sessao.pk}
+    return conflito
+
+
+def _faixa_resultante(serializer):
+    """Profissional e intervalo que a faixa terá depois de gravada (POST, PUT ou PATCH)."""
+    atual = serializer.instance
+    dados = serializer.validated_data
+    return {
+        campo: dados.get(campo, getattr(atual, campo, None))
+        for campo in ('profissional', 'inicio', 'fim')
+    }
+
+
 class DisponibilidadeViewSet(ModelViewSet):
-    """Gerencia períodos de disponibilidade com leitura autenticada e escrita administrativa."""
+    """Gerencia períodos de disponibilidade com leitura autenticada e escrita administrativa.
+
+    Remover ou reduzir uma disponibilidade que cobre sessão confirmada responde 409 (D-18).
+    """
 
     queryset = Disponibilidade.objects.select_related('profissional').all()
     serializer_class = DisponibilidadeSerializer
     permission_classes = [PodeAdministrarCadastros]
 
+    def perform_update(self, serializer):
+        atual = serializer.instance
+        nova = _faixa_resultante(serializer)
+        try:
+            alterar_agenda(
+                [atual.profissional, nova['profissional']],
+                lambda: validar_saida_de_disponibilidade(atual, nova),
+                serializer.save,
+            )
+        except AgendaComSessaoConfirmada as erro:
+            raise _conflito_de_agenda(erro) from erro
+
+    def perform_destroy(self, instance):
+        try:
+            alterar_agenda(
+                [instance.profissional],
+                lambda: validar_saida_de_disponibilidade(instance),
+                instance.delete,
+            )
+        except AgendaComSessaoConfirmada as erro:
+            raise _conflito_de_agenda(erro) from erro
+
 
 class BloqueioAgendaViewSet(ModelViewSet):
-    """Gerencia bloqueios com leitura autenticada e escrita administrativa."""
+    """Gerencia bloqueios com leitura autenticada e escrita administrativa.
+
+    Bloqueio sobre sessão confirmada responde 409 (D-18).
+    """
 
     queryset = BloqueioAgenda.objects.select_related('profissional').all()
     serializer_class = BloqueioAgendaSerializer
     permission_classes = [PodeAdministrarCadastros]
+
+    def _gravar(self, serializer):
+        faixa = _faixa_resultante(serializer)
+        try:
+            alterar_agenda(
+                [faixa['profissional']],
+                lambda: validar_bloqueio(**faixa),
+                serializer.save,
+            )
+        except AgendaComSessaoConfirmada as erro:
+            raise _conflito_de_agenda(erro) from erro
+
+    def perform_create(self, serializer):
+        self._gravar(serializer)
+
+    def perform_update(self, serializer):
+        self._gravar(serializer)
 
 
 class DashboardView(APIView):
