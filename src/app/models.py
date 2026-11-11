@@ -100,6 +100,15 @@ class Sessao(models.Model):
     )
     inicio = models.DateTimeField()
     fim = models.DateTimeField()
+    # Opcional só por causa das sessões criadas antes do catálogo; a confirmação (#92) exige o serviço.
+    servico = models.ForeignKey(
+        Servico,
+        on_delete=models.PROTECT,
+        related_name='sessoes',
+        null=True,
+        blank=True,
+        verbose_name='serviço',
+    )
     profissional = models.ForeignKey(
         'Usuario',
         on_delete=models.PROTECT,
@@ -119,10 +128,77 @@ class Sessao(models.Model):
         ordering = ['inicio']
         verbose_name = 'sessão'
         verbose_name_plural = 'sessões'
+        indexes = [
+            # Apoiam a busca de conflitos do profissional (RN-01) e dos alunos (RN-07), conforme o DER.
+            models.Index(fields=['profissional', 'inicio', 'fim'], name='sessao_prof_inicio_fim_idx'),
+            models.Index(fields=['inicio', 'fim'], name='sessao_inicio_fim_idx'),
+        ]
 
     def __str__(self):
         """Retorna o título e o início da sessão para exibição."""
         return f'{self.titulo} — {self.inicio:%d/%m/%Y %H:%M}'
+
+
+class Participacao(models.Model):
+    """Liga um aluno a uma sessão e guarda a presença dele (RF-05, RF-06)."""
+
+    class SituacaoPresenca(models.TextChoices):
+        """Presença registrada depois da sessão; fica vazia até o registro."""
+
+        PRESENTE = 'PRESENTE', 'Presente'
+        FALTA = 'FALTA', 'Falta'
+
+    sessao = models.ForeignKey(
+        Sessao,
+        on_delete=models.CASCADE,
+        related_name='participacoes',
+        verbose_name='sessão',
+    )
+    # PROTECT preserva o histórico de presença: o aluno não some das sessões ao ser removido.
+    aluno = models.ForeignKey(
+        Aluno,
+        on_delete=models.PROTECT,
+        related_name='participacoes',
+    )
+    situacao_presenca = models.CharField(
+        'situação da presença',
+        max_length=10,
+        choices=SituacaoPresenca.choices,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ['sessao__inicio', 'aluno__nome']
+        verbose_name = 'participação'
+        verbose_name_plural = 'participações'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sessao', 'aluno'],
+                name='participacao_sessao_aluno_unico',
+                violation_error_message='Este aluno já participa desta sessão.',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(situacao_presenca__isnull=True)
+                    | models.Q(situacao_presenca__in=['PRESENTE', 'FALTA'])
+                ),
+                name='participacao_presenca_valida',
+            ),
+        ]
+        indexes = [
+            # Apoia a busca dos compromissos de um aluno (RN-07).
+            models.Index(fields=['aluno', 'sessao'], name='participacao_aluno_sessao_idx'),
+        ]
+
+    def save(self, *args, **kwargs):
+        """Valida a presença e a duplicidade antes de gravar, mesmo fora do admin."""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        """Retorna o aluno e a sessão para exibição."""
+        return f'{self.aluno} — {self.sessao}'
 
 
 class Usuario(TelefoneMixin, models.Model):

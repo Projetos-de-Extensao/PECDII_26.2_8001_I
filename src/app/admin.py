@@ -2,7 +2,16 @@ from django.contrib import admin
 from django import forms
 from django.db.models import Count
 
-from app.models import Aluno, BloqueioAgenda, Disponibilidade, ProfissionalServico, Servico, Sessao, Usuario
+from app.models import (
+    Aluno,
+    BloqueioAgenda,
+    Disponibilidade,
+    Participacao,
+    ProfissionalServico,
+    Servico,
+    Sessao,
+    Usuario,
+)
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -99,14 +108,25 @@ class ServicoAdmin(admin.ModelAdmin):
         return obj.total_profissionais
 
 
+class ParticipacaoInline(admin.TabularInline):
+    """Lista, dentro da sessão, os alunos participantes e a presença de cada um."""
+
+    model = Participacao
+    extra = 0
+    autocomplete_fields = ('aluno',)
+    verbose_name = 'participante'
+    verbose_name_plural = 'participantes'
+
+
 @admin.register(Sessao)
 class SessaoAdmin(admin.ModelAdmin):
     """Configura filtros e colunas de sessões no admin."""
 
     form = SessaoAdminForm
+    inlines = [ParticipacaoInline]
     readonly_fields = ('notificacao_enviada_em',)
-    list_display = ('__str__', 'tipo', 'profissional', 'inicio', 'fim', 'status')
-    list_filter = ('tipo', 'status')
+    list_display = ('__str__', 'servico', 'profissional', 'inicio', 'fim', 'status')
+    list_filter = ('servico', 'tipo', 'status')
     ordering = ('inicio',)
 
     def get_readonly_fields(self, request, obj=None):
