@@ -42,6 +42,14 @@ class Conflito(APIException):
     default_detail = 'A operação conflita com registros existentes.'
     default_code = 'conflito'
 
+    def __init__(self, detail=None, code=None):
+        sessao_id = detail.get('sessao') if isinstance(detail, dict) else None
+        super().__init__(detail, code)
+        if sessao_id is not None:
+            # APIException converte valores do dicionário em ErrorDetail (texto);
+            # o contrato da API expõe o ID da sessão como inteiro.
+            self.detail['sessao'] = sessao_id
+
 
 def executar_alteracao_de_agenda(profissionais, validar, gravar):
     """Serializa a mudança da agenda e converte violações de regra em HTTP 409."""
