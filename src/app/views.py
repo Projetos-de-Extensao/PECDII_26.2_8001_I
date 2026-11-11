@@ -6,15 +6,18 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from app.agendamento import RegraDeAgendamentoViolada
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
+from app.operacao import mes_atual, resumo_por_servico
 from app.permissoes import (
     PodeAdministrarCadastros,
     PodeAlterarSessao,
     PodeConfirmarAgendamento,
     PodeRemoverSessao,
+    SomenteAdministrador,
     perfil_da_conta,
 )
 from app.serializers import (
@@ -22,6 +25,7 @@ from app.serializers import (
     BloqueioAgendaSerializer,
     DisponibilidadeSerializer,
     FiltroAgendaQueryParamsSerializer,
+    PeriodoDashboardQueryParamsSerializer,
     ProfissionalSerializer,
     RegistroPresencaSerializer,
     ServicoSerializer,
@@ -206,3 +210,17 @@ class BloqueioAgendaViewSet(ModelViewSet):
     queryset = BloqueioAgenda.objects.select_related('profissional').all()
     serializer_class = BloqueioAgendaSerializer
     permission_classes = [PodeAdministrarCadastros]
+
+
+class DashboardView(APIView):
+    """Dashboard simples da operação, exclusivo do Administrador (RF-11)."""
+
+    permission_classes = [SomenteAdministrador]
+
+    def get(self, request):
+        periodo = PeriodoDashboardQueryParamsSerializer(data=request.query_params)
+        periodo.is_valid(raise_exception=True)
+        inicio, fim = mes_atual()
+        inicio = periodo.validated_data.get('inicio', inicio)
+        fim = periodo.validated_data.get('fim', fim)
+        return Response(resumo_por_servico(inicio, fim))

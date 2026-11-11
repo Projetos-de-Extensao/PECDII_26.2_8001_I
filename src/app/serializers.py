@@ -235,6 +235,24 @@ class FiltroAgendaQueryParamsSerializer(serializers.Serializer):
         return attrs
 
 
+class PeriodoDashboardQueryParamsSerializer(serializers.Serializer):
+    """Valida o período do dashboard: as duas datas juntas ou nenhuma (mês atual)."""
+
+    inicio = serializers.DateField(required=False)
+    fim = serializers.DateField(required=False)
+
+    def validate(self, attrs):
+        if ('inicio' in attrs) != ('fim' in attrs):
+            raise serializers.ValidationError(
+                'Informe inicio e fim juntos, ou nenhum dos dois para usar o mês atual.'
+            )
+        if 'inicio' in attrs and attrs['fim'] < attrs['inicio']:
+            raise serializers.ValidationError({
+                'fim': 'O fim do período não pode ser anterior ao início.'
+            })
+        return attrs
+
+
 class FaixaAgendaSerializer(serializers.ModelSerializer):
     """Valida faixas da agenda e restringe o responsável a perfis profissionais."""
 
