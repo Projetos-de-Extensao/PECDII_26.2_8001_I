@@ -31,6 +31,14 @@ class AlunoViewSet(ModelViewSet):
     serializer_class = AlunoSerializer
     permission_classes = [PodeAdministrarCadastros]
 
+    def perform_destroy(self, instance):
+        # As participações protegem o aluno; sem esta checagem o delete virava erro 500.
+        if instance.participacoes.exists():
+            raise Conflito(
+                'Este aluno participa de sessões. Remova-o das sessões antes de excluir o cadastro.'
+            )
+        instance.delete()
+
 
 class ProfissionalViewSet(ModelViewSet):
     queryset = Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS)
@@ -52,6 +60,14 @@ class ServicoViewSet(ModelViewSet):
     queryset = Servico.objects.all()
     serializer_class = ServicoSerializer
     permission_classes = [PodeAdministrarCadastros]
+
+    def perform_destroy(self, instance):
+        # As sessões protegem o serviço; sem esta checagem o delete virava erro 500.
+        if instance.sessoes.exists():
+            raise Conflito(
+                'Este serviço possui sessões agendadas ou realizadas e não pode ser excluído.'
+            )
+        instance.delete()
 
 
 class SessaoViewSet(ModelViewSet):
