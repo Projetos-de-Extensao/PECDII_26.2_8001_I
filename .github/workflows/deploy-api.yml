@@ -9,7 +9,9 @@ permissions:
   id-token: write
 
 concurrency:
-  group: deploy-api-producao
+  # Um deploy por vez na VPS. O nome mudou de "deploy-api-producao" porque esse grupo
+  # ficou preso no GitHub depois que um run foi apagado, deixando os deploys em espera.
+  group: deploy-api-vps
   cancel-in-progress: false
 
 jobs:
