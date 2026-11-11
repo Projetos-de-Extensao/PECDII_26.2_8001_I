@@ -36,7 +36,7 @@ def validar_capacidade(alunos):
         )
 
 
-def validar_regras_da_agenda(dados, alunos):
+def validar_regras_da_agenda(dados, alunos, *, sessao_ignorada=None):
     """Valida as regras que dependem do que já está gravado na agenda.
 
     Roda dentro da transação, depois do bloqueio, para que duas confirmações simultâneas
@@ -88,6 +88,8 @@ def validar_regras_da_agenda(dados, alunos):
         inicio__lt=fim,
         fim__gt=inicio,
     ).exclude(status=Sessao.Status.CANCELADA)
+    if sessao_ignorada is not None:
+        sessoes_conflitantes = sessoes_conflitantes.exclude(pk=sessao_ignorada)
     if sessoes_conflitantes.exists():
         raise RegraDeAgendamentoViolada(
             'RN-01', 'O profissional já possui um compromisso neste horário.'
@@ -98,6 +100,10 @@ def validar_regras_da_agenda(dados, alunos):
         sessao__inicio__lt=fim,
         sessao__fim__gt=inicio,
     ).exclude(sessao__status=Sessao.Status.CANCELADA)
+    if sessao_ignorada is not None:
+        participacoes_conflitantes = participacoes_conflitantes.exclude(
+            sessao_id=sessao_ignorada,
+        )
     participacao = participacoes_conflitantes.select_related('aluno').first()
     if participacao is not None:
         raise RegraDeAgendamentoViolada(

@@ -188,7 +188,15 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'GAAP API',
-    'DESCRIPTION': 'API REST para agenda, sessões e serviços do GAAP.',
+    'DESCRIPTION': (
+        'API REST para agenda, sessões e serviços do GAAP. '
+        'Os endpoints exigem autenticação, exceto autenticação, CSRF e documentação. '
+        'A API aceita HTTP Basic ou sessão Django; requisições de escrita autenticadas por '
+        'sessão também precisam enviar o cabeçalho X-CSRFToken. '
+        'Permissões por perfil são descritas em cada operação: consultas de cadastro são '
+        'disponíveis a usuários autenticados, alterações de cadastro ficam com o Administrador, '
+        'e ações de sessão respeitam o profissional responsável.'
+    ),
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'ENUM_NAME_OVERRIDES': {

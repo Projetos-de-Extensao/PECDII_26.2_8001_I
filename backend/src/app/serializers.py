@@ -182,6 +182,17 @@ class ProfissionalSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class PresencaDaSessaoSerializer(serializers.Serializer):
+    """Presença/falta exposta ao consultar uma sessão."""
+
+    aluno = serializers.IntegerField(source='aluno_id', read_only=True)
+    situacao_presenca = serializers.ChoiceField(
+        choices=Participacao.SituacaoPresenca.choices,
+        allow_null=True,
+        read_only=True,
+    )
+
+
 class SessaoSerializer(serializers.ModelSerializer):
     """Valida e converte sessões para a API REST."""
 
@@ -198,12 +209,13 @@ class SessaoSerializer(serializers.ModelSerializer):
         many=True,
         required=False,
     )
+    presencas = PresencaDaSessaoSerializer(source='participacoes', many=True, read_only=True)
 
     class Meta:
         model = Sessao
         fields = [
             'id', 'titulo', 'tipo', 'descricao', 'observacoes', 'inicio', 'fim', 'servico', 'profissional',
-            'participantes', 'status', 'notificacao_enviada_em',
+            'participantes', 'presencas', 'status', 'notificacao_enviada_em',
         ]
         read_only_fields = ['id', 'notificacao_enviada_em']
         extra_kwargs = {
@@ -216,10 +228,6 @@ class SessaoSerializer(serializers.ModelSerializer):
         dados = super().to_representation(instance)
         participacoes = list(instance.participacoes.all())
         dados['participantes'] = [participacao.aluno_id for participacao in participacoes]
-        dados['presencas'] = [
-            {'aluno': participacao.aluno_id, 'situacao_presenca': participacao.situacao_presenca}
-            for participacao in participacoes
-        ]
         return dados
 
     def validate(self, attrs):
@@ -263,6 +271,55 @@ class SessaoSerializer(serializers.ModelSerializer):
         return confirmar_sessao(validated_data, alunos)
 
 
+class ConfirmarSessaoRequestSerializer(serializers.Serializer):
+    """Contrato OpenAPI da confirmação, com os campos exigidos pela API."""
+
+    titulo = serializers.CharField(max_length=150)
+    tipo = serializers.ChoiceField(choices=Sessao.Tipo.choices)
+    descricao = serializers.CharField(required=False, allow_blank=True)
+    observacoes = serializers.CharField(required=False, allow_blank=True)
+    inicio = serializers.DateTimeField()
+    fim = serializers.DateTimeField()
+    servico = serializers.PrimaryKeyRelatedField(queryset=Servico.objects.all())
+    profissional = serializers.PrimaryKeyRelatedField(
+        queryset=Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS),
+    )
+    participantes = serializers.PrimaryKeyRelatedField(
+        queryset=Aluno.objects.all(), many=True, allow_empty=False,
+    )
+
+
+class AtualizarSessaoPatchRequestSerializer(serializers.Serializer):
+    """Contrato OpenAPI do PATCH; participantes não mudam após confirmar."""
+
+    titulo = serializers.CharField(max_length=150, required=False)
+    tipo = serializers.ChoiceField(choices=Sessao.Tipo.choices, required=False)
+    descricao = serializers.CharField(required=False, allow_blank=True)
+    observacoes = serializers.CharField(required=False, allow_blank=True)
+    inicio = serializers.DateTimeField(required=False)
+    fim = serializers.DateTimeField(required=False)
+    servico = serializers.PrimaryKeyRelatedField(
+        queryset=Servico.objects.all(), required=False,
+    )
+    profissional = serializers.PrimaryKeyRelatedField(
+        queryset=Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS),
+        required=False,
+    )
+    status = serializers.ChoiceField(choices=Sessao.Status.choices, required=False)
+
+
+class AtualizarSessaoPutRequestSerializer(AtualizarSessaoPatchRequestSerializer):
+    """Contrato OpenAPI do PUT; título, tipo, início, fim e responsável são necessários."""
+
+    titulo = serializers.CharField(max_length=150)
+    tipo = serializers.ChoiceField(choices=Sessao.Tipo.choices)
+    inicio = serializers.DateTimeField()
+    fim = serializers.DateTimeField()
+    profissional = serializers.PrimaryKeyRelatedField(
+        queryset=Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS),
+    )
+
+
 class FiltroAgendaQueryParamsSerializer(serializers.Serializer):
     """Valida os filtros de período e serviço usados na consulta da agenda."""
 
@@ -287,6 +344,14 @@ class FiltroPendenciasQueryParamsSerializer(serializers.Serializer):
     """Valida o filtro opcional por tipo de pendência (RF-09)."""
 
     tipo = serializers.ChoiceField(choices=list(TIPOS_DE_PENDENCIA.items()), required=False)
+
+
+class FiltroAuditoriaQueryParamsSerializer(serializers.Serializer):
+    """Filtros documentados para consultar a trilha de auditoria."""
+
+    operacao = serializers.ChoiceField(choices=RegistroAuditoria.Operacao.choices, required=False)
+    entidade = serializers.CharField(max_length=50, required=False)
+    entidade_id = serializers.IntegerField(min_value=1, required=False)
 
 
 class PeriodoDashboardQueryParamsSerializer(serializers.Serializer):
