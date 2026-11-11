@@ -32,3 +32,24 @@ class PodeConfirmarAgendamento(PodeAdministrarCadastros):
     """Libera a confirmação de agendamento só ao Administrador (RF-05, UC-05)."""
 
     message = 'Apenas o perfil Administrador pode confirmar agendamentos.'
+
+
+class PodeRemoverSessao(PodeAdministrarCadastros):
+    """Libera a remoção de sessões só ao Administrador."""
+
+    message = 'Apenas o perfil Administrador pode remover sessões.'
+
+
+class PodeAlterarSessao(BasePermission):
+    """Libera a alteração da sessão ao Administrador e ao profissional responsável (RN-05, RF-10)."""
+
+    message = 'Apenas o profissional responsável ou o Administrador pode alterar esta sessão.'
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if perfil_da_conta(request.user) == Usuario.Perfil.ADMINISTRADOR:
+            return True
+        usuario = getattr(request.user, 'usuario', None)
+        return usuario is not None and obj.profissional_id == usuario.pk
