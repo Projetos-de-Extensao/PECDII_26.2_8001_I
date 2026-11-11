@@ -269,6 +269,91 @@ class PeriodoDashboardQueryParamsSerializer(serializers.Serializer):
         return attrs
 
 
+class SituacaoResumoSerializer(serializers.Serializer):
+    """Rotulo exibido para cada situação de sessão no dashboard."""
+
+    valor = serializers.ChoiceField(choices=Sessao.Status.choices)
+    rotulo = serializers.CharField()
+
+
+class ContagemSituacoesSerializer(serializers.Serializer):
+    """Contagem de sessões agrupada pelas chaves de status da API."""
+
+    por_situacao = serializers.DictField(child=serializers.IntegerField())
+    total = serializers.IntegerField()
+
+
+class ServicoDashboardSerializer(serializers.Serializer):
+    """Resumo de um serviço no dashboard operacional."""
+
+    id = serializers.IntegerField()
+    nome = serializers.CharField()
+    categoria = serializers.ChoiceField(choices=Servico.Categoria.choices)
+    por_situacao = serializers.DictField(child=serializers.IntegerField())
+    total = serializers.IntegerField()
+
+
+class DashboardResponseSerializer(serializers.Serializer):
+    """Resposta do dashboard administrativo."""
+
+    periodo = PeriodoDashboardQueryParamsSerializer()
+    situacoes = SituacaoResumoSerializer(many=True)
+    servicos = ServicoDashboardSerializer(many=True)
+    total = ContagemSituacoesSerializer()
+
+
+class ServicoResumoPendenciaSerializer(serializers.Serializer):
+    """Serviço associado a uma sessão pendente."""
+
+    id = serializers.IntegerField()
+    nome = serializers.CharField()
+    categoria = serializers.ChoiceField(choices=Servico.Categoria.choices)
+
+
+class SessaoResumoPendenciaSerializer(serializers.Serializer):
+    """Resumo da sessão mostrado nos atalhos de pendências."""
+
+    id = serializers.IntegerField()
+    titulo = serializers.CharField()
+    inicio = serializers.DateTimeField()
+    fim = serializers.DateTimeField()
+    status = serializers.ChoiceField(choices=Sessao.Status.choices)
+    servico = ServicoResumoPendenciaSerializer()
+
+
+class ResponsavelPendenciaSerializer(serializers.Serializer):
+    """Profissional responsável por uma pendência operacional."""
+
+    id = serializers.IntegerField()
+    nome = serializers.CharField()
+
+
+class ItemPendenciaSerializer(serializers.Serializer):
+    """Pendência individual com o atalho para a sessão ou relatório."""
+
+    tipo = serializers.ChoiceField(choices=list(TIPOS_DE_PENDENCIA.items()))
+    motivo = serializers.CharField()
+    sessao = SessaoResumoPendenciaSerializer()
+    responsavel = ResponsavelPendenciaSerializer()
+    detalhe = serializers.CharField()
+
+
+class TipoPendenciaSerializer(serializers.Serializer):
+    """Rótulo de um tipo de pendência no filtro."""
+
+    valor = serializers.ChoiceField(choices=list(TIPOS_DE_PENDENCIA.items()))
+    rotulo = serializers.CharField()
+
+
+class PendenciasResponseSerializer(serializers.Serializer):
+    """Resposta da consulta operacional de pendências."""
+
+    total = serializers.IntegerField()
+    por_tipo = serializers.DictField(child=serializers.IntegerField())
+    tipos = TipoPendenciaSerializer(many=True)
+    itens = ItemPendenciaSerializer(many=True)
+
+
 class FaixaAgendaSerializer(serializers.ModelSerializer):
     """Valida faixas da agenda e restringe o responsável a perfis profissionais."""
 

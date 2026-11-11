@@ -12,6 +12,19 @@ Aplicação responsiva em React 19, TypeScript e Vite 8. O cliente consome a API
 
 Use `npm test` para a suíte do cliente e `npm run build` para conferir tipos e gerar os arquivos de produção em `dist/`.
 
+### Publicação na VPS
+
+O deploy de `main` compila o cliente com Node.js 26 e publica `frontend/dist/` em `/var/www/PECDII_26.2_8001_I/frontend/`. Antes do primeiro deploy do frontend, instale Node.js 26 pelo NVM no usuário `ubuntu` da VPS:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash
+source ~/.bashrc
+cd /home/ubuntu/PECDII_26.2_8001_I/frontend
+nvm install
+```
+
+O Nginx serve o cliente em `/` e encaminha `/api/`, `/admin/` e `/static/` ao Django. A API deve continuar vinculada a `127.0.0.1:8000`.
+
 ## Fluxos iniciais
 
 - Login por login/e-mail e senha, com sessão Django e CSRF.
