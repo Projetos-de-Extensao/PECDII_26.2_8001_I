@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { api, ApiError, clearCsrf, refreshCsrf } from './api';
 import { Dashboard, NovoAgendamento, Pendencias } from './AdminViews';
 import { SessionActions } from './SessionActions';
+import { Disponibilidade, EquipeTreinos } from './TeamViews';
 import { errorMessage } from './errors';
 import gaapLogo from './assets/gaap-logo.svg';
 import type { Notice, Profile, RecordKind, Service, Session, SessionList, Student } from './types';
@@ -143,6 +144,7 @@ function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [starting, setStarting] = useState(true);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const secureConnection = window.location.protocol === 'https:';
 
   useEffect(() => {
     let active = true;
@@ -203,7 +205,10 @@ function App() {
             <img className="brand-logo" src={gaapLogo} width="393" height="82" alt="GAAP — Gestão de Atletas" />
           </span>
         </a>
-        <span className="secure-label"><span aria-hidden="true">●</span> Acesso seguro</span>
+        <span className={`secure-label ${secureConnection ? 'is-secure' : 'is-insecure'}`}>
+          <span aria-hidden="true">●</span>
+          {secureConnection ? 'Conexão protegida' : 'Conexão sem HTTPS'}
+        </span>
       </header>
 
       {profile
@@ -215,13 +220,15 @@ function App() {
   );
 }
 
-type View = 'agenda' | 'pendencias' | 'dashboard' | 'agendamento' | 'cadastros';
+type View = 'agenda' | 'pendencias' | 'dashboard' | 'agendamento' | 'cadastros' | 'equipe' | 'disponibilidade';
 
 const adminViews: { id: View; label: string; icon: string }[] = [
   { id: 'agenda', label: 'Agenda', icon: '▦' },
   { id: 'pendencias', label: 'Pendências', icon: '!' },
   { id: 'dashboard', label: 'Dashboard', icon: '▤' },
   { id: 'agendamento', label: 'Novo agendamento', icon: '◷' },
+  { id: 'equipe', label: 'Equipe e treinos', icon: '♙' },
+  { id: 'disponibilidade', label: 'Disponibilidade', icon: '⚙' },
   { id: 'cadastros', label: 'Cadastros', icon: '＋' },
 ];
 
@@ -271,6 +278,8 @@ function Workspace({
         {isAdmin && view === 'pendencias' && <Pendencias onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'dashboard' && <Dashboard onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'agendamento' && <NovoAgendamento onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'equipe' && <EquipeTreinos profile={profile} onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'disponibilidade' && <Disponibilidade onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'cadastros' && <Records onUnauthorized={onUnauthorized} />}
       </div>
     </main>

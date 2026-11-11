@@ -17,7 +17,7 @@ const health: Profile = {
 function session(servico: number): Session {
   return {
     id: 10, titulo: 'Sessão da manhã', inicio: '2026-11-16T09:00:00Z', fim: '2026-11-16T10:00:00Z',
-    servico, participantes: [7], presencas: [{ aluno: 7, situacao_presenca: null }], status: 'AGENDADA',
+    servico, profissional: 2, participantes: [7], presencas: [{ aluno: 7, situacao_presenca: null }], status: 'AGENDADA',
   };
 }
 
@@ -99,6 +99,26 @@ describe('Administrador', () => {
     expect(within(table).getByRole('rowheader', { name: 'Treino funcional' })).toBeTruthy();
     expect(within(table).getAllByText('3')).toHaveLength(2);
     expect(screen.getByText('2026-11-01 a 2026-11-30')).toBeTruthy();
+  });
+
+  it('consulta os treinadores e relaciona os treinos agendados a cada responsável', async () => {
+    const adminWithTrainingService = { ...admin, servicos: [{ id: 3, nome: 'Treino funcional', categoria: 'TREINO' }] };
+    mockApi(adminWithTrainingService, {
+      'GET /api/sessoes/?': () => json([session(3)]),
+      'GET /api/profissionais/': () => json([
+        { id: 2, nome: 'Diego Treinador', email: 'diego@example.com', perfil: 'TREINADOR' },
+        { id: 4, nome: 'Eva Fisio', email: 'eva@example.com', perfil: 'PROFISSIONAL_SAUDE' },
+      ]),
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: /equipe e treinos/i }));
+
+    expect(await screen.findByRole('heading', { name: 'Treinadores e treinos' })).toBeTruthy();
+    expect(screen.getAllByText('Diego Treinador')).toHaveLength(2);
+    expect(screen.queryByText('Eva Fisio')).toBeNull();
+    expect(screen.getByText('Sessão da manhã')).toBeTruthy();
+    expect(screen.getByText('Diego Treinador', { selector: 'strong' })).toBeTruthy();
   });
 
   it('mostra a recusa 409 ao confirmar agendamento', async () => {
