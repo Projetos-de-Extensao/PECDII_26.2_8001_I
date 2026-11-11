@@ -100,13 +100,10 @@ class Sessao(models.Model):
     )
     inicio = models.DateTimeField()
     fim = models.DateTimeField()
-    # Opcional só por causa das sessões criadas antes do catálogo; a confirmação (#92) exige o serviço.
     servico = models.ForeignKey(
         Servico,
         on_delete=models.PROTECT,
         related_name='sessoes',
-        null=True,
-        blank=True,
         verbose_name='serviço',
     )
     profissional = models.ForeignKey(
@@ -114,8 +111,6 @@ class Sessao(models.Model):
         on_delete=models.PROTECT,
         related_name='sessoes',
         limit_choices_to={'perfil__in': ['TREINADOR', 'PROFISSIONAL_SAUDE']},
-        null=True,
-        blank=True,
     )
     status = models.CharField(
         max_length=15,

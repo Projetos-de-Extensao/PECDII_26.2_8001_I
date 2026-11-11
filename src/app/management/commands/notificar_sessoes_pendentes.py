@@ -19,7 +19,6 @@ class Command(BaseCommand):
             status=Sessao.Status.AGENDADA,
             notificacao_enviada_em__isnull=True,
             fim__lte=limite,
-            profissional__isnull=False,
         ).select_related('profissional')
 
         notificadas = 0

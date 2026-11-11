@@ -96,14 +96,16 @@ class ParticipacaoModelTests(BaseParticipacaoTests):
         with self.assertRaises(ProtectedError):
             self.servico.delete()
 
-    def test_sessao_antiga_sem_servico_continua_valida(self):
-        sessao = Sessao.objects.create(
-            profissional=self.treinador,
-            inicio=self.inicio + timedelta(days=1),
-            fim=self.inicio + timedelta(days=1, hours=1),
-        )
-
-        self.assertIsNone(sessao.servico)
+    def test_banco_recusa_sessao_sem_servico_ou_sem_profissional(self):
+        inicio = self.inicio + timedelta(days=1)
+        incompletas = [
+            {'profissional': self.treinador},
+            {'servico': self.servico},
+        ]
+        for campos in incompletas:
+            with self.subTest(campos=list(campos)):
+                with self.assertRaises(IntegrityError), transaction.atomic():
+                    Sessao.objects.create(inicio=inicio, fim=inicio + timedelta(hours=1), **campos)
 
 
 class RemocaoComParticipacaoApiTests(BaseParticipacaoTests):

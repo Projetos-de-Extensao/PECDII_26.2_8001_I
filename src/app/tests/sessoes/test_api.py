@@ -34,6 +34,7 @@ class SessaoApiTests(TestCase):
             'tipo': Sessao.Tipo.TREINAMENTO,
             'inicio': agora - timedelta(hours=2),
             'fim': agora - timedelta(hours=1),
+            'servico': self.servico,
             'profissional': self.profissional,
         }
         dados.update(overrides)
