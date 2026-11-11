@@ -25,12 +25,53 @@ nvm install
 
 O Nginx serve o cliente em `/` e encaminha `/api/`, `/admin/` e `/static/` ao Django. A API deve continuar vinculada a `127.0.0.1:8000`.
 
-## Fluxos iniciais
+## Configuração
 
-- Login por login/e-mail e senha, com sessão Django e CSRF.
-- Agenda por período e serviço, limitada pelo perfil autenticado na API.
-- Cadastros iniciais de aluno, profissional e serviço, exclusivos do Administrador.
-- Estados de carregamento, lista vazia, erro de conexão, validação e acesso negado.
+| Item | Onde fica | Padrão |
+|---|---|---|
+| Endereço da API em desenvolvimento | `server.proxy['/api'].target` em `vite.config.ts` | `http://127.0.0.1:8000` |
+| Porta do cliente | script `dev` em `package.json` | `5173` |
+| Produção | O cliente usa caminhos relativos (`/api/...`); o Nginx serve `dist/` e encaminha `/api/` ao Django (ver “Publicação na VPS”) | — |
 
-O layout usa o azul-marinho e o amarelo do protótipo, com navegação lateral em desktop e navegação adaptada para telas estreitas. Os formulários e cartões são renderizados com componentes React; dados recebidos da API são exibidos como texto.
+A autenticação usa a sessão do Django com CSRF; não há token guardado no navegador.
 
+## Comandos
+
+| Comando | O que faz |
+|---|---|
+| `npm install` | Instala as dependências |
+| `npm run dev` | Sobe o cliente com proxy para a API |
+| `npm test` | Roda os testes (Vitest + Testing Library) |
+| `npm run build` | Confere os tipos e gera `dist/` |
+
+## Fluxos por perfil
+
+| Perfil | Telas | Endpoints usados |
+|---|---|---|
+| Administrador | Agenda, Pendências, Dashboard, Novo agendamento, Cadastros | `/api/sessoes/`, `/api/pendencias/`, `/api/dashboard/`, `/api/servicos/`, `/api/profissionais/`, `/api/alunos/` |
+| Treinador | Agenda → Detalhes: presença/falta, “A sessão foi realizada?” e relatório de treino (rascunho e finalização) | `/api/sessoes/`, `/api/sessoes/{id}/presencas/`, `PATCH /api/sessoes/{id}/`, `/api/sessoes/{id}/relatorio/`, `/api/sessoes/{id}/relatorio/finalizar/` |
+| Profissional de Saúde | Agenda própria → Detalhes: presença/falta | `/api/sessoes/`, `/api/sessoes/{id}/presencas/` |
+
+O menu mostra só as telas que se aplicam ao perfil, mas quem decide é a API: horário, responsável, capacidade e permissões continuam no backend, e o cliente apenas exibe a resposta.
+
+## Estados de tela
+
+`src/errors.ts` traduz as respostas da API em mensagens:
+
+| Resposta | O que a tela mostra |
+|---|---|
+| carregando | indicador “Carregando…” |
+| sucesso | mensagem verde (ex.: “Presença registrada.”) |
+| 400 | “Revise os dados: …” com os campos apontados pela API |
+| 401 | volta ao login com “Sua sessão expirou. Entre novamente.” |
+| 403 | “Acesso negado: …” |
+| 404 | “Não encontrado: …” (no relatório, 404 significa “ainda não tem relatório” e abre o formulário vazio) |
+| 409 | “Operação recusada: …” (ex.: presença antes do fim da sessão, conflito de agenda) |
+| falha de rede | “Falha de conexão. Verifique a rede e tente novamente.” |
+
+## Testes e validação de layout
+
+- `src/App.test.tsx`: login, cadastro e erro de credenciais.
+- `src/flows.test.tsx`: fluxos principais dos três perfis, incluindo 401, 403, 404, 409 e falha de rede.
+
+Os layouts foram conferidos em 1920×1080 e 390×844 com a API real e dados de exemplo, em todas as telas dos três perfis: nenhuma tela tem rolagem horizontal. Em telas estreitas o menu quebra em mais de uma linha e a tabela do dashboard rola dentro do próprio quadro.
