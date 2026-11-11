@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api } from './api';
 import { formatDateTime, reportError } from './errors';
-import type { DashboardData, Notice, PendingList, Professional, Service, Student } from './types';
+import type { DashboardData, Notice, PendingList, Professional, ProfessionalServiceLink, Service, Student } from './types';
 
 interface AdminProps {
   onUnauthorized: () => void;
@@ -142,13 +142,21 @@ export function Dashboard({ onUnauthorized }: AdminProps) {
 }
 
 /** Confirmação de agendamento (UC-05). Conflitos e capacidade são validados pela API (409). */
-export function NovoAgendamento({ onUnauthorized }: AdminProps) {
+export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & { onManageLinks: () => void }) {
   const [servicos, setServicos] = useState<Service[]>([]);
   const [profissionais, setProfissionais] = useState<Professional[]>([]);
   const [alunos, setAlunos] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Notice | null>(null);
+  const [servicoSelecionado, setServicoSelecionado] = useState('');
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState('');
+
+  const profissionaisElegiveis = servicos.find((servico) => String(servico.id) === servicoSelecionado)
+    ?.profissionais_habilitados ?? [];
+  const profissionaisDoServico = profissionais.filter(
+    (profissional) => profissionaisElegiveis.includes(profissional.id),
+  );
 
   useEffect(() => {
     let active = true;
@@ -188,6 +196,8 @@ export function NovoAgendamento({ onUnauthorized }: AdminProps) {
         },
       });
       form.reset();
+      setServicoSelecionado('');
+      setProfissionalSelecionado('');
       setMessage({ kind: 'success', message: 'Agendamento confirmado.' });
     } catch (error) {
       reportError(error, onUnauthorized, setMessage);
@@ -213,20 +223,29 @@ export function NovoAgendamento({ onUnauthorized }: AdminProps) {
               </select>
             </label>
             <label htmlFor="booking-service">Serviço
-              <select id="booking-service" name="servico" required defaultValue="">
+              <select id="booking-service" name="servico" required value={servicoSelecionado} onChange={(event) => {
+                setServicoSelecionado(event.target.value);
+                setProfissionalSelecionado('');
+              }}>
                 <option value="" disabled>Selecione</option>
                 {servicos.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
               </select>
             </label>
             <label htmlFor="booking-professional">Profissional
-              <select id="booking-professional" name="profissional" required defaultValue="">
+              <select id="booking-professional" name="profissional" required value={profissionalSelecionado} disabled={!servicoSelecionado || profissionaisDoServico.length === 0} onChange={(event) => setProfissionalSelecionado(event.target.value)}>
                 <option value="" disabled>Selecione</option>
-                {profissionais.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                {profissionaisDoServico.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </label>
             <label htmlFor="booking-start">Início<input id="booking-start" name="inicio" type="datetime-local" required /></label>
             <label htmlFor="booking-end">Fim<input id="booking-end" name="fim" type="datetime-local" required /></label>
           </div>
+          {servicoSelecionado && profissionaisDoServico.length === 0 && (
+            <p className="form-hint" role="status">
+              Nenhum profissional está habilitado para este serviço.{' '}
+              <button className="text-button" type="button" onClick={onManageLinks}>Configurar habilitações</button>
+            </p>
+          )}
           <fieldset className="checkbox-list">
             <legend>Alunos participantes</legend>
             {alunos.length === 0 && <p className="muted">Nenhum aluno cadastrado.</p>}
@@ -234,8 +253,130 @@ export function NovoAgendamento({ onUnauthorized }: AdminProps) {
               <label key={aluno.id}><input type="checkbox" name="participantes" value={aluno.id} /> {aluno.nome}</label>
             ))}
           </fieldset>
-          <button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Confirmando…' : 'Confirmar agendamento'}</button>
+          <button className="button button-primary" type="submit" disabled={busy || !servicoSelecionado || !profissionalSelecionado}>{busy ? 'Confirmando…' : 'Confirmar agendamento'}</button>
         </form>
+      )}
+    </section>
+  );
+}
+
+/** Configura as habilitações usadas pelo RN-04 e pelo filtro do agendamento. */
+export function VinculosProfissionais({ onUnauthorized }: AdminProps) {
+  const [servicos, setServicos] = useState<Service[]>([]);
+  const [profissionais, setProfissionais] = useState<Professional[]>([]);
+  const [vinculos, setVinculos] = useState<ProfessionalServiceLink[]>([]);
+  const [servicoSelecionado, setServicoSelecionado] = useState('');
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<Notice | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      api<Service[]>('/api/servicos/'),
+      api<Professional[]>('/api/profissionais/'),
+      api<ProfessionalServiceLink[]>('/api/profissionais-servicos/'),
+    ])
+      .then(([listaServicos, listaProfissionais, listaVinculos]) => {
+        if (!active) return;
+        setServicos(listaServicos);
+        setProfissionais(listaProfissionais);
+        setVinculos(listaVinculos);
+      })
+      .catch((error: unknown) => { if (active) reportError(error, onUnauthorized, setMessage); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [onUnauthorized]);
+
+  async function criarVinculo(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage(null);
+    try {
+      const novo = await api<ProfessionalServiceLink>('/api/profissionais-servicos/', {
+        method: 'POST',
+        body: { profissional: Number(profissionalSelecionado), servico: Number(servicoSelecionado) },
+      });
+      setVinculos((atuais) => [...atuais, novo]);
+      setProfissionalSelecionado('');
+      setMessage({ kind: 'success', message: 'Habilitação cadastrada.' });
+    } catch (error) {
+      reportError(error, onUnauthorized, setMessage);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removerVinculo(vinculo: ProfessionalServiceLink) {
+    const profissional = profissionais.find((item) => item.id === vinculo.profissional)?.nome ?? 'profissional';
+    const servico = servicos.find((item) => item.id === vinculo.servico)?.nome ?? 'serviço';
+    if (!window.confirm(`Remover a habilitação de ${profissional} para ${servico}?`)) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      await api(`/api/profissionais-servicos/${vinculo.id}/`, { method: 'DELETE' });
+      setVinculos((atuais) => atuais.filter((item) => item.id !== vinculo.id));
+      setMessage({ kind: 'success', message: 'Habilitação removida.' });
+    } catch (error) {
+      reportError(error, onUnauthorized, setMessage);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const profissionaisDisponiveis = profissionais.filter((profissional) =>
+    !vinculos.some((vinculo) => vinculo.servico === Number(servicoSelecionado) && vinculo.profissional === profissional.id),
+  );
+
+  return (
+    <section className="content-panel" aria-labelledby="links-title">
+      <div className="panel-title-row">
+        <div><p className="eyebrow">CADASTROS</p><h2 id="links-title">Habilitações</h2><p className="muted">Defina quais profissionais podem atender cada serviço.</p></div>
+      </div>
+      <Message notice={message} />
+      {loading ? <Loading text="Carregando profissionais e serviços…" /> : (
+        <>
+          <form className="record-form" onSubmit={(event) => void criarVinculo(event)}>
+            <div className="form-grid">
+              <label htmlFor="link-service">Serviço
+                <select id="link-service" required value={servicoSelecionado} onChange={(event) => {
+                  setServicoSelecionado(event.target.value);
+                  setProfissionalSelecionado('');
+                }}>
+                  <option value="" disabled>Selecione</option>
+                  {servicos.map((servico) => <option key={servico.id} value={servico.id}>{servico.nome}</option>)}
+                </select>
+              </label>
+              <label htmlFor="link-professional">Profissional
+                <select id="link-professional" required value={profissionalSelecionado} disabled={!servicoSelecionado || profissionaisDisponiveis.length === 0} onChange={(event) => setProfissionalSelecionado(event.target.value)}>
+                  <option value="" disabled>Selecione</option>
+                  {profissionaisDisponiveis.map((profissional) => <option key={profissional.id} value={profissional.id}>{profissional.nome} · {profissional.perfil === 'TREINADOR' ? 'Treinador' : 'Profissional de Saúde'}</option>)}
+                </select>
+              </label>
+            </div>
+            {servicoSelecionado && profissionaisDisponiveis.length === 0 && <p className="form-hint">Todos os profissionais já estão habilitados para este serviço.</p>}
+            <button className="button button-primary" type="submit" disabled={busy || !servicoSelecionado || !profissionalSelecionado}>{busy ? 'Salvando…' : 'Adicionar habilitação'}</button>
+          </form>
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead><tr><th scope="col">Serviço</th><th scope="col">Profissional</th><th scope="col">Perfil</th><th scope="col">Ação</th></tr></thead>
+              <tbody>
+                {vinculos.map((vinculo) => {
+                  const profissional = profissionais.find((item) => item.id === vinculo.profissional);
+                  const servico = servicos.find((item) => item.id === vinculo.servico);
+                  if (!profissional || !servico) return null;
+                  return <tr key={vinculo.id}>
+                    <th scope="row">{servico.nome}</th><td>{profissional.nome}</td>
+                    <td>{profissional.perfil === 'TREINADOR' ? 'Treinador' : 'Profissional de Saúde'}</td>
+                    <td><button className="text-button danger-text" type="button" disabled={busy} onClick={() => void removerVinculo(vinculo)}>Remover</button></td>
+                  </tr>;
+                })}
+                {vinculos.length === 0 && <tr><td colSpan={4}>Nenhuma habilitação cadastrada.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
   );

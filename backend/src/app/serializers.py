@@ -11,6 +11,7 @@ from app.models import (
     Participacao,
     RegistroAuditoria,
     RelatorioTreino,
+    ProfissionalServico,
     Servico,
     Sessao,
     Usuario,
@@ -53,13 +54,49 @@ class AlunoSerializer(serializers.ModelSerializer):
 class ServicoSerializer(serializers.ModelSerializer):
     """Converte serviços entre modelos Django e JSON."""
 
+    profissionais_habilitados = serializers.SerializerMethodField()
+
+    def get_profissionais_habilitados(self, obj):
+        """Expõe os IDs elegíveis para a tela filtrar profissionais no agendamento."""
+        return [vinculo.profissional_id for vinculo in obj.vinculos.all()]
+
     class Meta:
         model = Servico
-        fields = ['id', 'nome', 'categoria']
+        fields = ['id', 'nome', 'categoria', 'profissionais_habilitados']
         read_only_fields = ['id']
         extra_kwargs = {
             'categoria': {'required': True},
         }
+
+
+class ProfissionalServicoSerializer(serializers.ModelSerializer):
+    """Converte habilitações entre um profissional e um serviço."""
+
+    profissional = serializers.PrimaryKeyRelatedField(
+        queryset=Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS),
+    )
+
+    class Meta:
+        model = ProfissionalServico
+        fields = ['id', 'profissional', 'servico']
+        read_only_fields = ['id']
+        validators = []
+
+    def validate(self, attrs):
+        """Evita vínculos duplicados com resposta de validação legível."""
+        profissional = attrs.get('profissional', getattr(self.instance, 'profissional', None))
+        servico = attrs.get('servico', getattr(self.instance, 'servico', None))
+        duplicado = ProfissionalServico.objects.filter(
+            profissional=profissional,
+            servico=servico,
+        )
+        if self.instance:
+            duplicado = duplicado.exclude(pk=self.instance.pk)
+        if duplicado.exists():
+            raise serializers.ValidationError(
+                'Este profissional já está vinculado a este serviço.'
+            )
+        return attrs
 
 
 class ProfissionalSerializer(serializers.ModelSerializer):

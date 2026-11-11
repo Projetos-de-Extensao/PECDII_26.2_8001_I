@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ApiError, clearCsrf, refreshCsrf } from './api';
-import { Dashboard, NovoAgendamento, Pendencias } from './AdminViews';
+import { Dashboard, NovoAgendamento, Pendencias, VinculosProfissionais } from './AdminViews';
 import { SessionActions } from './SessionActions';
 import { Disponibilidade, EquipeTreinos } from './TeamViews';
 import { errorMessage } from './errors';
@@ -220,7 +220,7 @@ function App() {
   );
 }
 
-type View = 'agenda' | 'pendencias' | 'dashboard' | 'agendamento' | 'cadastros' | 'equipe' | 'disponibilidade';
+type View = 'agenda' | 'pendencias' | 'dashboard' | 'agendamento' | 'cadastros' | 'equipe' | 'disponibilidade' | 'habilitacoes';
 
 const adminViews: { id: View; label: string; icon: string }[] = [
   { id: 'agenda', label: 'Agenda', icon: '▦' },
@@ -229,6 +229,7 @@ const adminViews: { id: View; label: string; icon: string }[] = [
   { id: 'agendamento', label: 'Novo agendamento', icon: '◷' },
   { id: 'equipe', label: 'Equipe e treinos', icon: '♙' },
   { id: 'disponibilidade', label: 'Disponibilidade', icon: '⚙' },
+  { id: 'habilitacoes', label: 'Habilitações', icon: '✓' },
   { id: 'cadastros', label: 'Cadastros', icon: '＋' },
 ];
 
@@ -277,9 +278,10 @@ function Workspace({
         {view === 'agenda' && <Agenda profile={profile} onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'pendencias' && <Pendencias onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'dashboard' && <Dashboard onUnauthorized={onUnauthorized} />}
-        {isAdmin && view === 'agendamento' && <NovoAgendamento onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'agendamento' && <NovoAgendamento onUnauthorized={onUnauthorized} onManageLinks={() => setView('habilitacoes')} />}
         {isAdmin && view === 'equipe' && <EquipeTreinos profile={profile} onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'disponibilidade' && <Disponibilidade onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'habilitacoes' && <VinculosProfissionais onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'cadastros' && <Records onUnauthorized={onUnauthorized} />}
       </div>
     </main>

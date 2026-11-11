@@ -1,9 +1,10 @@
 from datetime import timedelta
 
 from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError as ValidacaoDjango
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
-from rest_framework import status
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
@@ -22,6 +23,7 @@ from app.models import (
     BloqueioAgenda,
     Disponibilidade,
     Participacao,
+    ProfissionalServico,
     RegistroAuditoria,
     RelatorioTreino,
     Servico,
@@ -47,6 +49,7 @@ from app.serializers import (
     PendenciasResponseSerializer,
     PeriodoDashboardQueryParamsSerializer,
     ProfissionalSerializer,
+    ProfissionalServicoSerializer,
     RegistroAuditoriaSerializer,
     RelatorioTreinoSerializer,
     RegistroPresencaSerializer,
@@ -184,6 +187,65 @@ class ProfissionalViewSet(ModelViewSet):
 
 
 @extend_schema_view(
+    list=extend_schema(
+        tags=['Habilitações'], summary='Listar profissionais habilitados para serviços',
+    ),
+    create=extend_schema(
+        tags=['Habilitações'], summary='Habilitar profissional para serviço',
+        description='Cria o vínculo que autoriza o profissional a atender o serviço (RN-04).',
+        examples=[OpenApiExample(
+            'Nova habilitação', value={'profissional': 2, 'servico': 3}, request_only=True,
+        )],
+    ),
+    destroy=extend_schema(
+        tags=['Habilitações'], summary='Remover habilitação',
+        description='Recusa a remoção se houver sessão futura ou em andamento associada.',
+    ),
+)
+class ProfissionalServicoViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Administra quais profissionais podem prestar cada serviço."""
+
+    queryset = ProfissionalServico.objects.select_related('profissional', 'servico')
+    serializer_class = ProfissionalServicoSerializer
+    permission_classes = [PodeAdministrarCadastros]
+
+    def perform_create(self, serializer):
+        """Converte corrida de criação duplicada em conflito de domínio (409)."""
+        with transaction.atomic():
+            profissional = serializer.validated_data['profissional']
+            Usuario.objects.select_for_update().get(pk=profissional.pk)
+            try:
+                serializer.save()
+            except ValidacaoDjango as erro:
+                detalhes = getattr(erro, 'message_dict', None) or erro.messages
+                raise ValidationError(detalhes) from erro
+            except IntegrityError as erro:
+                raise Conflito('Este profissional já está vinculado a este serviço.') from erro
+
+    def perform_destroy(self, instance):
+        """Preserva a habilitação enquanto há sessão futura ou em andamento."""
+        with transaction.atomic():
+            Usuario.objects.select_for_update().get(pk=instance.profissional_id)
+            vinculo = ProfissionalServico.objects.select_for_update().get(pk=instance.pk)
+            existe_sessao_futura = Sessao.objects.filter(
+                profissional_id=vinculo.profissional_id,
+                servico_id=vinculo.servico_id,
+                fim__gt=timezone.now(),
+            ).exclude(status=Sessao.Status.CANCELADA).exists()
+            if existe_sessao_futura:
+                raise Conflito(
+                    'Não é possível remover esta habilitação enquanto houver sessão futura '
+                    'ou em andamento para esse profissional e serviço.'
+                )
+            vinculo.delete()
+
+
+@extend_schema_view(
     list=extend_schema(tags=['Serviços'], summary='Listar serviços'),
     retrieve=extend_schema(tags=['Serviços'], summary='Consultar serviço'),
     create=extend_schema(
@@ -202,7 +264,7 @@ class ProfissionalViewSet(ModelViewSet):
     ),
 )
 class ServicoViewSet(ModelViewSet):
-    queryset = Servico.objects.all()
+    queryset = Servico.objects.prefetch_related('vinculos')
     serializer_class = ServicoSerializer
     permission_classes = [PodeAdministrarCadastros]
 
@@ -416,10 +478,17 @@ class SessaoViewSet(ModelViewSet):
         if timezone.now() < sessao.fim:
             raise Conflito(self.MENSAGEM_SESSAO_NAO_ENCERRADA)
 
-    @action(detail=True, methods=['get', 'post', 'patch'], url_path='relatorio')
     @extend_schema(
-        tags=['Relatórios'], summary='Consultar ou editar relatório de treino',
-        description='Consulta um relatório, cria um rascunho com POST ou altera um rascunho com PATCH. O relatório pertence a uma sessão de Treino realizada; edição permitida apenas ao Treinador responsável.',
+        methods=['GET'],
+        tags=['Relatórios'], summary='Consultar relatório de treino',
+        description='Consulta o relatório da sessão. Disponível ao Administrador ou ao Treinador responsável.',
+        request=None,
+        responses=RelatorioTreinoSerializer,
+    )
+    @extend_schema(
+        methods=['POST', 'PATCH'],
+        tags=['Relatórios'], summary='Criar ou editar relatório de treino',
+        description='Cria um rascunho com POST ou altera um rascunho com PATCH. O relatório pertence a uma sessão de Treino realizada; edição permitida apenas ao Treinador responsável.',
         request=RelatorioTreinoSerializer,
         responses=RelatorioTreinoSerializer,
         examples=[OpenApiExample(
@@ -432,6 +501,7 @@ class SessaoViewSet(ModelViewSet):
             request_only=True,
         )],
     )
+    @action(detail=True, methods=['get', 'post', 'patch'], url_path='relatorio')
     def relatorio(self, request, pk=None):
         """Consulta, cria ou edita o rascunho do relatório único da sessão de Treino."""
         sessao = self.get_object()
