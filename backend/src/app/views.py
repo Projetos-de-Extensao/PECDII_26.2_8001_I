@@ -8,7 +8,12 @@ from rest_framework.exceptions import APIException, NotFound, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from app.agendamento import RegraDeAgendamentoViolada
+from app.agendamento import (
+    RegraDeAgendamentoViolada,
+    alterar_agenda,
+    validar_bloqueio,
+    validar_saida_de_disponibilidade,
+)
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, RelatorioTreino, Servico, Sessao, Usuario
 from app.permissoes import (
     PodeAdministrarCadastros,
@@ -36,6 +41,18 @@ class Conflito(APIException):
     status_code = status.HTTP_409_CONFLICT
     default_detail = 'A operação conflita com registros existentes.'
     default_code = 'conflito'
+
+
+def executar_alteracao_de_agenda(profissionais, validar, gravar):
+    """Serializa a mudança da agenda e converte violações de regra em HTTP 409."""
+    try:
+        return alterar_agenda(profissionais, validar, gravar)
+    except RegraDeAgendamentoViolada as erro:
+        detalhes = {'regra': erro.regra, 'detail': erro.mensagem}
+        sessao = getattr(erro, 'sessao', None)
+        if sessao is not None:
+            detalhes['sessao'] = sessao.pk
+        raise Conflito(detalhes) from erro
 
 
 class AlunoViewSet(ModelViewSet):
@@ -293,6 +310,42 @@ class DisponibilidadeViewSet(ModelViewSet):
     serializer_class = DisponibilidadeSerializer
     permission_classes = [PodeAdministrarCadastros]
 
+    def perform_update(self, serializer):
+        instancia = serializer.instance
+        profissional_novo = serializer.validated_data.get('profissional', instancia.profissional)
+        profissionais = [instancia.profissional, profissional_novo]
+        estado = {}
+
+        def validar():
+            atual = Disponibilidade.objects.select_for_update().get(pk=instancia.pk)
+            estado['atual'] = atual
+            serializer.instance = atual
+            dados_novos = {
+                'profissional': serializer.validated_data.get('profissional', atual.profissional),
+                'inicio': serializer.validated_data.get('inicio', atual.inicio),
+                'fim': serializer.validated_data.get('fim', atual.fim),
+            }
+            if any(
+                dados_novos[campo] != getattr(atual, campo)
+                for campo in ('profissional', 'inicio', 'fim')
+            ):
+                validar_saida_de_disponibilidade(atual, nova=dados_novos)
+
+        executar_alteracao_de_agenda(profissionais, validar, serializer.save)
+
+    def perform_destroy(self, instance):
+        estado = {}
+
+        def validar():
+            atual = Disponibilidade.objects.select_for_update().get(pk=instance.pk)
+            estado['atual'] = atual
+            validar_saida_de_disponibilidade(atual)
+
+        def excluir():
+            estado['atual'].delete()
+
+        executar_alteracao_de_agenda([instance.profissional], validar, excluir)
+
 
 class BloqueioAgendaViewSet(ModelViewSet):
     """Gerencia bloqueios com leitura autenticada e escrita administrativa."""
@@ -300,3 +353,44 @@ class BloqueioAgendaViewSet(ModelViewSet):
     queryset = BloqueioAgenda.objects.select_related('profissional').all()
     serializer_class = BloqueioAgendaSerializer
     permission_classes = [PodeAdministrarCadastros]
+
+    def perform_create(self, serializer):
+        dados = serializer.validated_data
+        profissional = dados['profissional']
+        executar_alteracao_de_agenda(
+            [profissional],
+            lambda: validar_bloqueio(profissional, dados['inicio'], dados['fim']),
+            serializer.save,
+        )
+
+    def perform_update(self, serializer):
+        instancia = serializer.instance
+        profissional_novo = serializer.validated_data.get('profissional', instancia.profissional)
+        profissionais = [instancia.profissional, profissional_novo]
+        estado = {}
+
+        def validar():
+            atual = BloqueioAgenda.objects.select_for_update().get(pk=instancia.pk)
+            estado['atual'] = atual
+            serializer.instance = atual
+            dados_novos = {
+                'profissional': serializer.validated_data.get('profissional', atual.profissional),
+                'inicio': serializer.validated_data.get('inicio', atual.inicio),
+                'fim': serializer.validated_data.get('fim', atual.fim),
+            }
+            if any(
+                dados_novos[campo] != getattr(atual, campo)
+                for campo in ('profissional', 'inicio', 'fim')
+            ):
+                validar_bloqueio(
+                    dados_novos['profissional'], dados_novos['inicio'], dados_novos['fim']
+                )
+
+        executar_alteracao_de_agenda(profissionais, validar, serializer.save)
+
+    def perform_destroy(self, instance):
+        def excluir():
+            atual = BloqueioAgenda.objects.select_for_update().get(pk=instance.pk)
+            atual.delete()
+
+        executar_alteracao_de_agenda([instance.profissional], lambda: None, excluir)
