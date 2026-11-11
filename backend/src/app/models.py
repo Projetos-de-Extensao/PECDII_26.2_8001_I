@@ -196,6 +196,55 @@ class Participacao(models.Model):
         return f'{self.aluno} — {self.sessao}'
 
 
+class RelatorioTreino(models.Model):
+    """Relatório único de execução associado a uma sessão de Treino (RF-07)."""
+
+    class Status(models.TextChoices):
+        RASCUNHO = 'RASCUNHO', 'Rascunho'
+        FINALIZADO = 'FINALIZADO', 'Finalizado'
+
+    sessao = models.OneToOneField(
+        Sessao,
+        on_delete=models.CASCADE,
+        related_name='relatorio_treino',
+        verbose_name='sessão',
+    )
+    data = models.DateField(null=True, blank=True)
+    horario = models.TimeField(null=True, blank=True)
+    local = models.CharField(max_length=150, blank=True)
+    objetivo = models.TextField(blank=True)
+    exercicios = models.TextField(blank=True)
+    volume_valor = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    volume_unidade = models.CharField(max_length=50, blank=True)
+    intensidade_borg = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.RASCUNHO)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    finalizado_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'relatório de treino'
+        verbose_name_plural = 'relatórios de treino'
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(intensidade_borg__isnull=True)
+                           | models.Q(intensidade_borg__gte=0, intensidade_borg__lte=10)),
+                name='relatorio_borg_entre_zero_e_dez',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(volume_valor__isnull=True) | models.Q(volume_valor__gte=0),
+                name='relatorio_volume_nao_negativo',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=['RASCUNHO', 'FINALIZADO']),
+                name='relatorio_status_valido',
+            ),
+        ]
+
+    def __str__(self):
+        return f'Relatório de treino — sessão {self.sessao_id} ({self.get_status_display()})'
+
+
 class Usuario(TelefoneMixin, models.Model):
     """Guarda o perfil GAAP da conta que acessa a API."""
 

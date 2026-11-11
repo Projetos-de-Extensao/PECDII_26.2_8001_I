@@ -21,9 +21,16 @@ class MigrarProfessorParaUsuarioTests(TransactionTestCase):
         ProfessorAntigo = apps_anteriores.get_model('app', 'Professor')
         SessaoAntiga = apps_anteriores.get_model('app', 'Sessao')
         professor = ProfessorAntigo.objects.create(
+            pk=1,
             nome='Bruno Costa',
             email='bruno-legado@example.com',
             telefone='+5521912345678',
+        )
+        ProfessorAntigo.objects.create(
+            pk=2,
+            nome='Ana Lima',
+            email='ana-legada@example.com',
+            telefone='+5521912345679',
         )
         sessao = SessaoAntiga.objects.create(
             titulo='Treino legado',
@@ -47,6 +54,16 @@ class MigrarProfessorParaUsuarioTests(TransactionTestCase):
         executor.migrate(executor.loader.graph.leaf_nodes())
         super().tearDown()
 
+    def preparar_sessao_para_migracao_0015(self):
+        alvo_pre_0015 = [('app', '0014_participacao_servico_da_sessao')]
+        executor = MigrationExecutor(connection)
+        executor.migrate(alvo_pre_0015)
+        apps_pre_0015 = executor.loader.project_state(alvo_pre_0015).apps
+        Servico = apps_pre_0015.get_model('app', 'Servico')
+        Sessao = apps_pre_0015.get_model('app', 'Sessao')
+        servico = Servico.objects.create(nome='Treino legado', categoria='TREINO')
+        Sessao.objects.filter(pk=self.sessao_id).update(servico_id=servico.pk)
+
     def test_mantem_contato_e_sessao_e_cria_treinador_sem_senha_utilizavel(self):
         UsuarioMigrado = self.apps_migradas.get_model('app', 'Usuario')
         SessaoMigrada = self.apps_migradas.get_model('app', 'Sessao')
@@ -60,6 +77,48 @@ class MigrarProfessorParaUsuarioTests(TransactionTestCase):
         self.assertTrue(perfil.conta.password.startswith('!'))
         self.assertEqual(sessao.profissional_id, perfil.pk)
 
+    def test_simplifica_logins_legados_e_permite_reverter(self):
+        self.preparar_sessao_para_migracao_0015()
+        alvo_final = [('app', '0017_simplificar_login_professor_migrado')]
+        executor = MigrationExecutor(connection)
+        executor.migrate(alvo_final)
+        apps_finais = executor.loader.project_state(alvo_final).apps
+        UsuarioFinal = apps_finais.get_model('app', 'Usuario')
+
+        perfil_um = UsuarioFinal.objects.get(email='bruno-legado@example.com')
+        perfil_dois = UsuarioFinal.objects.get(email='ana-legada@example.com')
+        sessao = apps_finais.get_model('app', 'Sessao').objects.get(pk=self.sessao_id)
+
+        self.assertEqual(perfil_um.conta.username, 'usuario')
+        self.assertEqual(perfil_dois.conta.username, 'usuario-2')
+        self.assertTrue(perfil_um.conta.password.startswith('!'))
+        self.assertEqual(sessao.profissional_id, perfil_um.pk)
+
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.migrate_to)
+        apps_revertidas = executor.loader.project_state(self.migrate_to).apps
+        UsuarioRevertido = apps_revertidas.get_model('app', 'Usuario')
+        self.assertEqual(
+            UsuarioRevertido.objects.get(email='bruno-legado@example.com').conta.username,
+            f'gaap-migrado-professor-{self.professor_id}',
+        )
+
+    def test_nao_sobrescreve_um_login_professor_ja_existente(self):
+        self.preparar_sessao_para_migracao_0015()
+        ContaHistorica = self.apps_migradas.get_model('auth', 'User')
+        conta_conflitante = ContaHistorica.objects.create(username='usuario', password='!')
+
+        executor = MigrationExecutor(connection)
+        with self.assertRaisesRegex(RuntimeError, 'já pertence a outra conta'):
+            executor.migrate([('app', '0017_simplificar_login_professor_migrado')])
+
+        ContaAindaMigrada = self.apps_migradas.get_model('auth', 'User')
+        self.assertTrue(
+            ContaAindaMigrada.objects.filter(
+                username=f'gaap-migrado-professor-{self.professor_id}',
+            ).exists()
+        )
+        conta_conflitante.delete()
 
 class SessaoComServicoEProfissionalObrigatoriosTests(TransactionTestCase):
     """A 0015 só torna as colunas obrigatórias se não houver sessão incompleta."""

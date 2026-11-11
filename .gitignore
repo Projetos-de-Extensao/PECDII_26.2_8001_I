@@ -71,5 +71,5 @@ node_modules/
 .cache/mkdocs-jupyter/c4dd72c10d4fc791ce4c7340891edbb5b95cac7b271cc08a9467bf48a29e7e31.json
 
 # Banco de dados
-src/db.sqlite3
-src/test_db.sqlite3
+backend/src/db.sqlite3
+backend/src/test_db.sqlite3

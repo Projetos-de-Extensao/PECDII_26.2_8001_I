@@ -34,6 +34,9 @@ class BaseSessaoTests(TestCase):
         Participacao.objects.create(sessao=self.sessao, aluno=self.bruno)
         self.url_presencas = f'/api/sessoes/{self.sessao.pk}/presencas/'
         self.url_sessao = f'/api/sessoes/{self.sessao.pk}/'
+        self.agora_patcher = mock.patch('app.views.timezone.now', return_value=self.sessao.fim + timedelta(seconds=1))
+        self.agora_patcher.start()
+        self.addCleanup(self.agora_patcher.stop)
 
     def presenca_de(self, aluno):
         return Participacao.objects.get(sessao=self.sessao, aluno=aluno).situacao_presenca
@@ -175,6 +178,32 @@ class RegistroPresencaTests(BaseSessaoTests):
         self.assertEqual(response.data['detail'], 'Sessão cancelada não recebe registro de presença ou falta.')
         self.assertIsNone(self.presenca_de(self.ana))
 
+    def test_presenca_antes_do_fim_previsto_e_recusada(self):
+        with mock.patch('app.views.timezone.now', return_value=self.sessao.fim - timedelta(microseconds=1)):
+            response = cliente(self.responsavel).patch(
+                self.url_presencas,
+                {'presencas': [{'aluno': self.ana.pk, 'situacao': 'PRESENTE'}]},
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.data['detail'],
+            'A presença e a situação da sessão só podem ser registradas a partir do fim previsto.',
+        )
+        self.assertIsNone(self.presenca_de(self.ana))
+
+    def test_presenca_no_instante_exato_do_fim_previsto_e_permitida(self):
+        with mock.patch('app.views.timezone.now', return_value=self.sessao.fim):
+            response = cliente(self.responsavel).patch(
+                self.url_presencas,
+                {'presencas': [{'aluno': self.ana.pk, 'situacao': 'PRESENTE'}]},
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.presenca_de(self.ana), 'PRESENTE')
+
     def test_falha_no_meio_do_registro_desfaz_tudo(self):
         save_original = Participacao.save
         chamadas = []
@@ -223,6 +252,30 @@ class AlteracaoSessaoTests(BaseSessaoTests):
         self.sessao.refresh_from_db()
         self.assertEqual(self.sessao.status, Sessao.Status.REALIZADA)
         self.assertEqual(self.sessao.observacoes, 'Turma completa.')
+
+    def test_responsavel_nao_registra_desfecho_antes_do_fim_previsto(self):
+        with mock.patch('app.views.timezone.now', return_value=self.sessao.fim - timedelta(microseconds=1)):
+            response = cliente(self.responsavel).patch(
+                self.url_sessao, {'status': 'REALIZADA'}, format='json'
+            )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(
+            response.data['detail'],
+            'A presença e a situação da sessão só podem ser registradas a partir do fim previsto.',
+        )
+        self.sessao.refresh_from_db()
+        self.assertEqual(self.sessao.status, Sessao.Status.AGENDADA)
+
+    def test_desfecho_no_instante_exato_do_fim_previsto_e_permitido(self):
+        with mock.patch('app.views.timezone.now', return_value=self.sessao.fim):
+            response = cliente(self.responsavel).patch(
+                self.url_sessao, {'status': 'REALIZADA'}, format='json'
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.sessao.refresh_from_db()
+        self.assertEqual(self.sessao.status, Sessao.Status.REALIZADA)
 
     def test_responsavel_nao_altera_horario_nem_outros_campos(self):
         novo_inicio = INICIO + timedelta(days=1)

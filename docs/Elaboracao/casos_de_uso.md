@@ -129,9 +129,9 @@ UC05 ..> VALID : <<include>>
 ## UC-06 — Registrar presença/falta
 
 - **Atores:** Treinador responsável por sessão de Treino; Profissional de Saúde responsável por atendimento vinculado ao seu serviço e agenda.
-- **Pré-condição:** sessão/atendimento existente; profissional autenticado e associado ao compromisso.
-- **Fluxo principal:** profissional seleciona o compromisso e informa presença/falta por aluno participante; API valida os participantes e salva o resultado.
-- **Alternativas:** profissional diferente do responsável recebe 403; participante inexistente ou situação inválida recebe 400/404.
+- **Pré-condição:** sessão/atendimento existente e encerrado pelo horário previsto; profissional autenticado e associado ao compromisso.
+- **Fluxo principal:** a partir do fim previsto, inclusive no instante exato, profissional seleciona o compromisso e informa presença/falta por aluno participante; API valida os participantes e salva o resultado.
+- **Alternativas:** profissional diferente do responsável recebe 403; tentativa antes do fim previsto ou em sessão cancelada recebe 409; participante inexistente ou situação inválida recebe 400/404.
 - **Pós-condição:** presença/falta persistida por participante.
 - **Requisitos:** RF-06; RN-05; RNF-04, RNF-05.
 
@@ -139,8 +139,8 @@ UC05 ..> VALID : <<include>>
 
 - **Ator:** Treinador responsável pela sessão.
 - **Pré-condição:** sessão de Treino realizada e Treinador autorizado.
-- **Fluxo principal:** Treinador responsável cria um relatório associado somente à sessão, registra objetivo, exercícios executados, volume total com unidade e intensidade Borg CR10 (0–10), e pode salvá-lo como rascunho. Ao finalizar, a API valida os campos obrigatórios e associa o relatório à lista de participantes da sessão. Se a sessão for reatribuída enquanto o relatório for rascunho, o responsável atual passa a poder editá-lo; o vínculo do relatório à sessão não muda.
-- **Alternativas:** perfil sem permissão recebe 403; sessão inexistente recebe 404; payload incompleto/inválido impede a finalização e recebe 400; rascunhos podem permanecer incompletos; relatório finalizado não pode ser alterado.
+- **Fluxo principal:** depois do fim previsto e de a sessão de Treino estar marcada como realizada, o Treinador responsável cria um relatório associado somente à sessão, registra data, horário, local, objetivo, exercícios executados, volume com unidade e intensidade Borg CR10 (0–10), e pode salvá-lo como rascunho. Ao finalizar, a API valida os campos obrigatórios e associa o relatório à lista de participantes da sessão. Se a sessão for reatribuída enquanto o relatório for rascunho, o responsável atual passa a poder editá-lo; o vínculo do relatório à sessão não muda.
+- **Alternativas:** perfil sem permissão recebe 403; sessão inexistente ou relatório ausente recebe 404; sessão de outro serviço, não realizada ou ainda não encerrada recebe 409; payload incompleto/inválido impede a finalização e recebe 400; rascunhos podem permanecer incompletos; relatório finalizado não pode ser alterado.
 - **Pós-condição:** há no máximo um relatório por sessão; fica como rascunho ou finalizado e consultável por perfis autorizados.
 - **Requisitos:** RF-07; RN-05; RNF-01, RNF-04, RNF-06.
 - **Diagrama:** [Finalizar relatório de treino](diagrama_de_sequencia.md#finalizar-relatorio-de-treino).
@@ -167,8 +167,8 @@ UC05 ..> VALID : <<include>>
 
 - **Atores:** Treinador ou Profissional de Saúde responsável.
 - **Pré-condição:** compromisso atribuído ao profissional autenticado.
-- **Fluxo principal:** depois do horário previsto, o profissional responsável registra se a sessão ou o atendimento foi realizado ou não realizado. Essa informação é independente da presença/falta dos participantes.
-- **Alternativas:** usuário sem vínculo recebe 403; estado inválido recebe 400.
+- **Fluxo principal:** a partir do fim previsto, inclusive no instante exato, o profissional responsável registra se a sessão ou o atendimento foi realizado ou não realizado. Essa informação é independente da presença/falta dos participantes.
+- **Alternativas:** usuário sem vínculo recebe 403; tentativa antecipada recebe 409; estado inválido recebe 400.
 - **Pós-condição:** situação do compromisso atualizada.
 - **Requisitos:** RF-10; RNF-04, RNF-06.
 

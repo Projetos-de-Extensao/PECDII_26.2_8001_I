@@ -4,7 +4,7 @@ title: Diagrama de Classes
 ---
 # Modelo Conceitual do Domínio GAAP
 
-Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. O código atual implementa `Aluno`, `Usuario`, `Servico`, `ProfissionalServico`, `Disponibilidade`, `BloqueioAgenda`, `Sessao` e `Participacao`, incluindo a consulta de agenda com escopo por perfil. `RelatorioTreino` e `RegistroAuditoria` continuam no modelo-alvo, mas ainda não têm implementação. A notificação RF-08 é implementada por `Sessao.notificacao_enviada_em` e pelo comando de notificação; `NotificacaoEmail` no diagrama é uma evolução do modelo, não uma classe atual. O professor informou capacidade máxima de 6 alunos por sessão para qualquer serviço; no MVP, a validação usa uma constante no backend.
+Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. O código atual implementa `Aluno`, `Usuario`, `Servico`, `ProfissionalServico`, `Disponibilidade`, `BloqueioAgenda`, `Sessao`, `Participacao` e `RelatorioTreino`, incluindo a consulta de agenda com escopo por perfil. `RegistroAuditoria` continua no modelo-alvo, mas ainda não tem implementação. A notificação RF-08 é implementada por `Sessao.notificacao_enviada_em` e pelo comando de notificação; `NotificacaoEmail` no diagrama é uma evolução do modelo, não uma classe atual. O professor informou capacidade máxima de 6 alunos por sessão para qualquer serviço; no MVP, a validação usa uma constante no backend.
 
 ## Diagrama
 
@@ -73,12 +73,17 @@ class Participacao {
 }
 class RelatorioTreino {
   id
+  data
+  horario
+  local
   objetivo
-  exerciciosExecutados
-  volumeTotal
+  exercicios
+  volumeValor
   unidadeVolume
-  intensidade
-  situacao: SituacaoRelatorio
+  intensidadeBorg
+  status: SituacaoRelatorio
+  criadoEm
+  atualizadoEm
   finalizadoEm
 }
 class NotificacaoEmail {
@@ -137,7 +142,7 @@ end note
 | BloqueioAgenda | Intervalo geral indisponível em todos os serviços do profissional. | RF-03, RF-05, RN-03 | UC-03, UC-05 |
 | Sessao | Ocorrência agendada de um serviço, com situação realizada/não realizada; fonte das pendências e dos indicadores operacionais. | RF-04, RF-05, RF-09, RF-10, RF-11, RN-01 a RN-04, RN-06, RN-07 | UC-04, UC-05, UC-09, UC-10, UC-11 |
 | Participacao | Vínculo aluno–sessão/atendimento e presença/falta individual; permite verificar conflito do aluno e pendências de presença. | RF-05, RF-06, RF-09, RN-02, RN-06, RN-07 | UC-05, UC-06, UC-09 |
-| RelatorioTreino | Um relatório por sessão de Treino, imutável após finalização e ligado à sessão, não diretamente ao usuário. O Treinador responsável atual edita o rascunho; reatribuições não movem o relatório. Registra participantes, objetivo, exercícios, volume (valor e unidade), intensidade Borg CR10 (0–10) e situação; data, horário e local vêm da sessão. | RF-07, RF-09, RN-05 | UC-07, UC-09 |
+| RelatorioTreino | Um relatório por sessão de Treino, imutável após finalização e ligado à sessão, não diretamente ao usuário. O Treinador responsável atual edita o rascunho; reatribuições não movem o relatório. Registra participantes derivados da sessão, data, horário, local, objetivo, exercícios, volume (valor e unidade), intensidade Borg CR10 (0–10), estado e timestamps. | RF-07, RF-09, RN-05 | UC-07, UC-09 |
 | NotificacaoEmail | Marca avisos enviados para a sessão e evita duplicidade. | RF-08 (exceção fora do escopo), RF-12 | UC-08, UC-12 |
 | RegistroAuditoria | Registro somente de inclusão da autoria, operação, entidade, data/hora e mensagem legível por pessoas; não inclui senhas ou credenciais. | RNF-06 | UC-02, UC-05, UC-06, UC-07, UC-10 |
 
