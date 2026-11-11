@@ -9,7 +9,7 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from app.models import Aluno, Servico, Sessao, Usuario
+from app.models import Aluno, Disponibilidade, ProfissionalServico, Servico, Sessao, Usuario
 
 
 def criar_usuario(perfil, login):
@@ -423,6 +423,13 @@ class SessaoApiTests(TestCase):
         self.responsavel_client = APIClient()
         self.responsavel_client.force_authenticate(user=self.profissional_conta)
         self.servico = Servico.objects.create(nome='Avaliação física', categoria=Servico.Categoria.TREINO)
+        ProfissionalServico.objects.create(profissional=self.profissional, servico=self.servico)
+        agora = timezone.now()
+        Disponibilidade.objects.create(
+            profissional=self.profissional,
+            inicio=agora - timedelta(days=1),
+            fim=agora + timedelta(days=365),
+        )
         self.aluno = Aluno.objects.create(nome='Aluno da sessão', data_nascimento='2010-01-01')
 
     def criar_sessao(self, **overrides):

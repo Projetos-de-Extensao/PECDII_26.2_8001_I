@@ -9,7 +9,15 @@ from django.test import TestCase, TransactionTestCase
 from rest_framework.test import APIClient
 
 from app.agendamento import CAPACIDADE_MAXIMA_SESSAO, RegraDeAgendamentoViolada, confirmar_sessao
-from app.models import Aluno, Participacao, Servico, Sessao, Usuario
+from app.models import (
+    Aluno,
+    Disponibilidade,
+    Participacao,
+    ProfissionalServico,
+    Servico,
+    Sessao,
+    Usuario,
+)
 
 INICIO = datetime(2026, 11, 16, 9, tzinfo=timezone_utc.utc)
 
@@ -33,6 +41,12 @@ class ConfirmacaoApiTests(TestCase):
         self.admin = criar_usuario('admin-confirmacao', Usuario.Perfil.ADMINISTRADOR)
         self.treinador = criar_usuario('treinador-confirmacao', Usuario.Perfil.TREINADOR)
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
+        Disponibilidade.objects.create(
+            profissional=self.treinador,
+            inicio=INICIO - timedelta(days=1),
+            fim=INICIO + timedelta(days=1),
+        )
         self.alunos = criar_alunos(CAPACIDADE_MAXIMA_SESSAO + 1)
         self.client = APIClient()
         self.client.force_authenticate(self.admin.conta)
@@ -174,6 +188,12 @@ class AtomicidadeConfirmacaoTests(TestCase):
     def setUp(self):
         self.treinador = criar_usuario('treinador-atomicidade', Usuario.Perfil.TREINADOR)
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
+        Disponibilidade.objects.create(
+            profissional=self.treinador,
+            inicio=INICIO - timedelta(days=1),
+            fim=INICIO + timedelta(days=1),
+        )
         self.alunos = criar_alunos(3)
         self.dados = {
             'titulo': 'Treino de força',
@@ -223,6 +243,12 @@ class ConcorrenciaConfirmacaoTests(TransactionTestCase):
     def setUp(self):
         self.treinador = criar_usuario('treinador-concorrencia', Usuario.Perfil.TREINADOR)
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
+        ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
+        Disponibilidade.objects.create(
+            profissional=self.treinador,
+            inicio=INICIO - timedelta(days=1),
+            fim=INICIO + timedelta(days=1),
+        )
         self.alunos = criar_alunos(2)
 
     @staticmethod
