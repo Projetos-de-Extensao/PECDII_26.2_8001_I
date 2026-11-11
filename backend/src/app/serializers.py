@@ -218,9 +218,10 @@ class SessaoSerializer(serializers.ModelSerializer):
             'participantes', 'presencas', 'status', 'notificacao_enviada_em',
         ]
         read_only_fields = ['id', 'notificacao_enviada_em']
+        # `tipo` é opcional: sobra de antes do catálogo de serviços (o DER prevê o serviço no lugar).
+        # Sem ele, vale o padrão do modelo, TREINAMENTO.
         extra_kwargs = {
             'titulo': {'required': True},
-            'tipo': {'required': True},
         }
 
     def to_representation(self, instance):

@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ApiError, clearCsrf, refreshCsrf } from './api';
 import { Dashboard, NovoAgendamento, Pendencias, VinculosProfissionais } from './AdminViews';
-import { SessionActions } from './SessionActions';
+import { Records } from './RecordsView';
+import { SessionActions, SessionDetails } from './SessionActions';
 import { Disponibilidade, EquipeTreinos } from './TeamViews';
-import { errorMessage } from './errors';
+import { errorMessage, plural } from './errors';
 import gaapLogo from './assets/gaap-logo.svg';
-import type { Notice, Profile, RecordKind, Service, Session, SessionList, Student } from './types';
+import type { Notice, PendingList, Profile, Service, Session, SessionList, Student } from './types';
 
 const profileLabels = {
   ADMINISTRADOR: 'Administrador',
@@ -254,11 +255,21 @@ function Workspace({
   const isAdmin = profile.perfil === 'ADMINISTRADOR';
   // A API recusa com 403 o que o perfil não pode acessar; o menu só evita mostrar o que não se aplica.
   const views = isAdmin ? adminViews : professionalViews;
+  // Contador de pendências no menu do Administrador (D-15); atualiza a cada troca de tela.
+  const [pendencias, setPendencias] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    api<PendingList>('/api/pendencias/')
+      .then((dados) => setPendencias(dados.total))
+      .catch(() => setPendencias(null));
+  }, [isAdmin, view]);
 
   function navButton(item: { id: View; label: string; icon: string }) {
     return (
       <button key={item.id} className={`nav-link${view === item.id ? ' is-active' : ''}`} type="button" aria-current={view === item.id ? 'page' : undefined} onClick={() => setView(item.id)}>
         <span aria-hidden="true">{item.icon}</span> {item.label}
+        {item.id === 'pendencias' && pendencias !== null && pendencias > 0 && <span className="nav-badge" aria-label={`${pendencias} pendências`}>{pendencias}</span>}
       </button>
     );
   }
@@ -273,7 +284,6 @@ function Workspace({
       <div className="workspace-body">
         <nav className="main-nav" aria-label="Navegação principal">
           {views.map(navButton)}
-          <div className="nav-user"><span className="nav-user-mark" aria-hidden="true">{profile.nome.slice(0, 1).toLocaleUpperCase('pt-BR')}</span><span><strong>{profile.nome}</strong><small>{profileLabels[profile.perfil]}</small></span></div>
         </nav>
         {view === 'agenda' && <Agenda profile={profile} onUnauthorized={onUnauthorized} />}
         {isAdmin && view === 'pendencias' && <Pendencias onUnauthorized={onUnauthorized} />}
@@ -299,16 +309,19 @@ function Agenda({ profile, onUnauthorized }: { profile: Profile; onUnauthorized:
   const [count, setCount] = useState(0);
   const [openSession, setOpenSession] = useState<number | null>(null);
   const [studentNames, setStudentNames] = useState(new Map<number, string>());
+  const [services, setServices] = useState<Service[]>(profile.servicos);
   const requestId = useRef(0);
   const isProfessional = profile.perfil !== 'ADMINISTRADOR';
 
-  // Nomes dos alunos para o registro de presença; se falhar, a tela mostra o ID.
+  // Nomes dos alunos e dos serviços para os cartões; se falhar, a tela mostra o ID.
   useEffect(() => {
-    if (!isProfessional) return;
     api<Student[]>('/api/alunos/')
       .then((students) => setStudentNames(new Map(students.map((item) => [item.id, item.nome]))))
       .catch(() => undefined);
-  }, [isProfessional]);
+    api<Service[]>('/api/servicos/')
+      .then(setServices)
+      .catch(() => undefined);
+  }, []);
 
   function replaceSession(updated: Session) {
     setSessions((current) => current.map((item) => (item.id === updated.id ? updated : item)));
@@ -352,7 +365,7 @@ function Agenda({ profile, onUnauthorized }: { profile: Profile; onUnauthorized:
   useEffect(() => { void loadAgenda(); }, []); // A primeira busca usa a semana atual.
 
   const todayLabel = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date());
-  const serviceById = new Map(profile.servicos.map((item: Service) => [String(item.id), item]));
+  const serviceById = new Map(services.map((item: Service) => [String(item.id), item]));
 
   return (
     <section className="content-panel" aria-labelledby="agenda-title">
@@ -367,7 +380,7 @@ function Agenda({ profile, onUnauthorized }: { profile: Profile; onUnauthorized:
         <button className="button button-primary" type="submit" disabled={loading}>Buscar agenda <span aria-hidden="true">→</span></button>
       </form>
       {error && <div className="inline-message error-message" role="alert">{error}</div>}
-      <div className="agenda-heading"><h3>Sessões</h3><span className="muted">{loading ? 'Atualizando…' : `${count} sessão${count === 1 ? '' : 'ões'}`}</span></div>
+      <div className="agenda-heading"><h3>Sessões</h3><span className="muted">{loading ? 'Atualizando…' : plural(count, 'sessão', 'sessões')}</span></div>
       {loading && <div className="loading-card" role="status"><span className="spinner" /> Carregando sessões…</div>}
       {!loading && !error && sessions.length === 0 && <div className="empty-state"><span aria-hidden="true">▦</span><h3>Nenhuma sessão neste período</h3><p>Escolha outro intervalo para consultar a agenda.</p></div>}
       {!loading && sessions.length > 0 && <div className="session-list" aria-live="polite">{sessions.map((session) => {
@@ -382,84 +395,14 @@ function Agenda({ profile, onUnauthorized }: { profile: Profile; onUnauthorized:
             <div className="session-meta">
               {sessionService?.categoria && <span className="tag">{categoryLabels[sessionService.categoria] ?? sessionService.categoria}</span>}
               <span className="tag status">{statusLabels[session.status] ?? session.status}</span>
-              {isProfessional && <button className="button button-quiet" type="button" aria-expanded={isOpen} onClick={() => setOpenSession(isOpen ? null : session.id)}>{isOpen ? 'Fechar' : 'Detalhes'}</button>}
+              <button className="button button-quiet" type="button" aria-expanded={isOpen} onClick={() => setOpenSession(isOpen ? null : session.id)}>{isOpen ? 'Fechar' : 'Detalhes'}</button>
             </div>
-            {isOpen && <SessionActions session={session} profile={profile} isTraining={sessionService?.categoria === 'TREINO'} studentNames={studentNames} onChanged={replaceSession} onUnauthorized={onUnauthorized} />}
+            {isOpen && (isProfessional
+              ? <SessionActions session={session} profile={profile} isTraining={sessionService?.categoria === 'TREINO'} studentNames={studentNames} onChanged={replaceSession} onUnauthorized={onUnauthorized} />
+              : <SessionDetails session={session} isTraining={sessionService?.categoria === 'TREINO'} studentNames={studentNames} onChanged={replaceSession} onUnauthorized={onUnauthorized} />)}
           </article>
         );
       })}</div>}
-    </section>
-  );
-}
-
-function Records({ onUnauthorized }: { onUnauthorized: () => void }) {
-  const [record, setRecord] = useState<RecordKind>('aluno');
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<Notice | null>(null);
-  const endpointByType: Record<RecordKind, string> = {
-    aluno: '/api/alunos/',
-    profissional: '/api/profissionais/',
-    servico: '/api/servicos/',
-  };
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    setMessage(null);
-    if (!form.reportValidity()) return;
-    const values = Object.fromEntries(new FormData(form).entries());
-    for (const [key, value] of Object.entries(values)) {
-      if (typeof value === 'string') values[key] = value.trim();
-    }
-    setBusy(true);
-    try {
-      await api(endpointByType[record], { method: 'POST', body: values });
-      form.reset();
-      setMessage({ message: 'Cadastro salvo com sucesso.', kind: 'success' });
-    } catch (reason) {
-      if (reason instanceof ApiError && reason.status === 401) {
-        onUnauthorized();
-        return;
-      }
-      const messageText = reason instanceof ApiError && reason.status === 403
-        ? `Acesso negado: ${reason.message}`
-        : reason instanceof ApiError
-          ? `Revise os dados: ${reason.message}`
-          : describeError(reason);
-      setMessage({ message: messageText, kind: 'error' });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const tabs: { id: RecordKind; label: string }[] = [
-    { id: 'aluno', label: 'Aluno' },
-    { id: 'profissional', label: 'Profissional' },
-    { id: 'servico', label: 'Serviço' },
-  ];
-
-  return (
-    <section className="content-panel" aria-labelledby="records-title">
-      <div className="panel-title-row"><div><p className="eyebrow">ADMINISTRAÇÃO</p><h2 id="records-title">Cadastros</h2><p className="muted">Inicie um cadastro. Os dados são validados pela API.</p></div><span className="date-chip">＋ Administração</span></div>
-      <div className="record-tabs" role="tablist" aria-label="Tipo de cadastro">
-        {tabs.map((tab) => <button key={tab.id} className={`record-tab${record === tab.id ? ' is-active' : ''}`} type="button" role="tab" aria-selected={record === tab.id} onClick={() => { setRecord(tab.id); setMessage(null); }}>{tab.label}</button>)}
-      </div>
-      {message && <div className={`inline-message ${message.kind === 'error' ? 'error-message' : 'success-message'}`} role="status" aria-live="polite">{message.message}</div>}
-      {record === 'aluno' && <form className="record-form" onSubmit={(event) => void submit(event)}>
-        <div className="form-intro"><span className="section-icon" aria-hidden="true">♙</span><div><h3>Novo aluno</h3><p>Preencha os dados básicos do cadastro.</p></div></div>
-        <div className="form-grid"><label htmlFor="student-name">Nome completo<input id="student-name" name="nome" required maxLength={150} autoComplete="name" /></label><label htmlFor="student-birth">Data de nascimento<input id="student-birth" name="data_nascimento" type="date" required /></label><label htmlFor="student-phone">Telefone <span className="optional-label">opcional</span><input id="student-phone" name="telefone" type="tel" maxLength={20} autoComplete="tel" /></label></div>
-        <button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Salvando…' : 'Salvar aluno'} <span aria-hidden="true">→</span></button>
-      </form>}
-      {record === 'profissional' && <form className="record-form" onSubmit={(event) => void submit(event)}>
-        <div className="form-intro"><span className="section-icon" aria-hidden="true">♙</span><div><h3>Novo profissional</h3><p>Crie o cadastro e as credenciais de acesso.</p></div></div>
-        <div className="form-grid"><label htmlFor="professional-name">Nome completo<input id="professional-name" name="nome" required maxLength={150} autoComplete="name" /></label><label htmlFor="professional-email">E-mail<input id="professional-email" name="email" type="email" required maxLength={254} autoComplete="email" /></label><label htmlFor="professional-phone">Telefone <span className="optional-label">opcional</span><input id="professional-phone" name="telefone" type="tel" maxLength={20} autoComplete="tel" /></label><label htmlFor="professional-profile">Perfil<select id="professional-profile" name="perfil" required defaultValue=""><option value="" disabled>Selecione</option><option value="TREINADOR">Treinador</option><option value="PROFISSIONAL_SAUDE">Profissional de Saúde</option></select></label><label htmlFor="professional-login">Login<input id="professional-login" name="login" required maxLength={150} autoComplete="off" /></label><label htmlFor="professional-password">Senha<input id="professional-password" name="senha" type="password" required autoComplete="new-password" /></label></div>
-        <button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Salvando…' : 'Salvar profissional'} <span aria-hidden="true">→</span></button>
-      </form>}
-      {record === 'servico' && <form className="record-form" onSubmit={(event) => void submit(event)}>
-        <div className="form-intro"><span className="section-icon" aria-hidden="true">✦</span><div><h3>Novo serviço</h3><p>Adicione uma modalidade ao catálogo.</p></div></div>
-        <div className="form-grid service-grid"><label htmlFor="service-name">Nome do serviço<input id="service-name" name="nome" required maxLength={100} placeholder="Ex.: Fisioterapia individual" /></label><label htmlFor="service-category">Categoria<select id="service-category" name="categoria" required defaultValue=""><option value="" disabled>Selecione</option><option value="TREINO">Treino</option><option value="FISIOTERAPIA">Fisioterapia</option><option value="PSICOLOGIA">Psicologia</option><option value="NUTRICAO">Nutrição</option></select></label></div>
-        <button className="button button-primary" type="submit" disabled={busy}>{busy ? 'Salvando…' : 'Salvar serviço'} <span aria-hidden="true">→</span></button>
-      </form>}
     </section>
   );
 }
