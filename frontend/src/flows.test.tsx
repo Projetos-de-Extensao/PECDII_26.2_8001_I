@@ -98,7 +98,10 @@ describe('Administrador', () => {
     const table = await screen.findByRole('table');
     expect(within(table).getByRole('rowheader', { name: 'Treino funcional' })).toBeTruthy();
     expect(within(table).getAllByText('3')).toHaveLength(2);
-    expect(screen.getByText('2026-11-01 a 2026-11-30')).toBeTruthy();
+    expect(screen.getByText('01/11/2026 a 30/11/2026')).toBeTruthy();
+    // Os campos mostram o período carregado, em vez de ficarem vazios.
+    expect((screen.getByLabelText('De') as HTMLInputElement).value).toBe('2026-11-01');
+    expect((screen.getByLabelText('Até') as HTMLInputElement).value).toBe('2026-11-30');
   });
 
   it('consulta os treinadores e relaciona os treinos agendados a cada responsável', async () => {
@@ -197,20 +200,18 @@ describe('Administrador', () => {
 });
 
 describe('Treinador', () => {
-  it('registra presença, vê a recusa 409 da situação e finaliza o relatório', async () => {
+  it('registra presença, vê a recusa 409 da situação e o aviso antecipado do relatório', async () => {
     const atualizada = { ...session(3), presencas: [{ aluno: 7, situacao_presenca: 'PRESENTE' }] };
     const fetchMock = mockApi(trainer, {
       'GET /api/sessoes/?': () => json([session(3)]),
       'GET /api/alunos/': () => json([{ id: 7, nome: 'Ana Lima' }]),
       'PATCH /api/sessoes/10/presencas/': () => json(atualizada),
       'PATCH /api/sessoes/10/': () => json({ detail: 'A presença e a situação da sessão só podem ser registradas a partir do fim previsto.' }, 409),
-      'GET /api/sessoes/10/relatorio/': () => json({ detail: 'Esta sessão ainda não possui relatório de treino.' }, 404),
-      'POST /api/sessoes/10/relatorio/': () => json({ id: 1, sessao: 10, status: 'RASCUNHO', objetivo: 'Força', local: '', exercicios: '', volume_unidade: '', data: null, horario: null, volume_valor: null, intensidade_borg: null, finalizado_em: null }, 201),
-      'POST /api/sessoes/10/relatorio/finalizar/': () => json({ id: 1, sessao: 10, status: 'FINALIZADO', objetivo: 'Força', local: 'Sala 2', exercicios: 'Agachamento', volume_unidade: 'kg', data: '2026-11-16', horario: '10:00:00', volume_valor: '100.00', intensidade_borg: '6.0', finalizado_em: '2026-11-16T12:00:00Z' }),
     });
 
     render(<App />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Detalhes' }));
+    expect(await screen.findByText('1 sessão')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Detalhes' }));
 
     fireEvent.change(await screen.findByLabelText('Ana Lima'), { target: { value: 'PRESENTE' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Salvar presença' }).closest('form')!);
@@ -220,8 +221,29 @@ describe('Treinador', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Marcar realizada' }));
     expect(await screen.findByText(/Operação recusada: A presença e a situação/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Abrir relatório' }));
-    expect(await screen.findByText(/ainda não tem relatório/)).toBeTruthy();
+    // Antes de a sessão ser realizada, o relatório mostra o pré-requisito em vez do formulário.
+    expect(screen.getByText(/Disponível depois que a sessão terminar/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Abrir relatório' })).toBeNull();
+  });
+
+  it('preenche e finaliza o relatório de uma sessão realizada', async () => {
+    const realizada = { ...session(3), status: 'REALIZADA' };
+    const fetchMock = mockApi(trainer, {
+      'GET /api/sessoes/?': () => json([realizada]),
+      'GET /api/alunos/': () => json([{ id: 7, nome: 'Ana Lima' }]),
+      'GET /api/sessoes/10/relatorio/': () => json({ detail: 'Esta sessão ainda não possui relatório de treino.' }, 404),
+      'POST /api/sessoes/10/relatorio/': () => json({ id: 1, sessao: 10, status: 'RASCUNHO', objetivo: 'Força', local: '', exercicios: '', volume_unidade: '', data: null, horario: null, volume_valor: null, intensidade_borg: null, finalizado_em: null }, 201),
+      'POST /api/sessoes/10/relatorio/finalizar/': () => json({ id: 1, sessao: 10, status: 'FINALIZADO', objetivo: 'Força', local: 'Sala 2', exercicios: 'Agachamento', volume_unidade: 'kg', data: '2026-11-16', horario: '10:00:00', volume_valor: '100.00', intensidade_borg: '6.0', finalizado_em: '2026-11-16T12:00:00Z' }),
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Detalhes' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Abrir relatório' }));
+    const aviso = await screen.findByText(/ainda não tem relatório/);
+    expect(aviso.className).toContain('info-message');
+    expect(screen.getByLabelText('Exercícios').tagName).toBe('TEXTAREA');
+    expect(screen.getByLabelText('Intensidade (Borg 0–10)').getAttribute('max')).toBe('10');
     fireEvent.change(screen.getByLabelText('Objetivo'), { target: { value: 'Força' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
     expect(await screen.findByText('Rascunho salvo.')).toBeTruthy();
@@ -249,7 +271,7 @@ describe('Treinador', () => {
 });
 
 describe('Profissional de Saúde', () => {
-  it('registra presença sem acesso a situação nem relatório, e vê o 403 da API', async () => {
+  it('registra presença e situação (RF-10), sem relatório de treino, e vê o 403 da API', async () => {
     mockApi(health, {
       'GET /api/sessoes/?': () => json([session(5)]),
       'GET /api/alunos/': () => json([{ id: 7, nome: 'Ana Lima' }]),
@@ -260,7 +282,8 @@ describe('Profissional de Saúde', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Detalhes' }));
     expect(screen.queryByRole('button', { name: /pendências/i })).toBeNull();
 
-    expect(screen.queryByRole('button', { name: 'Marcar realizada' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Marcar realizada' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cancelar sessão' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Abrir relatório' })).toBeNull();
     fireEvent.change(await screen.findByLabelText('Ana Lima'), { target: { value: 'FALTA' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Salvar presença' }).closest('form')!);

@@ -30,6 +30,17 @@ export function reportError(
   setMessage({ kind: 'error', message: errorMessage(error) });
 }
 
+/** Monta "1 sessão" / "2 sessões" sem concatenar sufixos. */
+export function plural(count: number, singular: string, pluralForm: string): string {
+  return `${count} ${count === 1 ? singular : pluralForm}`;
+}
+
+/** Converte "2026-11-01" em "01/11/2026". */
+export function formatDate(value: string): string {
+  const [year, month, day] = value.split('-');
+  return year && month && day ? `${day}/${month}/${year}` : value;
+}
+
 /** Mostra data e hora no padrão brasileiro. */
 export function formatDateTime(value: string): string {
   const date = new Date(value);

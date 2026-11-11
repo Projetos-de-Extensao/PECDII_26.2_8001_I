@@ -26,6 +26,14 @@ function localIso(value: string, nextDay = false): string {
   return `${dateString(date)}T00:00:00${sign}${offsetHours}:${offsetMinutes}`;
 }
 
+/** Converte uma data ISO da API para o formato do campo datetime-local ("2026-11-16T09:00"). */
+function toLocalInput(value: string): string {
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${dateString(date)}T${hours}:${minutes}`;
+}
+
 function sessionRows(payload: Session[] | SessionList): Session[] {
   return Array.isArray(payload) ? payload : payload.results ?? [];
 }
@@ -123,6 +131,11 @@ export function Disponibilidade({ onUnauthorized }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Notice | null>(null);
+  // Edição e filtros da lista de períodos.
+  const [editing, setEditing] = useState<(AgendaRange & { kind: 'disponibilidade' | 'bloqueio' }) | null>(null);
+  const [filtroProfissional, setFiltroProfissional] = useState('');
+  const [filtroDe, setFiltroDe] = useState('');
+  const [filtroAte, setFiltroAte] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -157,10 +170,16 @@ export function Disponibilidade({ onUnauthorized }: Props) {
     setBusy(true);
     setMessage(null);
     try {
-      await api(kind === 'disponibilidade' ? '/api/disponibilidades/' : '/api/bloqueios-agenda/', { method: 'POST', body });
+      const endpoint = kind === 'disponibilidade' ? '/api/disponibilidades/' : '/api/bloqueios-agenda/';
+      if (editing) {
+        await api(`${endpoint}${editing.id}/`, { method: 'PATCH', body });
+      } else {
+        await api(endpoint, { method: 'POST', body });
+      }
       form.reset();
       await load();
-      setMessage({ kind: 'success', message: kind === 'disponibilidade' ? 'Disponibilidade cadastrada.' : 'Bloqueio cadastrado.' });
+      setMessage({ kind: 'success', message: editing ? 'Período atualizado.' : kind === 'disponibilidade' ? 'Disponibilidade cadastrada.' : 'Bloqueio cadastrado.' });
+      setEditing(null);
     } catch (error) {
       reportError(error, onUnauthorized, setMessage);
     } finally {
@@ -187,24 +206,43 @@ export function Disponibilidade({ onUnauthorized }: Props) {
   const rows = [
     ...availability.map((item) => ({ ...item, kind: 'disponibilidade' as const })),
     ...blocks.map((item) => ({ ...item, kind: 'bloqueio' as const })),
-  ].sort((a, b) => a.inicio.localeCompare(b.inicio));
+  ]
+    // Filtro por profissional e por período: mostra o que cruza o intervalo escolhido.
+    .filter((item) => !filtroProfissional || item.profissional === Number(filtroProfissional))
+    .filter((item) => !filtroDe || item.fim.slice(0, 10) >= filtroDe)
+    .filter((item) => !filtroAte || item.inicio.slice(0, 10) <= filtroAte)
+    .sort((a, b) => a.inicio.localeCompare(b.inicio));
+
+  function editar(item: AgendaRange & { kind: 'disponibilidade' | 'bloqueio' }) {
+    setKind(item.kind);
+    setEditing(item);
+    setMessage(null);
+  }
 
   return (
     <section className="content-panel" aria-labelledby="availability-title">
       <div className="panel-title-row"><div><p className="eyebrow">CONFIGURAÇÃO DA AGENDA</p><h2 id="availability-title">Disponibilidade</h2><p className="muted">Defina os períodos de atendimento e os bloqueios dos profissionais.</p></div><span className="date-chip">⚙ Agenda da equipe</span></div>
       <Message notice={message} />
       <div className="availability-layout">
-        <form className="availability-form" onSubmit={(event) => void create(event)}>
+        <form key={editing ? `${editing.kind}-${editing.id}` : 'novo'} className="availability-form" onSubmit={(event) => void create(event)}>
           <div className="record-tabs" role="tablist" aria-label="Tipo de período">
-            <button className={`record-tab${kind === 'disponibilidade' ? ' is-active' : ''}`} role="tab" aria-selected={kind === 'disponibilidade'} type="button" onClick={() => setKind('disponibilidade')}>Disponibilidade</button>
-            <button className={`record-tab${kind === 'bloqueio' ? ' is-active' : ''}`} role="tab" aria-selected={kind === 'bloqueio'} type="button" onClick={() => setKind('bloqueio')}>Bloqueio</button>
+            <button className={`record-tab${kind === 'disponibilidade' ? ' is-active' : ''}`} role="tab" aria-selected={kind === 'disponibilidade'} type="button" disabled={!!editing} onClick={() => setKind('disponibilidade')}>Disponibilidade</button>
+            <button className={`record-tab${kind === 'bloqueio' ? ' is-active' : ''}`} role="tab" aria-selected={kind === 'bloqueio'} type="button" disabled={!!editing} onClick={() => setKind('bloqueio')}>Bloqueio</button>
           </div>
-          <div className="form-grid"><label htmlFor="range-professional">Profissional<select id="range-professional" name="profissional" required defaultValue=""><option value="" disabled>Selecione</option>{professionals.map((item) => <option value={item.id} key={item.id}>{item.nome}</option>)}</select></label><label htmlFor="range-start">Início<input id="range-start" name="inicio" type="datetime-local" required /></label><label htmlFor="range-end">Fim<input id="range-end" name="fim" type="datetime-local" required /></label>{kind === 'bloqueio' && <label htmlFor="range-reason">Motivo <span className="optional-label">opcional</span><input id="range-reason" name="motivo" maxLength={200} /></label>}</div>
-          <button className="button button-primary" type="submit" disabled={busy || loading || professionals.length === 0}>{busy ? 'Salvando…' : 'Adicionar período'} <span aria-hidden="true">→</span></button>
+          <div className="form-grid"><label htmlFor="range-professional">Profissional<select id="range-professional" name="profissional" required defaultValue={editing ? String(editing.profissional) : ''}><option value="" disabled>Selecione</option>{professionals.map((item) => <option value={item.id} key={item.id}>{item.nome}</option>)}</select></label><label htmlFor="range-start">Início<input id="range-start" name="inicio" type="datetime-local" required defaultValue={editing ? toLocalInput(editing.inicio) : ''} /></label><label htmlFor="range-end">Fim<input id="range-end" name="fim" type="datetime-local" required defaultValue={editing ? toLocalInput(editing.fim) : ''} /></label>{kind === 'bloqueio' && <label htmlFor="range-reason">Motivo <span className="optional-label">opcional</span><input id="range-reason" name="motivo" maxLength={200} defaultValue={editing?.motivo ?? ''} /></label>}</div>
+          <div className="button-row">
+            <button className="button button-primary" type="submit" disabled={busy || loading || professionals.length === 0}>{busy ? 'Salvando…' : editing ? 'Salvar alterações' : 'Adicionar período'} <span aria-hidden="true">→</span></button>
+            {editing && <button className="button button-quiet" type="button" onClick={() => setEditing(null)}>Cancelar edição</button>}
+          </div>
           {!loading && professionals.length === 0 && <p className="muted">Cadastre um profissional antes de configurar a agenda.</p>}
         </form>
         <div className="range-list-area"><div className="agenda-heading"><h3>Períodos cadastrados</h3><button className="text-button" type="button" onClick={() => void load()} disabled={loading}>↻ Atualizar</button></div>
-          {loading ? <Loading text="Carregando períodos…" /> : rows.length === 0 ? <div className="empty-state"><h3>Nenhum período cadastrado</h3><p>Adicione uma disponibilidade ou um bloqueio.</p></div> : <div className="range-list">{rows.map((item) => <article className="range-card" key={`${item.kind}-${item.id}`}><span className={`range-icon ${item.kind}`} aria-hidden="true">{item.kind === 'disponibilidade' ? '✓' : '⊘'}</span><div><div className="range-card-title"><strong>{professionalsById.get(item.profissional) ?? `Profissional #${item.profissional}`}</strong><span className={`tag ${item.kind === 'bloqueio' ? 'warning-tag' : ''}`}>{item.kind === 'disponibilidade' ? 'Disponível' : 'Bloqueado'}</span></div><p>{formatDateTime(item.inicio)} – {formatDateTime(item.fim)}</p>{item.motivo && <small>{item.motivo}</small>}</div><button className="icon-button remove-button" aria-label="Remover período" type="button" disabled={busy} onClick={() => void remove(item.kind, item.id)}>×</button></article>)}</div>}
+          <div className="filter-bar range-filters">
+            <div className="filter-field"><label htmlFor="range-filter-professional">Profissional</label><select id="range-filter-professional" value={filtroProfissional} onChange={(event) => setFiltroProfissional(event.target.value)}><option value="">Todos</option>{professionals.map((item) => <option value={item.id} key={item.id}>{item.nome}</option>)}</select></div>
+            <div className="filter-field"><label htmlFor="range-filter-start">De</label><input id="range-filter-start" type="date" value={filtroDe} onChange={(event) => setFiltroDe(event.target.value)} /></div>
+            <div className="filter-field"><label htmlFor="range-filter-end">Até</label><input id="range-filter-end" type="date" value={filtroAte} onChange={(event) => setFiltroAte(event.target.value)} /></div>
+          </div>
+          {loading ? <Loading text="Carregando períodos…" /> : rows.length === 0 ? <div className="empty-state"><h3>Nenhum período cadastrado</h3><p>Adicione uma disponibilidade ou um bloqueio.</p></div> : <div className="range-list">{rows.map((item) => <article className="range-card" key={`${item.kind}-${item.id}`}><span className={`range-icon ${item.kind}`} aria-hidden="true">{item.kind === 'disponibilidade' ? '✓' : '⊘'}</span><div><div className="range-card-title"><strong>{professionalsById.get(item.profissional) ?? `Profissional #${item.profissional}`}</strong><span className={`tag ${item.kind === 'bloqueio' ? 'warning-tag' : ''}`}>{item.kind === 'disponibilidade' ? 'Disponível' : 'Bloqueado'}</span></div><p>{formatDateTime(item.inicio)} – {formatDateTime(item.fim)}</p>{item.motivo && <small>{item.motivo}</small>}</div><button className="text-button" type="button" disabled={busy} onClick={() => editar(item)}>Editar</button><button className="icon-button remove-button" aria-label="Remover período" type="button" disabled={busy} onClick={() => void remove(item.kind, item.id)}>×</button></article>)}</div>}
         </div>
       </div>
     </section>

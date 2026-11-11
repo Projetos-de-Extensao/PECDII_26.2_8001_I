@@ -48,9 +48,11 @@ A autenticação usa a sessão do Django com CSRF; não há token guardado no na
 
 | Perfil | Telas | Endpoints usados |
 |---|---|---|
-| Administrador | Agenda, Pendências, Dashboard, Novo agendamento, Cadastros | `/api/sessoes/`, `/api/pendencias/`, `/api/dashboard/`, `/api/servicos/`, `/api/profissionais/`, `/api/alunos/` |
-| Treinador | Agenda → Detalhes: presença/falta, “A sessão foi realizada?” e relatório de treino (rascunho e finalização) | `/api/sessoes/`, `/api/sessoes/{id}/presencas/`, `PATCH /api/sessoes/{id}/`, `/api/sessoes/{id}/relatorio/`, `/api/sessoes/{id}/relatorio/finalizar/` |
-| Profissional de Saúde | Agenda própria → Detalhes: presença/falta | `/api/sessoes/`, `/api/sessoes/{id}/presencas/` |
+| Administrador | Agenda (Detalhes: presenças, relatório e cancelamento), Pendências (contador no menu e atalho “Ver sessão”), Dashboard, Novo agendamento, Equipe e treinos, Disponibilidade (filtro e edição), Habilitações, Cadastros (criar, listar, editar e remover) | `/api/sessoes/`, `/api/pendencias/`, `/api/dashboard/`, `/api/servicos/`, `/api/profissionais/`, `/api/alunos/`, `/api/disponibilidades/`, `/api/bloqueios-agenda/`, `/api/profissionais-servicos/`, `/api/sessoes/{id}/relatorio/` |
+| Treinador | Agenda → Detalhes: presença/falta, “A sessão foi realizada?”, cancelamento e relatório de treino (rascunho e finalização, liberado depois da sessão realizada) | `/api/sessoes/`, `/api/sessoes/{id}/presencas/`, `PATCH /api/sessoes/{id}/`, `/api/sessoes/{id}/relatorio/`, `/api/sessoes/{id}/relatorio/finalizar/` |
+| Profissional de Saúde | Agenda própria → Detalhes: presença/falta, “A sessão foi realizada?” e cancelamento | `/api/sessoes/`, `/api/sessoes/{id}/presencas/`, `PATCH /api/sessoes/{id}/` |
+
+O Administrador consulta presenças e relatórios, mas não os altera (D-15). Cancelar uma sessão é permitido ao Administrador e ao profissional responsável (D-17).
 
 O menu mostra só as telas que se aplicam ao perfil, mas quem decide é a API: horário, responsável, capacidade e permissões continuam no backend, e o cliente apenas exibe a resposta.
 
@@ -73,5 +75,6 @@ O menu mostra só as telas que se aplicam ao perfil, mas quem decide é a API: h
 
 - `src/App.test.tsx`: login, cadastro e erro de credenciais.
 - `src/flows.test.tsx`: fluxos principais dos três perfis, incluindo 401, 403, 404, 409 e falha de rede.
+- `src/review.test.tsx`: itens da revisão da interface (contador e atalho de pendências, detalhes e cancelamento pelo Administrador, CRUD de cadastros, conferências do novo agendamento e edição de disponibilidade).
 
 Os layouts foram conferidos em 1920×1080 e 390×844 com a API real e dados de exemplo, em todas as telas dos três perfis: nenhuma tela tem rolagem horizontal. Em telas estreitas o menu quebra em mais de uma linha e a tabela do dashboard rola dentro do próprio quadro.

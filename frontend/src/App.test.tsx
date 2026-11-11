@@ -88,7 +88,10 @@ describe('cliente web GAAP', () => {
       if (url === '/api/auth/csrf/') return jsonResponse({ csrfToken: 'token-csrf' });
       if (url === '/api/auth/login/') return jsonResponse({ perfil: administrator.perfil });
       if (url.startsWith('/api/sessoes/')) return jsonResponse([]);
-      if (url === '/api/alunos/') return jsonResponse({ id: 8, nome: 'Ana Lima' }, 201);
+      if (url === '/api/alunos/' && _init?.method === 'POST') return jsonResponse({ id: 8, nome: 'Ana Lima' }, 201);
+      if (url === '/api/alunos/') return jsonResponse([]);
+      if (url === '/api/servicos/') return jsonResponse([]);
+      if (url === '/api/pendencias/') return jsonResponse({ total: 0, tipos: [], itens: [] });
       throw new Error(`Endpoint inesperado: ${url}`);
     });
     vi.stubGlobal('fetch', fetchMock);
