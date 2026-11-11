@@ -111,7 +111,7 @@ UC05 ..> VALID : <<include>>
 
 - **Atores:** Administrador, Treinador e Profissional de Saúde.
 - **Pré-condição:** usuário autenticado.
-- **Fluxo principal:** usuário consulta um período; API restringe a resposta ao escopo do perfil: administrador consulta a operação, treinador consulta sessões sob sua responsabilidade e serviços a ele vinculados, e profissional de saúde consulta atendimentos dos serviços e agenda a ele vinculados.
+- **Fluxo principal:** usuário consulta um período; API restringe a resposta ao escopo do perfil: administrador consulta a operação, treinador consulta sessões sob sua responsabilidade e serviços a ele vinculados, e profissional de saúde consulta atendimentos dos serviços e agenda a ele vinculados. Treinadores e Profissionais de Saúde podem filtrar por um serviço vinculado ao próprio perfil.
 - **Alternativas:** período inválido recebe 400; usuário não pode ampliar o escopo de acesso alterando filtros.
 - **Pós-condição:** API retorna apenas registros autorizados.
 - **Requisitos:** RF-04; RNF-04.

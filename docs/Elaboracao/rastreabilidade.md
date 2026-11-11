@@ -4,7 +4,7 @@ title: Rastreabilidade Requisito × Artefato
 ---
 # Rastreabilidade Requisito × Artefato
 
-Esta matriz liga os requisitos estáveis do [levantamento](levreq.md) aos documentos em que são definidos, modelados ou representados. O [DER](der.md) complementa o modelo de classes com as tabelas propostas. As células indicam quando uma representação visual é parcial ou pendente. Uma referência não significa que a funcionalidade já esteja implementada; o [plano de viabilidade](viabilidade_mvp.md) registra o estado atual do código.
+Esta matriz liga os requisitos estáveis do [levantamento](levreq.md) aos documentos em que são definidos, modelados ou representados. O [DER](der.md) complementa o modelo de classes com as tabelas propostas. As células indicam quando uma representação visual é parcial ou pendente. Uma referência não significa que a funcionalidade já esteja implementada; o [plano de viabilidade](viabilidade_mvp.md) registra o estado atual do código. RF-04 já está implementado em `/api/sessoes/`: Administrador consulta a agenda operacional; Treinador e Profissional de Saúde veem apenas os compromissos do próprio escopo e podem filtrar por serviço vinculado ao perfil.
 
 | ID | Visão | Caso de uso | Classes/domínio | Sequência | Protótipo baixa | Protótipo alta |
 |---|---|---|---|---|---|---|

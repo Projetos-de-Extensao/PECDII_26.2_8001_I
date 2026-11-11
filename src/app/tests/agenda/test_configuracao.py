@@ -8,29 +8,19 @@ from django.test import TestCase, TransactionTestCase
 from rest_framework.test import APIClient
 
 from app.models import BloqueioAgenda, Disponibilidade, Usuario
+from app.tests.helpers import cliente_para, criar_perfil
 
 
 class ConfiguracaoAgendaApiTests(TestCase):
     """Verifica CRUD, validação e autorização da configuração da agenda."""
 
     def setUp(self):
-        self.admin = self.criar_usuario('admin-agenda', Usuario.Perfil.ADMINISTRADOR)
-        self.treinador = self.criar_usuario('treinador-agenda', Usuario.Perfil.TREINADOR)
-        self.admin_client = APIClient()
-        self.admin_client.force_authenticate(self.admin.conta)
-        self.treinador_client = APIClient()
-        self.treinador_client.force_authenticate(self.treinador.conta)
+        self.admin = criar_perfil(Usuario.Perfil.ADMINISTRADOR, 'admin-agenda')
+        self.treinador = criar_perfil(Usuario.Perfil.TREINADOR, 'treinador-agenda')
+        self.admin_client = cliente_para(self.admin)
+        self.treinador_client = cliente_para(self.treinador)
         self.inicio = datetime(2026, 11, 10, 9, tzinfo=timezone_utc.utc)
         self.fim = self.inicio + timedelta(hours=1)
-
-    def criar_usuario(self, login, perfil):
-        conta = get_user_model().objects.create_user(username=login)
-        return Usuario.objects.create(
-            conta=conta,
-            nome=login,
-            email=f'{login}@example.com',
-            perfil=perfil,
-        )
 
     def dados_faixa(self, **extras):
         dados = {

@@ -3,7 +3,6 @@ import time
 from datetime import datetime, timedelta, timezone as timezone_utc
 from unittest import mock
 
-from django.contrib.auth import get_user_model
 from django.db import IntegrityError, connection
 from django.test import TestCase, TransactionTestCase
 from rest_framework.test import APIClient
@@ -18,13 +17,9 @@ from app.models import (
     Sessao,
     Usuario,
 )
+from app.tests.helpers import cliente_para, criar_perfil
 
 INICIO = datetime(2026, 11, 16, 9, tzinfo=timezone_utc.utc)
-
-
-def criar_usuario(login, perfil):
-    conta = get_user_model().objects.create_user(username=login)
-    return Usuario.objects.create(conta=conta, nome=login, email=f'{login}@example.com', perfil=perfil)
 
 
 def criar_alunos(quantidade):
@@ -38,8 +33,8 @@ class ConfirmacaoApiTests(TestCase):
     """POST /api/sessoes/ confirma a sessão com serviço, profissional, intervalo e participantes."""
 
     def setUp(self):
-        self.admin = criar_usuario('admin-confirmacao', Usuario.Perfil.ADMINISTRADOR)
-        self.treinador = criar_usuario('treinador-confirmacao', Usuario.Perfil.TREINADOR)
+        self.admin = criar_perfil(Usuario.Perfil.ADMINISTRADOR, 'admin-confirmacao')
+        self.treinador = criar_perfil(Usuario.Perfil.TREINADOR, 'treinador-confirmacao')
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
         ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
         Disponibilidade.objects.create(
@@ -48,8 +43,7 @@ class ConfirmacaoApiTests(TestCase):
             fim=INICIO + timedelta(days=1),
         )
         self.alunos = criar_alunos(CAPACIDADE_MAXIMA_SESSAO + 1)
-        self.client = APIClient()
-        self.client.force_authenticate(self.admin.conta)
+        self.client = cliente_para(self.admin)
 
     def dados(self, **extras):
         dados = {
@@ -105,8 +99,7 @@ class ConfirmacaoApiTests(TestCase):
         self.assertFalse(Participacao.objects.exists())
 
     def test_treinador_nao_confirma_agendamento(self):
-        client = APIClient()
-        client.force_authenticate(self.treinador.conta)
+        client = cliente_para(self.treinador)
 
         response = client.post('/api/sessoes/', self.dados(), format='json')
 
@@ -115,9 +108,8 @@ class ConfirmacaoApiTests(TestCase):
         self.assertFalse(Sessao.objects.exists())
 
     def test_profissional_de_saude_nao_confirma_agendamento(self):
-        fisio = criar_usuario('fisio-confirmacao', Usuario.Perfil.PROFISSIONAL_SAUDE)
-        client = APIClient()
-        client.force_authenticate(fisio.conta)
+        fisio = criar_perfil(Usuario.Perfil.PROFISSIONAL_SAUDE, 'fisio-confirmacao')
+        client = cliente_para(fisio)
 
         response = client.post('/api/sessoes/', self.dados(), format='json')
 
@@ -186,7 +178,7 @@ class AtomicidadeConfirmacaoTests(TestCase):
     """Sessão e participantes são gravados por inteiro ou não são gravados (RN-06)."""
 
     def setUp(self):
-        self.treinador = criar_usuario('treinador-atomicidade', Usuario.Perfil.TREINADOR)
+        self.treinador = criar_perfil(Usuario.Perfil.TREINADOR, 'treinador-atomicidade')
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
         ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
         Disponibilidade.objects.create(
@@ -241,7 +233,7 @@ class ConcorrenciaConfirmacaoTests(TransactionTestCase):
     """
 
     def setUp(self):
-        self.treinador = criar_usuario('treinador-concorrencia', Usuario.Perfil.TREINADOR)
+        self.treinador = criar_perfil(Usuario.Perfil.TREINADOR, 'treinador-concorrencia')
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
         ProfissionalServico.objects.create(profissional=self.treinador, servico=self.servico)
         Disponibilidade.objects.create(

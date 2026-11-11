@@ -21,7 +21,7 @@ from app.serializers import (
     AlunoSerializer,
     BloqueioAgendaSerializer,
     DisponibilidadeSerializer,
-    PeriodoConsultaSerializer,
+    FiltroAgendaQueryParamsSerializer,
     ProfissionalSerializer,
     RegistroPresencaSerializer,
     ServicoSerializer,
@@ -89,7 +89,7 @@ class SessaoViewSet(ModelViewSet):
     CAMPOS_DO_RESPONSAVEL = {'status', 'observacoes'}
 
     def get_queryset(self):
-        """Limita os atendimentos de saúde ao profissional e serviços vinculados."""
+        """Aplica o escopo da agenda e os filtros permitidos para cada perfil."""
         queryset = self.queryset.all().select_related('profissional', 'servico')
         usuario = getattr(self.request.user, 'usuario', None)
         if usuario is not None and usuario.perfil == Usuario.Perfil.PROFISSIONAL_SAUDE:
@@ -102,14 +102,28 @@ class SessaoViewSet(ModelViewSet):
                 ],
                 servico__vinculos__profissional=usuario,
             )
+        elif usuario is not None and usuario.perfil == Usuario.Perfil.TREINADOR:
+            queryset = queryset.filter(profissional=usuario)
 
         if self.action in ('list', 'pendentes_status'):
-            periodo = PeriodoConsultaSerializer(data=self.request.query_params)
+            periodo = FiltroAgendaQueryParamsSerializer(data=self.request.query_params)
             periodo.is_valid(raise_exception=True)
             if 'inicio' in periodo.validated_data:
                 queryset = queryset.filter(fim__gt=periodo.validated_data['inicio'])
             if 'fim' in periodo.validated_data:
                 queryset = queryset.filter(inicio__lt=periodo.validated_data['fim'])
+            if 'servico' in periodo.validated_data:
+                servico = periodo.validated_data['servico']
+                if (
+                    usuario is not None
+                    and usuario.perfil in (
+                        Usuario.Perfil.TREINADOR,
+                        Usuario.Perfil.PROFISSIONAL_SAUDE,
+                    )
+                    and not usuario.vinculos.filter(servico=servico).exists()
+                ):
+                    raise PermissionDenied('Só é possível filtrar por serviços vinculados ao seu perfil.')
+                queryset = queryset.filter(servico=servico)
 
         return queryset.order_by('inicio', 'pk')
 

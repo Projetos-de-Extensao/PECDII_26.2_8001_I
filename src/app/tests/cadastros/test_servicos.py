@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from django.contrib import admin
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.forms import modelform_factory
@@ -10,6 +9,7 @@ from django.utils import timezone
 
 from app.admin import ProfissionalServicoInline
 from app.models import ProfissionalServico, Servico, Sessao, Usuario
+from app.tests.helpers import criar_perfil
 
 
 class ServicoModelTests(TestCase):
@@ -107,18 +107,14 @@ class ProfissionalServicoTests(TestCase):
     def setUp(self):
         self.treino = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
         self.fisio = Servico.objects.create(nome='Fisioterapia esportiva', categoria=Servico.Categoria.FISIOTERAPIA)
-        self.treinador = self.criar_usuario('Bruno Costa', Usuario.Perfil.TREINADOR)
-        self.fisioterapeuta = self.criar_usuario('Carla Dias', Usuario.Perfil.PROFISSIONAL_SAUDE)
-        self.administrador = self.criar_usuario('Ana Souza', Usuario.Perfil.ADMINISTRADOR)
-
-    def criar_usuario(self, nome, perfil):
-        login = nome.lower().replace(' ', '.')
-        return Usuario.objects.create(
-            # Sem senha: nenhum destes testes faz login, e gerar o hash deixava a suíte lenta.
-            conta=get_user_model().objects.create_user(username=login),
-            nome=nome,
-            email=f'{login}@example.com',
-            perfil=perfil,
+        self.treinador = criar_perfil(
+            Usuario.Perfil.TREINADOR, 'bruno.costa', nome='Bruno Costa'
+        )
+        self.fisioterapeuta = criar_perfil(
+            Usuario.Perfil.PROFISSIONAL_SAUDE, 'carla.dias', nome='Carla Dias'
+        )
+        self.administrador = criar_perfil(
+            Usuario.Perfil.ADMINISTRADOR, 'ana.souza', nome='Ana Souza'
         )
 
     def test_treinador_e_profissional_de_saude_podem_ser_vinculados(self):
@@ -222,11 +218,8 @@ class PerfilComVinculosTests(TestCase):
 
     def setUp(self):
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
-        self.treinador = Usuario.objects.create(
-            conta=get_user_model().objects.create_user(username='bruno.costa'),
-            nome='Bruno Costa',
-            email='bruno.costa@example.com',
-            perfil=Usuario.Perfil.TREINADOR,
+        self.treinador = criar_perfil(
+            Usuario.Perfil.TREINADOR, 'bruno.costa', nome='Bruno Costa'
         )
 
     def test_save_recusa_virar_administrador_com_vinculo(self):
@@ -272,11 +265,8 @@ class PerfilComSessoesTests(TestCase):
     """Quem é responsável por sessões não pode virar Administrador (#88)."""
 
     def setUp(self):
-        self.treinador = Usuario.objects.create(
-            conta=get_user_model().objects.create_user(username='carla.dias'),
-            nome='Carla Dias',
-            email='carla.dias@example.com',
-            perfil=Usuario.Perfil.TREINADOR,
+        self.treinador = criar_perfil(
+            Usuario.Perfil.TREINADOR, 'carla.dias', nome='Carla Dias'
         )
         agora = timezone.now()
         Sessao.objects.create(inicio=agora, fim=agora + timedelta(hours=1), profissional=self.treinador)
