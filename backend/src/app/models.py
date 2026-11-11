@@ -245,6 +245,34 @@ class RelatorioTreino(models.Model):
         return f'Relatório de treino — sessão {self.sessao_id} ({self.get_status_display()})'
 
 
+class NotificacaoEmail(models.Model):
+    """Registra cada aviso enviado por e-mail sobre uma sessão, para não repeti-lo (RF-12)."""
+
+    class Tipo(models.TextChoices):
+        RELATORIO_PENDENTE = 'RELATORIO_PENDENTE', 'Relatório de treino pendente'
+
+    sessao = models.ForeignKey(
+        Sessao,
+        on_delete=models.CASCADE,
+        related_name='notificacoes',
+        verbose_name='sessão',
+    )
+    tipo = models.CharField(max_length=30, choices=Tipo.choices)
+    enviada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-enviada_em']
+        verbose_name = 'notificação por e-mail'
+        verbose_name_plural = 'notificações por e-mail'
+        constraints = [
+            # Duas execuções do comando não conseguem gravar o mesmo aviso para a mesma sessão.
+            models.UniqueConstraint(fields=['sessao', 'tipo'], name='notificacao_sessao_tipo_unica'),
+        ]
+
+    def __str__(self):
+        return f'{self.get_tipo_display()} — sessão {self.sessao_id}'
+
+
 class Usuario(TelefoneMixin, models.Model):
     """Guarda o perfil GAAP da conta que acessa a API."""
 

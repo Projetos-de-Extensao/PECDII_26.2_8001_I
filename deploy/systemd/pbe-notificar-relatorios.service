@@ -1,0 +1,9 @@
+[Unit]
+Description=Lembra Treinadores de relatórios de treino pendentes (RF-12)
+After=network.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/PECDII_26.2_8001_I/backend/src
+ExecStart=/home/ubuntu/PECDII_26.2_8001_I/backend/src/.venv/bin/python manage.py notificar_relatorios_pendentes

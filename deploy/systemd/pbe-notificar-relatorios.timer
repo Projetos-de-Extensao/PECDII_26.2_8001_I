@@ -1,0 +1,11 @@
+[Unit]
+Description=Verifica a cada 15 minutos os relatórios de treino pendentes há 24 horas
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Unit=pbe-notificar-relatorios.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

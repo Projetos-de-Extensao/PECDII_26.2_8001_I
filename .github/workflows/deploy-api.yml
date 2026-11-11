@@ -90,8 +90,11 @@ jobs:
           install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe.service.d/override.conf /etc/systemd/system/pbe.service.d/override.conf
           install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-sessoes.service /etc/systemd/system/pbe-notificar-sessoes.service
           install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-sessoes.timer /etc/systemd/system/pbe-notificar-sessoes.timer
+          install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-relatorios.service /etc/systemd/system/pbe-notificar-relatorios.service
+          install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-relatorios.timer /etc/systemd/system/pbe-notificar-relatorios.timer
           systemctl daemon-reload
           systemctl enable --now pbe-notificar-sessoes.timer
+          systemctl enable --now pbe-notificar-relatorios.timer
           systemctl restart pbe
           systemctl reload nginx
           SCRIPT
