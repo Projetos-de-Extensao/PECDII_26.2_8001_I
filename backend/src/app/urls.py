@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from app.views import (
     AlunoViewSet,
+    AuditoriaViewSet,
     BloqueioAgendaViewSet,
     DashboardView,
     PendenciasView,
@@ -21,6 +22,7 @@ router.register('servicos', ServicoViewSet, basename='servico')
 router.register('sessoes', SessaoViewSet, basename='sessao')
 router.register('disponibilidades', DisponibilidadeViewSet, basename='disponibilidade')
 router.register('bloqueios-agenda', BloqueioAgendaViewSet, basename='bloqueio-agenda')
+router.register('auditoria', AuditoriaViewSet, basename='auditoria')
 
 urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),

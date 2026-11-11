@@ -5,12 +5,14 @@ from django import forms
 from django.db.models import Count
 
 from app.agendamento import CAPACIDADE_MAXIMA_SESSAO
+from app.auditoria import Operacao, registrar_auditoria
 from app.models import (
     Aluno,
     BloqueioAgenda,
     Disponibilidade,
     Participacao,
     ProfissionalServico,
+    RegistroAuditoria,
     Servico,
     Sessao,
     Usuario,
@@ -240,6 +242,13 @@ class UsuarioAdmin(admin.ModelAdmin):
             )
 
         super().save_model(request, obj, form, change)
+        if not change:
+            registrar_auditoria(
+                request.user,
+                Operacao.USUARIO_CRIADO,
+                obj,
+                f'criou o usuário "{obj.nome}" com o perfil {obj.get_perfil_display()} pelo Django Admin.',
+            )
 
     @admin.display(description='Login', ordering='conta__username')
     def login(self, obj):
@@ -275,3 +284,21 @@ class BloqueioAgendaAdmin(admin.ModelAdmin):
     list_filter = ('profissional',)
     search_fields = ('motivo', 'profissional__nome')
     ordering = ('inicio',)
+
+
+@admin.register(RegistroAuditoria)
+class RegistroAuditoriaAdmin(admin.ModelAdmin):
+    """Mostra a trilha de auditoria sem permitir incluir, alterar ou apagar registros."""
+
+    list_display = ('registrado_em', 'autor', 'operacao', 'entidade', 'entidade_id', 'mensagem')
+    list_filter = ('operacao', 'entidade')
+    search_fields = ('autor', 'mensagem')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
