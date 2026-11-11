@@ -34,9 +34,42 @@ jobs:
 
           remote_script="$(cat <<'SCRIPT'
           set -eu
-          sudo -H -u ubuntu bash -lc 'cd /home/ubuntu/PECDII_26.2_8001_I && git pull --ff-only origin main'
-          sudo -H -u ubuntu bash -lc 'cd /home/ubuntu/PECDII_26.2_8001_I/backend/src && .venv/bin/python -m pip install -r ../requirements.txt && .venv/bin/python manage.py migrate && .venv/bin/python manage.py collectstatic --noinput'
+          sudo -H -u ubuntu bash -lc '
+            set -eu
+            repo=/home/ubuntu/PECDII_26.2_8001_I
+            cd "$repo"
+            git pull --ff-only origin main
+
+            # O refactor moveu o código versionado, mas .venv, .env e o SQLite são
+            # arquivos locais ignorados pelo Git e permaneceram em src/ na VPS.
+            for nome in .venv .env db.sqlite3; do
+              origem="$repo/src/$nome"
+              destino="$repo/backend/src/$nome"
+              if [ ! -e "$origem" ]; then
+                printf "Estado de produção ausente: %s\\n" "$origem" >&2
+                exit 1
+              fi
+              if [ -L "$destino" ]; then
+                if [ "$(readlink -f "$destino")" != "$(readlink -f "$origem")" ]; then
+                  printf "Link de estado inesperado: %s\\n" "$destino" >&2
+                  exit 1
+                fi
+              elif [ -e "$destino" ]; then
+                printf "Destino já existe; recusando sobrescrever: %s\\n" "$destino" >&2
+                exit 1
+              else
+                ln -s "$origem" "$destino"
+              fi
+            done
+
+            cd "$repo/backend/src"
+            .venv/bin/python -m pip install -r ../requirements.txt
+            .venv/bin/python manage.py migrate
+            .venv/bin/python manage.py collectstatic --noinput
+          '
           cp -r /home/ubuntu/PECDII_26.2_8001_I/backend/src/staticfiles/. /var/www/PECDII_26.2_8001_I/static/
+          mkdir -p /etc/systemd/system/pbe.service.d
+          install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe.service.d/override.conf /etc/systemd/system/pbe.service.d/override.conf
           install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-sessoes.service /etc/systemd/system/pbe-notificar-sessoes.service
           install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-sessoes.timer /etc/systemd/system/pbe-notificar-sessoes.timer
           systemctl daemon-reload

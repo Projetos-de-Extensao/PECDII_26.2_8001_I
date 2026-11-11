@@ -29,6 +29,7 @@ venv/
 ENV/
 env/
 .venv/
+/backend/src/.venv
 
 # IDE
 .vscode/
@@ -73,3 +74,7 @@ node_modules/
 # Banco de dados
 backend/src/db.sqlite3
 backend/src/test_db.sqlite3
+src/db.sqlite3
+src/test_db.sqlite3
+backend/src/staticfiles/
+src/staticfiles/
