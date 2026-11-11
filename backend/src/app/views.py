@@ -5,18 +5,29 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import APIException, NotFound, PermissionDenied
+from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from app.auditoria import Operacao, registrar_auditoria
 from app.agendamento import (
     RegraDeAgendamentoViolada,
     alterar_agenda,
     validar_bloqueio,
     validar_saida_de_disponibilidade,
 )
-from app.models import Aluno, BloqueioAgenda, Disponibilidade, RelatorioTreino, Servico, Sessao, Usuario
+from app.models import (
+    Aluno,
+    BloqueioAgenda,
+    Disponibilidade,
+    Participacao,
+    RegistroAuditoria,
+    RelatorioTreino,
+    Servico,
+    Sessao,
+    Usuario,
+)
 from app.operacao import mes_atual, pendencias_operacionais, resumo_por_servico
 from app.permissoes import (
     PodeAdministrarCadastros,
@@ -38,6 +49,7 @@ from app.serializers import (
     FiltroPendenciasQueryParamsSerializer,
     PeriodoDashboardQueryParamsSerializer,
     ProfissionalSerializer,
+    RegistroAuditoriaSerializer,
     RelatorioTreinoSerializer,
     RegistroPresencaSerializer,
     ServicoSerializer,
@@ -91,6 +103,16 @@ class ProfissionalViewSet(ModelViewSet):
     queryset = Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS)
     serializer_class = ProfissionalSerializer
     permission_classes = [PodeAdministrarCadastros]
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            usuario = serializer.save()
+            registrar_auditoria(
+                self.request.user,
+                Operacao.USUARIO_CRIADO,
+                usuario,
+                f'criou o usuário "{usuario.nome}" com o perfil {usuario.get_perfil_display()}.',
+            )
 
     def perform_destroy(self, instance):
         # As sessões protegem o responsável; sem esta checagem o delete virava erro 500.
@@ -180,7 +202,16 @@ class SessaoViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         try:
-            serializer.save()
+            with transaction.atomic():
+                sessao = serializer.save()
+                registrar_auditoria(
+                    self.request.user,
+                    Operacao.AGENDAMENTO_CONFIRMADO,
+                    sessao,
+                    f'confirmou o agendamento "{sessao.titulo}" em '
+                    f'{timezone.localtime(sessao.inicio):%d/%m/%Y às %H:%M} com '
+                    f'{sessao.participacoes.count()} aluno(s), sob responsabilidade de {sessao.profissional.nome}.',
+                )
         except RegraDeAgendamentoViolada as erro:
             raise Conflito({'regra': erro.regra, 'detail': erro.mensagem}) from erro
 
@@ -221,12 +252,25 @@ class SessaoViewSet(ModelViewSet):
         with transaction.atomic():
             participacoes = {
                 participacao.aluno_id: participacao
-                for participacao in sessao.participacoes.select_for_update()
+                for participacao in sessao.participacoes.select_for_update().select_related('aluno')
             }
+            alteracoes = []
             for item in entrada.validated_data['presencas']:
                 participacao = participacoes[item['aluno']]
+                if participacao.situacao_presenca == item['situacao']:
+                    continue
                 participacao.situacao_presenca = item['situacao']
                 participacao.save()
+                rotulo = Participacao.SituacaoPresenca(item['situacao']).label
+                alteracoes.append(f'{participacao.aluno.nome}: {rotulo.lower()}')
+            # Só registra auditoria quando alguma presença realmente mudou.
+            if alteracoes:
+                registrar_auditoria(
+                    request.user,
+                    Operacao.PRESENCA_ALTERADA,
+                    sessao,
+                    f'registrou presença/falta na sessão "{sessao.titulo}" — {"; ".join(alteracoes)}.',
+                )
 
         sessao = self.get_queryset().get(pk=sessao.pk)
         return Response(self.get_serializer(sessao).data)
@@ -311,6 +355,12 @@ class SessaoViewSet(ModelViewSet):
             relatorio = serializer.save(
                 status=RelatorioTreino.Status.FINALIZADO,
                 finalizado_em=timezone.now(),
+            )
+            registrar_auditoria(
+                request.user,
+                Operacao.RELATORIO_FINALIZADO,
+                relatorio,
+                f'finalizou o relatório de treino da sessão "{sessao.titulo}".',
             )
         return Response(RelatorioTreinoSerializer(relatorio).data)
 
@@ -435,6 +485,28 @@ class PendenciasView(APIView):
         filtro = FiltroPendenciasQueryParamsSerializer(data=request.query_params)
         filtro.is_valid(raise_exception=True)
         return Response(pendencias_operacionais(tipo=filtro.validated_data.get('tipo')))
+
+
+class AuditoriaViewSet(ReadOnlyModelViewSet):
+    """Consulta da trilha de auditoria, exclusiva do Administrador (RNF-06).
+
+    É somente leitura: a API não oferece criação, alteração nem exclusão de registros.
+    Filtros opcionais: ?operacao=, ?entidade= e ?entidade_id=.
+    """
+
+    serializer_class = RegistroAuditoriaSerializer
+    permission_classes = [SomenteAdministrador]
+
+    def get_queryset(self):
+        queryset = RegistroAuditoria.objects.all()
+        entidade_id = self.request.query_params.get('entidade_id')
+        if entidade_id and not entidade_id.isdigit():
+            raise ValidationError({'entidade_id': 'Informe um número inteiro.'})
+        for filtro in ('operacao', 'entidade', 'entidade_id'):
+            valor = self.request.query_params.get(filtro)
+            if valor:
+                queryset = queryset.filter(**{filtro: valor})
+        return queryset
 
 
 class DashboardView(APIView):

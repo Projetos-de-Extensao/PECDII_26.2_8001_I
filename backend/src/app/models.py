@@ -466,3 +466,49 @@ class BloqueioAgenda(models.Model):
 
     def __str__(self):
         return f'{self.profissional} — {self.inicio:%d/%m/%Y %H:%M} a {self.fim:%d/%m/%Y %H:%M}'
+
+
+class RegistroAuditoria(models.Model):
+    """Registro somente de inclusão das operações críticas do sistema (RNF-06)."""
+
+    class Operacao(models.TextChoices):
+        USUARIO_CRIADO = 'USUARIO_CRIADO', 'Criação de usuário'
+        AGENDAMENTO_CONFIRMADO = 'AGENDAMENTO_CONFIRMADO', 'Confirmação de agendamento'
+        PRESENCA_ALTERADA = 'PRESENCA_ALTERADA', 'Alteração de presença/falta'
+        RELATORIO_FINALIZADO = 'RELATORIO_FINALIZADO', 'Finalização de relatório'
+
+    # SET_NULL mantém o registro se o usuário for removido; o nome do autor fica guardado em `autor`.
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='registros_auditoria',
+    )
+    autor = models.CharField(max_length=150)
+    operacao = models.CharField('operação', max_length=50, choices=Operacao.choices)
+    entidade = models.CharField(max_length=50)
+    entidade_id = models.PositiveIntegerField()
+    mensagem = models.TextField()
+    registrado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-registrado_em', '-pk']
+        verbose_name = 'registro de auditoria'
+        verbose_name_plural = 'registros de auditoria'
+        indexes = [
+            models.Index(fields=['entidade', 'entidade_id'], name='auditoria_entidade_idx'),
+            models.Index(fields=['registrado_em'], name='auditoria_registrado_em_idx'),
+        ]
+
+    def save(self, *args, **kwargs):
+        """Permite só a inclusão: um registro já gravado não pode ser alterado."""
+        if self.pk is not None:
+            raise ValidationError('Registros de auditoria não podem ser alterados.')
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError('Registros de auditoria não podem ser apagados.')
+
+    def __str__(self):
+        return f'{self.get_operacao_display()} — {self.entidade} {self.entidade_id}'

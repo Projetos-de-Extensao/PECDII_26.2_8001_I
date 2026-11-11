@@ -9,6 +9,7 @@ from app.models import (
     BloqueioAgenda,
     Disponibilidade,
     Participacao,
+    RegistroAuditoria,
     RelatorioTreino,
     Servico,
     Sessao,
@@ -421,6 +422,20 @@ class RegistroPresencaSerializer(serializers.Serializer):
                 f'Aluno(s) que não participam desta sessão: {", ".join(map(str, fora_da_sessao))}.'
             )
         return value
+
+
+class RegistroAuditoriaSerializer(serializers.ModelSerializer):
+    """Expõe os registros de auditoria somente para leitura (RNF-06)."""
+
+    operacao_rotulo = serializers.CharField(source='get_operacao_display', read_only=True)
+
+    class Meta:
+        model = RegistroAuditoria
+        fields = [
+            'id', 'usuario', 'autor', 'operacao', 'operacao_rotulo', 'entidade', 'entidade_id',
+            'mensagem', 'registrado_em',
+        ]
+        read_only_fields = fields
 
 
 class RelatorioTreinoSerializer(serializers.ModelSerializer):
