@@ -72,3 +72,4 @@ node_modules/
 
 # Banco de dados
 src/db.sqlite3
+src/test_db.sqlite3

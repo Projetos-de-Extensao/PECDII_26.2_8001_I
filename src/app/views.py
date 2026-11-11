@@ -6,8 +6,9 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from app.agendamento import RegraDeAgendamentoViolada
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
-from app.permissoes import PodeAdministrarCadastros
+from app.permissoes import PodeAdministrarCadastros, PodeConfirmarAgendamento
 from app.serializers import (
     AlunoSerializer,
     BloqueioAgendaSerializer,
@@ -71,8 +72,20 @@ class ServicoViewSet(ModelViewSet):
 
 
 class SessaoViewSet(ModelViewSet):
-    queryset = Sessao.objects.all()
+    queryset = Sessao.objects.prefetch_related('participacoes')
     serializer_class = SessaoSerializer
+
+    def get_permissions(self):
+        # Confirmar agendamento é do Administrador (UC-05); os demais métodos seguem como antes.
+        if self.action == 'create':
+            return [PodeConfirmarAgendamento()]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        try:
+            serializer.save()
+        except RegraDeAgendamentoViolada as erro:
+            raise Conflito({'regra': erro.regra, 'detail': erro.mensagem}) from erro
 
     @action(detail=False, methods=['get'], url_path='pendentes-status')
     def pendentes_status(self, request):

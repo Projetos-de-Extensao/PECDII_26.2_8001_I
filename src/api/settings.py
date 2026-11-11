@@ -81,6 +81,18 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            # Cada transação reserva a escrita ao começar. Assim, duas confirmações de agendamento
+            # não validam a mesma agenda ao mesmo tempo (RN-06, RNF-03); a segunda espera a primeira.
+            'transaction_mode': 'IMMEDIATE',
+            # Segundos de espera pela transação anterior antes de responder "database is locked".
+            'timeout': 20,
+        },
+        'TEST': {
+            # Banco de teste em arquivo: o banco em memória compartilhado entre threads usa trava por
+            # tabela e não espera o timeout, o que impede o teste concorrente do RNF-03.
+            'NAME': BASE_DIR / 'test_db.sqlite3',
+        },
     }
 }
 

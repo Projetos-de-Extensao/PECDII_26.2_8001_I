@@ -415,8 +415,12 @@ class SessaoApiTests(TestCase):
 
     def setUp(self):
         self.client = cliente_autenticado(Usuario.Perfil.TREINADOR, 'teste-api-sessao')
+        # Confirmar agendamento é exclusivo do Administrador (UC-05).
+        self.admin_client = cliente_autenticado(Usuario.Perfil.ADMINISTRADOR, 'admin-api-sessao')
         self.profissional_conta = criar_usuario(Usuario.Perfil.TREINADOR, 'responsavel-sessao')
         self.profissional = self.profissional_conta.usuario
+        self.servico = Servico.objects.create(nome='Avaliação física', categoria=Servico.Categoria.TREINO)
+        self.aluno = Aluno.objects.create(nome='Aluno da sessão', data_nascimento='2010-01-01')
 
     def criar_sessao(self, **overrides):
         agora = timezone.now()
@@ -432,7 +436,7 @@ class SessaoApiTests(TestCase):
 
     def test_cria_sessao_com_profissional_tipo_e_descricao(self):
         inicio = timezone.now() + timedelta(days=1)
-        response = self.client.post(
+        response = self.admin_client.post(
             '/api/sessoes/',
             {
                 'titulo': 'Avaliação inicial',
@@ -440,7 +444,9 @@ class SessaoApiTests(TestCase):
                 'descricao': 'Avaliação de mobilidade e força.',
                 'inicio': inicio.isoformat(),
                 'fim': (inicio + timedelta(minutes=60)).isoformat(),
+                'servico': self.servico.pk,
                 'profissional': self.profissional.pk,
+                'participantes': [self.aluno.pk],
             },
             format='json',
         )
@@ -452,13 +458,15 @@ class SessaoApiTests(TestCase):
 
     def test_criacao_sem_profissional_e_rejeitada(self):
         inicio = timezone.now() + timedelta(days=1)
-        response = self.client.post(
+        response = self.admin_client.post(
             '/api/sessoes/',
             {
                 'titulo': 'Treino funcional',
                 'tipo': Sessao.Tipo.TREINAMENTO,
                 'inicio': inicio.isoformat(),
                 'fim': (inicio + timedelta(minutes=60)).isoformat(),
+                'servico': self.servico.pk,
+                'participantes': [self.aluno.pk],
             },
             format='json',
         )
@@ -468,14 +476,16 @@ class SessaoApiTests(TestCase):
 
     def test_fim_anterior_ao_inicio_e_rejeitado(self):
         inicio = timezone.now() + timedelta(days=1)
-        response = self.client.post(
+        response = self.admin_client.post(
             '/api/sessoes/',
             {
                 'titulo': 'Treino funcional',
                 'tipo': Sessao.Tipo.TREINAMENTO,
                 'inicio': inicio.isoformat(),
                 'fim': (inicio - timedelta(minutes=1)).isoformat(),
+                'servico': self.servico.pk,
                 'profissional': self.profissional.pk,
+                'participantes': [self.aluno.pk],
             },
             format='json',
         )

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db.models import Count
 
+from app.agendamento import CAPACIDADE_MAXIMA_SESSAO
 from app.models import (
     Aluno,
     BloqueioAgenda,
@@ -113,6 +114,8 @@ class ParticipacaoInline(admin.TabularInline):
 
     model = Participacao
     extra = 0
+    # Mesmo limite da confirmação pela API (RN-02).
+    max_num = CAPACIDADE_MAXIMA_SESSAO
     autocomplete_fields = ('aluno',)
     verbose_name = 'participante'
     verbose_name_plural = 'participantes'
