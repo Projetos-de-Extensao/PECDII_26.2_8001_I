@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from app.agendamento import confirmar_sessao
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, Participacao, Servico, Sessao, Usuario
+from app.operacao import TIPOS_DE_PENDENCIA
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -233,6 +234,12 @@ class FiltroAgendaQueryParamsSerializer(serializers.Serializer):
                 'fim': 'O fim do período deve ser posterior ao início.'
             })
         return attrs
+
+
+class FiltroPendenciasQueryParamsSerializer(serializers.Serializer):
+    """Valida o filtro opcional por tipo de pendência (RF-09)."""
+
+    tipo = serializers.ChoiceField(choices=list(TIPOS_DE_PENDENCIA.items()), required=False)
 
 
 class PeriodoDashboardQueryParamsSerializer(serializers.Serializer):

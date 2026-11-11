@@ -1,8 +1,9 @@
-"""Consultas operacionais do Administrador: dashboard simples (RF-11)."""
+"""Consultas operacionais do Administrador: pendências da agenda (RF-09) e dashboard (RF-11)."""
 
 from datetime import datetime, time, timedelta
 
-from django.db.models import Count
+from django.db.models import Count, Q
+from django.urls import reverse
 from django.utils import timezone
 
 from app.models import Servico, Sessao
@@ -65,4 +66,68 @@ def resumo_por_servico(inicio, fim):
         ],
         'servicos': servicos,
         'total': {'por_situacao': total_geral, 'total': sum(total_geral.values())},
+    }
+
+
+# RF-09 / D-11. O relatório de treino (#109) ainda não existe; quando existir, entra o tipo
+# RELATORIO_PENDENTE para sessões de Treino sem relatório ou com relatório em rascunho.
+PRESENCA_PENDENTE = 'PRESENCA_PENDENTE'
+TIPOS_DE_PENDENCIA = {
+    PRESENCA_PENDENTE: 'Presença pendente',
+}
+
+
+def _pendencias_de_presenca(agora):
+    """Compromissos encerrados, não cancelados, com participante sem presença ou falta."""
+    sessoes = (
+        Sessao.objects.filter(fim__lte=agora)
+        .exclude(status=Sessao.Status.CANCELADA)
+        .annotate(
+            participantes=Count('participacoes'),
+            sem_registro=Count('participacoes', filter=Q(participacoes__situacao_presenca__isnull=True)),
+        )
+        .filter(sem_registro__gt=0)
+        .select_related('servico', 'profissional')
+        .order_by('fim', 'pk')
+    )
+    for sessao in sessoes:
+        yield {
+            'tipo': PRESENCA_PENDENTE,
+            'motivo': (
+                f'{sessao.sem_registro} de {sessao.participantes} participante(s) '
+                'sem presença ou falta registrada.'
+            ),
+            'sessao': {
+                'id': sessao.pk,
+                'titulo': sessao.titulo,
+                'inicio': timezone.localtime(sessao.inicio).isoformat(),
+                'fim': timezone.localtime(sessao.fim).isoformat(),
+                'status': sessao.status,
+                'servico': {
+                    'id': sessao.servico_id,
+                    'nome': sessao.servico.nome,
+                    'categoria': sessao.servico.categoria,
+                },
+            },
+            'responsavel': {'id': sessao.profissional_id, 'nome': sessao.profissional.nome},
+            'detalhe': reverse('sessao-detail', args=[sessao.pk]),
+        }
+
+
+def pendencias_operacionais(tipo=None, agora=None):
+    """Lista as pendências da agenda com motivo e responsável (RF-09, D-11).
+
+    O total e a contagem por tipo consideram todas as pendências, mesmo com o filtro, para
+    que o menu mostre o total geral enquanto a lista mostra só o tipo escolhido.
+    """
+    agora = agora or timezone.now()
+    todas = list(_pendencias_de_presenca(agora))
+    por_tipo = {chave: 0 for chave in TIPOS_DE_PENDENCIA}
+    for item in todas:
+        por_tipo[item['tipo']] += 1
+    return {
+        'total': len(todas),
+        'por_tipo': por_tipo,
+        'tipos': [{'valor': valor, 'rotulo': rotulo} for valor, rotulo in TIPOS_DE_PENDENCIA.items()],
+        'itens': [item for item in todas if tipo is None or item['tipo'] == tipo],
     }
