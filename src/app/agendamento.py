@@ -1,6 +1,7 @@
 """Confirmação de agendamento (UC-05): grava a sessão e os participantes numa única transação."""
 
 from django.db import transaction
+from django.utils import timezone
 
 from app.models import (
     Aluno,
@@ -129,3 +130,84 @@ def confirmar_sessao(dados, alunos):
         for aluno in alunos:
             Participacao.objects.create(sessao=sessao, aluno=aluno)
     return sessao
+
+
+# Alterações da agenda depois da confirmação (#119, D-18). Contam as sessões não canceladas
+# que ainda não terminaram: as passadas não travam a limpeza de disponibilidades antigas.
+def _sessoes_ativas(profissional, agora=None):
+    return (
+        Sessao.objects.filter(profissional=profissional, fim__gt=agora or timezone.now())
+        .exclude(status=Sessao.Status.CANCELADA)
+        .order_by('inicio', 'pk')
+    )
+
+
+def _descrever(sessao):
+    inicio = timezone.localtime(sessao.inicio).strftime('%d/%m/%Y %H:%M')
+    return f'sessão {sessao.pk} ({sessao.titulo}, {inicio})'
+
+
+class AgendaComSessaoConfirmada(RegraDeAgendamentoViolada):
+    """A alteração da disponibilidade ou do bloqueio deixaria uma sessão confirmada fora da agenda."""
+
+    def __init__(self, mensagem, sessao):
+        super().__init__('RN-03', mensagem)
+        self.sessao = sessao
+
+
+def validar_bloqueio(profissional, inicio, fim, agora=None):
+    """Recusa o bloqueio que se sobrepõe a uma sessão confirmada do profissional (RN-03, D-18)."""
+    sessao = _sessoes_ativas(profissional, agora).filter(inicio__lt=fim, fim__gt=inicio).first()
+    if sessao is not None:
+        raise AgendaComSessaoConfirmada(
+            f'O bloqueio se sobrepõe à {_descrever(sessao)}, já confirmada. '
+            'Cancele ou remaneje a sessão antes de bloquear o horário.',
+            sessao,
+        )
+
+
+def validar_saida_de_disponibilidade(disponibilidade, nova=None, agora=None):
+    """Recusa remover ou alterar a disponibilidade se uma sessão confirmada perder a cobertura.
+
+    `disponibilidade` é o registro como está gravado; `nova`, quando houver, traz os valores
+    que vão substituí-lo (`profissional`, `inicio`, `fim`). Só importam as sessões que estavam
+    dentro dela, e cada uma continua coberta se outra disponibilidade do profissional, ou a
+    própria versão nova, ainda abranger o horário inteiro (RN-03, D-18).
+    """
+    afetadas = _sessoes_ativas(disponibilidade.profissional, agora).filter(
+        inicio__gte=disponibilidade.inicio,
+        fim__lte=disponibilidade.fim,
+    )
+    outras = Disponibilidade.objects.filter(
+        profissional=disponibilidade.profissional
+    ).exclude(pk=disponibilidade.pk)
+    for sessao in afetadas:
+        if nova is not None and (
+            nova['profissional'] == disponibilidade.profissional
+            and nova['inicio'] <= sessao.inicio
+            and nova['fim'] >= sessao.fim
+        ):
+            continue
+        if outras.filter(inicio__lte=sessao.inicio, fim__gte=sessao.fim).exists():
+            continue
+        raise AgendaComSessaoConfirmada(
+            f'A {_descrever(sessao)}, já confirmada, ficaria fora da disponibilidade do '
+            'profissional. Cancele ou remaneje a sessão antes de alterar a disponibilidade.',
+            sessao,
+        )
+
+
+def alterar_agenda(profissionais, validar, gravar):
+    """Valida e grava uma alteração da agenda numa transação, como a confirmação.
+
+    Trava os profissionais envolvidos, como `confirmar_sessao`, para que uma confirmação
+    simultânea não valide contra a agenda antiga (RNF-03).
+    """
+    with transaction.atomic():
+        list(
+            Usuario.objects.select_for_update()
+            .filter(pk__in={profissional.pk for profissional in profissionais})
+            .order_by('pk')
+        )
+        validar()
+        return gravar()

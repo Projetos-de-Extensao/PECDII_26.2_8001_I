@@ -59,6 +59,21 @@ Disponibilidade e bloqueio aceitam `GET`, `POST`, `PUT`, `PATCH` e `DELETE` no r
 
 O fim precisa ser posterior ao início. A API responde `400` ao intervalo inválido ou profissional que não seja Treinador/Profissional de Saúde, `401` sem autenticação e `403` se um perfil não administrador tentar alterar dados. Qualquer perfil autenticado pode consultar esses períodos, conforme a regra de leitura usada nos demais cadastros.
 
+Depois que uma sessão é confirmada, a agenda do profissional não pode mudar por baixo dela (RN-03, D-18). A API responde `409` quando:
+
+- a remoção ou alteração de uma disponibilidade deixaria uma sessão confirmada fora de qualquer disponibilidade do profissional. A sessão continua coberta se outra disponibilidade abranger o horário inteiro dela;
+- um bloqueio criado ou alterado se sobrepõe a uma sessão confirmada do mesmo profissional. Bloqueio contíguo, que termina quando a sessão começa, é aceito.
+
+Contam as sessões não canceladas que ainda não terminaram; sessões canceladas ou já encerradas não impedem a operação. O corpo do `409` traz a regra, o motivo e o ID da sessão afetada:
+
+```json
+{
+  "regra": "RN-03",
+  "detail": "O bloqueio se sobrepõe à sessão 42 (Treino de força, 16/11/2026 09:00), já confirmada. Cancele ou remaneje a sessão antes de bloquear o horário.",
+  "sessao": 42
+}
+```
+
 ### Confirmar agendamento
 
 O `POST /api/sessoes/` confirma uma sessão (UC-05) e é exclusivo do Administrador; os demais perfis recebem `403`. O payload informa o serviço, o profissional, o intervalo e os alunos participantes:
