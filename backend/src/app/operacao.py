@@ -6,7 +6,7 @@ from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils import timezone
 
-from app.models import Servico, Sessao
+from app.models import RelatorioTreino, Servico, Sessao
 
 
 def mes_atual():
@@ -69,12 +69,28 @@ def resumo_por_servico(inicio, fim):
     }
 
 
-# RF-09 / D-11. O relatório de treino (#109) ainda não existe; quando existir, entra o tipo
-# RELATORIO_PENDENTE para sessões de Treino sem relatório ou com relatório em rascunho.
+# RF-09 / D-11.
 PRESENCA_PENDENTE = 'PRESENCA_PENDENTE'
+RELATORIO_PENDENTE = 'RELATORIO_PENDENTE'
 TIPOS_DE_PENDENCIA = {
     PRESENCA_PENDENTE: 'Presença pendente',
+    RELATORIO_PENDENTE: 'Relatório pendente',
 }
+
+
+def _resumo_da_sessao(sessao):
+    return {
+        'id': sessao.pk,
+        'titulo': sessao.titulo,
+        'inicio': timezone.localtime(sessao.inicio).isoformat(),
+        'fim': timezone.localtime(sessao.fim).isoformat(),
+        'status': sessao.status,
+        'servico': {
+            'id': sessao.servico_id,
+            'nome': sessao.servico.nome,
+            'categoria': sessao.servico.categoria,
+        },
+    }
 
 
 def _pendencias_de_presenca(agora):
@@ -97,20 +113,42 @@ def _pendencias_de_presenca(agora):
                 f'{sessao.sem_registro} de {sessao.participantes} participante(s) '
                 'sem presença ou falta registrada.'
             ),
-            'sessao': {
-                'id': sessao.pk,
-                'titulo': sessao.titulo,
-                'inicio': timezone.localtime(sessao.inicio).isoformat(),
-                'fim': timezone.localtime(sessao.fim).isoformat(),
-                'status': sessao.status,
-                'servico': {
-                    'id': sessao.servico_id,
-                    'nome': sessao.servico.nome,
-                    'categoria': sessao.servico.categoria,
-                },
-            },
+            'sessao': _resumo_da_sessao(sessao),
             'responsavel': {'id': sessao.profissional_id, 'nome': sessao.profissional.nome},
             'detalhe': reverse('sessao-detail', args=[sessao.pk]),
+        }
+
+
+def _pendencias_de_relatorio(agora):
+    """Sessões de Treino realizadas sem relatório ou com relatório ainda em rascunho.
+
+    O relatório só pode ser criado depois que a sessão é marcada como realizada (#109); antes
+    disso a pendência é de situação, não de relatório.
+    """
+    sessoes = (
+        Sessao.objects.filter(
+            fim__lte=agora,
+            status=Sessao.Status.REALIZADA,
+            servico__categoria=Servico.Categoria.TREINO,
+        )
+        .filter(
+            Q(relatorio_treino__isnull=True)
+            | Q(relatorio_treino__status=RelatorioTreino.Status.RASCUNHO)
+        )
+        .select_related('servico', 'profissional', 'relatorio_treino')
+        .order_by('fim', 'pk')
+    )
+    for sessao in sessoes:
+        relatorio = getattr(sessao, 'relatorio_treino', None)
+        yield {
+            'tipo': RELATORIO_PENDENTE,
+            'motivo': (
+                'Relatório de treino ainda não criado.' if relatorio is None
+                else 'Relatório de treino em rascunho, ainda não finalizado.'
+            ),
+            'sessao': _resumo_da_sessao(sessao),
+            'responsavel': {'id': sessao.profissional_id, 'nome': sessao.profissional.nome},
+            'detalhe': reverse('sessao-relatorio', args=[sessao.pk]),
         }
 
 
@@ -121,7 +159,12 @@ def pendencias_operacionais(tipo=None, agora=None):
     que o menu mostre o total geral enquanto a lista mostra só o tipo escolhido.
     """
     agora = agora or timezone.now()
-    todas = list(_pendencias_de_presenca(agora))
+    todas = sorted(
+        [*_pendencias_de_presenca(agora), *_pendencias_de_relatorio(agora)],
+        key=lambda item: (
+            datetime.fromisoformat(item['sessao']['fim']), item['sessao']['id'], item['tipo']
+        ),
+    )
     por_tipo = {chave: 0 for chave in TIPOS_DE_PENDENCIA}
     for item in todas:
         por_tipo[item['tipo']] += 1

@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from app.agendamento import (
@@ -15,11 +16,13 @@ from app.agendamento import (
     validar_saida_de_disponibilidade,
 )
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, RelatorioTreino, Servico, Sessao, Usuario
+from app.operacao import mes_atual, pendencias_operacionais, resumo_por_servico
 from app.permissoes import (
     PodeAdministrarCadastros,
     PodeAlterarSessao,
     PodeConfirmarAgendamento,
     PodeRemoverSessao,
+    SomenteAdministrador,
     perfil_da_conta,
 )
 from app.serializers import (
@@ -27,6 +30,8 @@ from app.serializers import (
     BloqueioAgendaSerializer,
     DisponibilidadeSerializer,
     FiltroAgendaQueryParamsSerializer,
+    FiltroPendenciasQueryParamsSerializer,
+    PeriodoDashboardQueryParamsSerializer,
     ProfissionalSerializer,
     RelatorioTreinoSerializer,
     RegistroPresencaSerializer,
@@ -402,3 +407,32 @@ class BloqueioAgendaViewSet(ModelViewSet):
             atual.delete()
 
         executar_alteracao_de_agenda([instance.profissional], lambda: None, excluir)
+
+
+class PendenciasView(APIView):
+    """Pendências operacionais da agenda, exclusivas do Administrador (RF-09).
+
+    É só consulta: o atalho `detalhe` abre a sessão ou o relatório, mas presença e relatório
+    continuam sendo alterados apenas pelo profissional responsável (RN-05).
+    """
+
+    permission_classes = [SomenteAdministrador]
+
+    def get(self, request):
+        filtro = FiltroPendenciasQueryParamsSerializer(data=request.query_params)
+        filtro.is_valid(raise_exception=True)
+        return Response(pendencias_operacionais(tipo=filtro.validated_data.get('tipo')))
+
+
+class DashboardView(APIView):
+    """Dashboard simples da operação, exclusivo do Administrador (RF-11)."""
+
+    permission_classes = [SomenteAdministrador]
+
+    def get(self, request):
+        periodo = PeriodoDashboardQueryParamsSerializer(data=request.query_params)
+        periodo.is_valid(raise_exception=True)
+        inicio, fim = mes_atual()
+        inicio = periodo.validated_data.get('inicio', inicio)
+        fim = periodo.validated_data.get('fim', fim)
+        return Response(resumo_por_servico(inicio, fim))

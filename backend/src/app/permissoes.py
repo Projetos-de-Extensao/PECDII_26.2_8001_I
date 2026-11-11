@@ -53,3 +53,15 @@ class PodeAlterarSessao(BasePermission):
             return True
         usuario = getattr(request.user, 'usuario', None)
         return usuario is not None and obj.profissional_id == usuario.pk
+
+
+class SomenteAdministrador(BasePermission):
+    """Libera a consulta só ao Administrador, inclusive a leitura (RF-09, RF-11)."""
+
+    message = 'Apenas o perfil Administrador pode consultar esta informação.'
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated
+            and perfil_da_conta(request.user) == Usuario.Perfil.ADMINISTRADOR
+        )

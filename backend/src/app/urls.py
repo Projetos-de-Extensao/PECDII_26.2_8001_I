@@ -1,8 +1,11 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from app.views import (
     AlunoViewSet,
     BloqueioAgendaViewSet,
+    DashboardView,
+    PendenciasView,
     DisponibilidadeViewSet,
     ProfissionalViewSet,
     ServicoViewSet,
@@ -19,4 +22,8 @@ router.register('sessoes', SessaoViewSet, basename='sessao')
 router.register('disponibilidades', DisponibilidadeViewSet, basename='disponibilidade')
 router.register('bloqueios-agenda', BloqueioAgendaViewSet, basename='bloqueio-agenda')
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('pendencias/', PendenciasView.as_view(), name='pendencias'),
+    *router.urls,
+]

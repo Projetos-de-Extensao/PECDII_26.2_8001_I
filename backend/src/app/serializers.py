@@ -14,6 +14,7 @@ from app.models import (
     Sessao,
     Usuario,
 )
+from app.operacao import TIPOS_DE_PENDENCIA
 from app.telefones import formatar_telefone, normalizar_telefone
 
 
@@ -240,6 +241,30 @@ class FiltroAgendaQueryParamsSerializer(serializers.Serializer):
         if inicio is not None and fim is not None and fim <= inicio:
             raise serializers.ValidationError({
                 'fim': 'O fim do período deve ser posterior ao início.'
+            })
+        return attrs
+
+
+class FiltroPendenciasQueryParamsSerializer(serializers.Serializer):
+    """Valida o filtro opcional por tipo de pendência (RF-09)."""
+
+    tipo = serializers.ChoiceField(choices=list(TIPOS_DE_PENDENCIA.items()), required=False)
+
+
+class PeriodoDashboardQueryParamsSerializer(serializers.Serializer):
+    """Valida o período do dashboard: as duas datas juntas ou nenhuma (mês atual)."""
+
+    inicio = serializers.DateField(required=False)
+    fim = serializers.DateField(required=False)
+
+    def validate(self, attrs):
+        if ('inicio' in attrs) != ('fim' in attrs):
+            raise serializers.ValidationError(
+                'Informe inicio e fim juntos, ou nenhum dos dois para usar o mês atual.'
+            )
+        if 'inicio' in attrs and attrs['fim'] < attrs['inicio']:
+            raise serializers.ValidationError({
+                'fim': 'O fim do período não pode ser anterior ao início.'
             })
         return attrs
 
