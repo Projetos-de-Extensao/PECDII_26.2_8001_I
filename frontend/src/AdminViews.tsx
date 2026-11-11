@@ -123,7 +123,11 @@ export function Dashboard({ onUnauthorized }: AdminProps) {
     setLoading(true);
     setMessage(null);
     try {
-      const query = inicio && fim ? `?${new URLSearchParams({ inicio, fim }).toString()}` : '';
+      // Envia as datas preenchidas; a regra "início e fim juntos" é conferida pela API.
+      const params = new URLSearchParams();
+      if (inicio) params.set('inicio', inicio);
+      if (fim) params.set('fim', fim);
+      const query = params.size ? `?${params.toString()}` : '';
       const resultado = await api<DashboardData>(`/api/dashboard/${query}`);
       setDados(resultado);
       // Mostra nos campos o período usado pela API (na primeira carga, o mês atual).
@@ -145,8 +149,8 @@ export function Dashboard({ onUnauthorized }: AdminProps) {
         {dados && <span className="date-chip">{formatDate(dados.periodo.inicio)} a {formatDate(dados.periodo.fim)}</span>}
       </div>
       <form className="filter-bar" onSubmit={(event) => void carregar(event)}>
-        <div className="filter-field"><label htmlFor="dash-start">De</label><input id="dash-start" type="date" required value={inicio} onChange={(event) => setInicio(event.target.value)} /></div>
-        <div className="filter-field"><label htmlFor="dash-end">Até</label><input id="dash-end" type="date" required value={fim} onChange={(event) => setFim(event.target.value)} /></div>
+        <div className="filter-field"><label htmlFor="dash-start">De</label><input id="dash-start" type="date" value={inicio} onChange={(event) => setInicio(event.target.value)} /></div>
+        <div className="filter-field"><label htmlFor="dash-end">Até</label><input id="dash-end" type="date" value={fim} onChange={(event) => setFim(event.target.value)} /></div>
         <button className="button button-primary" type="submit" disabled={loading}>Atualizar</button>
       </form>
       <Message notice={message} />
@@ -221,11 +225,6 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
     const form = event.currentTarget;
     const dados = new FormData(form);
     setMessage(null);
-    // Conferência de preenchimento antes do envio; a API continua validando tudo.
-    if (new Date(String(dados.get('fim'))) <= new Date(String(dados.get('inicio')))) {
-      setMessage({ kind: 'error', message: 'O fim precisa ser depois do início.' });
-      return;
-    }
     setBusy(true);
     try {
       await api('/api/sessoes/', {

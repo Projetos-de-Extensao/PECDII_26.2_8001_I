@@ -250,20 +250,15 @@ function ReportPanel({ session, onUnauthorized }: Pick<DetailsProps, 'session' |
     }
   }
 
-  // Aviso antecipado: o relatório só pode ser registrado depois que a sessão é marcada como realizada.
-  if (session.status !== 'REALIZADA') {
-    return (
-      <div className="action-block">
-        <h5>Relatório de treino</h5>
-        <p className="muted">Disponível depois que a sessão terminar e for marcada como realizada.</p>
-      </div>
-    );
-  }
+  // Só informa o pré-requisito; quem recusa é a API (409), se a sessão ainda não estiver realizada.
+  const lembrete = session.status !== 'REALIZADA'
+    && <p className="muted">O relatório pode ser salvo depois que a sessão terminar e for marcada como realizada.</p>;
 
   if (!opened) {
     return (
       <div className="action-block">
         <h5>Relatório de treino</h5>
+        {lembrete}
         <button className="button button-quiet" type="button" disabled={busy} onClick={() => void open()}>{busy ? 'Abrindo…' : 'Abrir relatório'}</button>
         <Message notice={message} />
       </div>
@@ -283,6 +278,7 @@ function ReportPanel({ session, onUnauthorized }: Pick<DetailsProps, 'session' |
   return (
     <form className="action-block" ref={formRef} onSubmit={(event) => event.preventDefault()}>
       <h5>Relatório de treino {report && <span className="tag status">Rascunho</span>}</h5>
+      {lembrete}
       <div className="form-grid">
         {REPORT_FIELDS.map((field) => {
           const id = `report-${session.id}-${field.name}`;
@@ -295,8 +291,6 @@ function ReportPanel({ session, onUnauthorized }: Pick<DetailsProps, 'session' |
                     id={id}
                     name={field.name}
                     type={field.type}
-                    min={field.type === 'number' ? 0 : undefined}
-                    max={field.name === 'intensidade_borg' ? 10 : undefined}
                     step={field.type === 'number' ? '0.1' : undefined}
                     defaultValue={value}
                   />}

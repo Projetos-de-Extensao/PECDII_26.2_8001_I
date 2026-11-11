@@ -221,9 +221,9 @@ describe('Treinador', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Marcar realizada' }));
     expect(await screen.findByText(/Operação recusada: A presença e a situação/)).toBeTruthy();
 
-    // Antes de a sessão ser realizada, o relatório mostra o pré-requisito em vez do formulário.
-    expect(screen.getByText(/Disponível depois que a sessão terminar/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Abrir relatório' })).toBeNull();
+    // O pré-requisito do relatório aparece só como informação; o formulário continua disponível e a API decide.
+    expect(screen.getByText(/pode ser salvo depois que a sessão terminar/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Abrir relatório' })).toBeTruthy();
   });
 
   it('preenche e finaliza o relatório de uma sessão realizada', async () => {
@@ -243,7 +243,6 @@ describe('Treinador', () => {
     const aviso = await screen.findByText(/ainda não tem relatório/);
     expect(aviso.className).toContain('info-message');
     expect(screen.getByLabelText('Exercícios').tagName).toBe('TEXTAREA');
-    expect(screen.getByLabelText('Intensidade (Borg 0–10)').getAttribute('max')).toBe('10');
     fireEvent.change(screen.getByLabelText('Objetivo'), { target: { value: 'Força' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
     expect(await screen.findByText('Rascunho salvo.')).toBeTruthy();

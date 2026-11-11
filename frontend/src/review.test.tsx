@@ -129,11 +129,12 @@ describe('Revisão da interface', () => {
     expect((await screen.findByRole('alert')).textContent).toContain('Operação recusada: Este aluno participa de sessões');
   });
 
-  it('Novo agendamento confere fim depois do início e conta os alunos escolhidos', async () => {
+  it('Novo agendamento conta os alunos escolhidos e deixa a API recusar fim antes do início', async () => {
     const fetchMock = mockApi({
       'GET /api/servicos/': () => json([{ id: 3, nome: 'Treino funcional', categoria: 'TREINO', profissionais_habilitados: [2] }]),
       'GET /api/profissionais/': () => json([{ id: 2, nome: 'Diego Treinador', perfil: 'TREINADOR' }]),
       'GET /api/alunos/': () => json([{ id: 7, nome: 'Ana Lima' }]),
+      'POST /api/sessoes/': () => json({ fim: ['O fim da sessão deve ser posterior ao início.'] }, 400),
     });
 
     render(<App />);
@@ -147,8 +148,9 @@ describe('Revisão da interface', () => {
     expect(screen.getByText(/1 selecionado \(máximo 6\)/)).toBeTruthy();
 
     fireEvent.submit(screen.getByRole('button', { name: /confirmar agendamento/i }).closest('form')!);
-    expect((await screen.findByRole('alert')).textContent).toBe('O fim precisa ser depois do início.');
-    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false);
+    // O cliente não confere a regra: envia e mostra a recusa da API.
+    expect((await screen.findByRole('alert')).textContent).toBe('Revise os dados: fim: O fim da sessão deve ser posterior ao início.');
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(true);
   });
 
   it('Disponibilidade filtra por profissional e edita um período', async () => {

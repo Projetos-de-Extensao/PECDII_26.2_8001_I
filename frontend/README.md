@@ -75,6 +75,6 @@ O menu mostra só as telas que se aplicam ao perfil, mas quem decide é a API: h
 
 - `src/App.test.tsx`: login, cadastro e erro de credenciais.
 - `src/flows.test.tsx`: fluxos principais dos três perfis, incluindo 401, 403, 404, 409 e falha de rede.
-- `src/review.test.tsx`: itens da revisão da interface (contador e atalho de pendências, detalhes e cancelamento pelo Administrador, CRUD de cadastros, conferências do novo agendamento e edição de disponibilidade).
+- `src/review.test.tsx`: itens da revisão da interface (contador e atalho de pendências, detalhes e cancelamento pelo Administrador, CRUD de cadastros, contador de alunos do novo agendamento e edição de disponibilidade).
 
 Os layouts foram conferidos em 1920×1080 e 390×844 com a API real e dados de exemplo, em todas as telas dos três perfis: nenhuma tela tem rolagem horizontal. Em telas estreitas o menu quebra em mais de uma linha e a tabela do dashboard rola dentro do próprio quadro.
