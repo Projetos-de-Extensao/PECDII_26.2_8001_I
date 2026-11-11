@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from app.models import Aluno, Participacao, Servico, Sessao, Usuario
+from app.models import Aluno, Participacao, RelatorioTreino, Servico, Sessao, Usuario
 from app.tests.helpers import cliente_autenticado, cliente_para, criar_perfil
 
 URL = '/api/pendencias/'
@@ -13,8 +13,8 @@ PRESENTE = Participacao.SituacaoPresenca.PRESENTE
 FALTA = Participacao.SituacaoPresenca.FALTA
 
 
-class PendenciasTests(TestCase):
-    """GET /api/pendencias/ lista compromissos encerrados com presença pendente (RF-09, D-11)."""
+class BasePendenciasTests(TestCase):
+    """Cria o Administrador, um Treinador, um serviço de Treino e dois alunos."""
 
     def setUp(self):
         self.admin = criar_perfil(Usuario.Perfil.ADMINISTRADOR, 'admin-pendencias')
@@ -47,13 +47,17 @@ class PendenciasTests(TestCase):
     def ids(self, dados):
         return [item['sessao']['id'] for item in dados['itens']]
 
+
+class PendenciasTests(BasePendenciasTests):
+    """GET /api/pendencias/ lista compromissos encerrados com presença pendente (RF-09, D-11)."""
+
     def test_lista_sessao_encerrada_com_participante_sem_registro(self):
         sessao = self.criar_sessao(self.agora - timedelta(hours=2), [PRESENTE, None])
 
         dados = self.consultar()
 
         self.assertEqual(dados['total'], 1)
-        self.assertEqual(dados['por_tipo'], {'PRESENCA_PENDENTE': 1})
+        self.assertEqual(dados['por_tipo'], {'PRESENCA_PENDENTE': 1, 'RELATORIO_PENDENTE': 0})
         item = dados['itens'][0]
         self.assertEqual(item['tipo'], 'PRESENCA_PENDENTE')
         self.assertEqual(item['motivo'], '1 de 2 participante(s) sem presença ou falta registrada.')
@@ -73,7 +77,7 @@ class PendenciasTests(TestCase):
 
         self.assertEqual(dados['total'], 0)
         self.assertEqual(dados['itens'], [])
-        self.assertEqual(dados['por_tipo'], {'PRESENCA_PENDENTE': 0})
+        self.assertEqual(dados['por_tipo'], {'PRESENCA_PENDENTE': 0, 'RELATORIO_PENDENTE': 0})
 
     def test_sessao_nao_realizada_com_presenca_pendente_continua_pendente(self):
         # D-11 só exclui as canceladas; a situação da sessão é independente da presença (RF-10).
@@ -98,7 +102,9 @@ class PendenciasTests(TestCase):
         dados = self.consultar(tipo='PRESENCA_PENDENTE')
 
         self.assertEqual(self.ids(dados), [sessao.pk])
-        self.assertEqual([tipo['valor'] for tipo in dados['tipos']], ['PRESENCA_PENDENTE'])
+        self.assertEqual(
+            [tipo['valor'] for tipo in dados['tipos']], ['PRESENCA_PENDENTE', 'RELATORIO_PENDENTE']
+        )
 
     def test_tipo_desconhecido_responde_400(self):
         self.assertEqual(self.client.get(URL, {'tipo': 'RELATORIO_INEXISTENTE'}).status_code, 400)
@@ -127,6 +133,88 @@ class PendenciasTests(TestCase):
 
         self.assertEqual(resposta.status_code, 200)
         self.assertEqual(self.consultar()['total'], 0)
+
+
+class PendenciasDeRelatorioTests(BasePendenciasTests):
+    """Sessões de Treino realizadas sem relatório finalizado também são pendências (RF-09, D-11)."""
+
+    def realizada(self, presencas=(PRESENTE,), servico=None, fim=None):
+        sessao = self.criar_sessao(fim or self.agora - timedelta(hours=2), list(presencas), Sessao.Status.REALIZADA)
+        if servico is not None:
+            sessao.servico = servico
+            sessao.save()
+        return sessao
+
+    def itens_de_relatorio(self, dados):
+        return [item for item in dados['itens'] if item['tipo'] == 'RELATORIO_PENDENTE']
+
+    def test_sessao_de_treino_realizada_sem_relatorio_e_pendente(self):
+        sessao = self.realizada()
+
+        dados = self.consultar()
+
+        self.assertEqual(dados['por_tipo'], {'PRESENCA_PENDENTE': 0, 'RELATORIO_PENDENTE': 1})
+        item = dados['itens'][0]
+        self.assertEqual(item['tipo'], 'RELATORIO_PENDENTE')
+        self.assertEqual(item['motivo'], 'Relatório de treino ainda não criado.')
+        self.assertEqual(item['sessao']['id'], sessao.pk)
+        self.assertEqual(item['responsavel'], {'id': self.treinador.pk, 'nome': 'Carla Dias'})
+        self.assertEqual(item['detalhe'], f'/api/sessoes/{sessao.pk}/relatorio/')
+
+    def test_relatorio_em_rascunho_e_pendente(self):
+        sessao = self.realizada()
+        RelatorioTreino.objects.create(sessao=sessao, objetivo='Rascunho')
+
+        item = self.itens_de_relatorio(self.consultar())[0]
+
+        self.assertEqual(item['motivo'], 'Relatório de treino em rascunho, ainda não finalizado.')
+
+    def test_relatorio_finalizado_nao_e_pendente(self):
+        sessao = self.realizada()
+        RelatorioTreino.objects.create(sessao=sessao, status=RelatorioTreino.Status.FINALIZADO)
+
+        self.assertEqual(self.consultar()['total'], 0)
+
+    def test_so_sessoes_de_treino_realizadas_entram(self):
+        fisio = Servico.objects.create(nome='Fisioterapia', categoria=Servico.Categoria.FISIOTERAPIA)
+        self.realizada(servico=fisio)
+        fim = self.agora - timedelta(hours=2)
+        for status in (Sessao.Status.AGENDADA, Sessao.Status.NAO_REALIZADA, Sessao.Status.CANCELADA):
+            self.criar_sessao(fim, [PRESENTE], status)
+
+        self.assertEqual(self.itens_de_relatorio(self.consultar()), [])
+
+    def test_mesma_sessao_pode_ter_as_duas_pendencias(self):
+        sessao = self.realizada(presencas=[None])
+
+        dados = self.consultar()
+
+        self.assertEqual([item['tipo'] for item in dados['itens']], ['PRESENCA_PENDENTE', 'RELATORIO_PENDENTE'])
+        self.assertEqual({item['sessao']['id'] for item in dados['itens']}, {sessao.pk})
+        self.assertEqual(dados['total'], 2)
+
+    def test_filtro_por_tipo_mantem_o_total_geral(self):
+        self.criar_sessao(self.agora - timedelta(days=1), [None])
+        relatorio = self.realizada()
+
+        dados = self.consultar(tipo='RELATORIO_PENDENTE')
+
+        self.assertEqual([item['sessao']['id'] for item in dados['itens']], [relatorio.pk])
+        self.assertEqual(dados['total'], 2)
+
+    def test_itens_dos_dois_tipos_seguem_a_ordem_de_encerramento(self):
+        recente = self.realizada(fim=self.agora - timedelta(hours=1))
+        antiga = self.criar_sessao(self.agora - timedelta(days=2), [None])
+
+        self.assertEqual(self.ids(self.consultar()), [antiga.pk, recente.pk])
+
+    def test_atalho_abre_o_relatorio_mas_nao_permite_ao_administrador_editar(self):
+        sessao = self.realizada()
+        RelatorioTreino.objects.create(sessao=sessao, objetivo='Rascunho')
+        detalhe = self.itens_de_relatorio(self.consultar())[0]['detalhe']
+
+        self.assertEqual(self.client.get(detalhe).status_code, 200)
+        self.assertEqual(self.client.patch(detalhe, {'local': 'Sala 1'}, format='json').status_code, 403)
 
 
 class PendenciasAcessoTests(TestCase):

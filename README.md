@@ -164,13 +164,21 @@ Para finalizar, envie `POST /api/sessoes/{id}/relatorio/finalizar/` com os campo
 
 ### Pendências da agenda
 
-O `GET /api/pendencias/` lista os compromissos que ainda pedem ação (RF-09). É exclusivo do Administrador; os demais perfis recebem `403`. Hoje há um tipo de pendência, `PRESENCA_PENDENTE`: compromisso já encerrado, não cancelado, com ao menos um participante sem presença ou falta registrada. Sessões `NAO_REALIZADA` também entram, porque a situação da sessão é independente da presença de cada aluno. As pendências de relatório de treino entram quando o relatório existir (#109).
+O `GET /api/pendencias/` lista os compromissos que ainda pedem ação (RF-09). É exclusivo do Administrador; os demais perfis recebem `403`. Há dois tipos de pendência:
+
+- `PRESENCA_PENDENTE`: compromisso já encerrado, não cancelado, com ao menos um participante sem presença ou falta registrada. Sessões `NAO_REALIZADA` também entram, porque a situação da sessão é independente da presença de cada aluno.
+- `RELATORIO_PENDENTE`: sessão de Treino realizada sem relatório ou com o relatório ainda em rascunho. Só entram as sessões `REALIZADA`, porque o relatório só pode ser criado depois disso.
+
+A mesma sessão pode aparecer uma vez para cada tipo.
 
 ```json
 {
   "total": 1,
-  "por_tipo": {"PRESENCA_PENDENTE": 1},
-  "tipos": [{"valor": "PRESENCA_PENDENTE", "rotulo": "Presença pendente"}],
+  "por_tipo": {"PRESENCA_PENDENTE": 1, "RELATORIO_PENDENTE": 0},
+  "tipos": [
+    {"valor": "PRESENCA_PENDENTE", "rotulo": "Presença pendente"},
+    {"valor": "RELATORIO_PENDENTE", "rotulo": "Relatório pendente"}
+  ],
   "itens": [
     {
       "tipo": "PRESENCA_PENDENTE",
@@ -190,7 +198,7 @@ O `GET /api/pendencias/` lista os compromissos que ainda pedem ação (RF-09). �
 }
 ```
 
-Os itens vêm do mais antigo para o mais recente. O parâmetro opcional `tipo` filtra a lista (`?tipo=PRESENCA_PENDENTE`); tipo desconhecido responde `400`. `total` e `por_tipo` contam todas as pendências mesmo com o filtro, para servir de contador no menu. O atalho `detalhe` abre a sessão, mas o Administrador continua sem registrar presença: isso é do profissional responsável (RN-05).
+Os itens vêm do mais antigo para o mais recente. O parâmetro opcional `tipo` filtra a lista (`?tipo=RELATORIO_PENDENTE`); tipo desconhecido responde `400`. `total` e `por_tipo` contam todas as pendências mesmo com o filtro, para servir de contador no menu. O atalho `detalhe` abre a sessão (presença) ou o relatório (`/api/sessoes/{id}/relatorio/`), mas o Administrador continua sem registrar presença ou editar o relatório: isso é do profissional responsável (RN-05).
 
 ### Dashboard do Administrador
 
