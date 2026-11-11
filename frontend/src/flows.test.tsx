@@ -124,7 +124,7 @@ describe('Administrador', () => {
   it('mostra a recusa 409 ao confirmar agendamento', async () => {
     mockApi(admin, {
       'GET /api/sessoes/?': () => json([]),
-      'GET /api/servicos/': () => json([{ id: 3, nome: 'Treino funcional', categoria: 'TREINO' }]),
+      'GET /api/servicos/': () => json([{ id: 3, nome: 'Treino funcional', categoria: 'TREINO', profissionais_habilitados: [2] }]),
       'GET /api/profissionais/': () => json([{ id: 2, nome: 'Diego Treinador', perfil: 'TREINADOR' }]),
       'GET /api/alunos/': () => json([{ id: 7, nome: 'Ana Lima' }]),
       'POST /api/sessoes/': () => json({ regra: 'RN-01', detail: 'O profissional já possui um compromisso neste horário.' }, 409),
@@ -142,6 +142,57 @@ describe('Administrador', () => {
 
     expect((await screen.findByRole('alert')).textContent)
       .toBe('Operação recusada: RN-01 O profissional já possui um compromisso neste horário.');
+  });
+
+  it('filtra os profissionais pelas habilitações do serviço selecionado', async () => {
+    mockApi(admin, {
+      'GET /api/sessoes/?': () => json([]),
+      'GET /api/servicos/': () => json([
+        { id: 3, nome: 'Treino funcional', categoria: 'TREINO', profissionais_habilitados: [2] },
+        { id: 5, nome: 'Fisioterapia', categoria: 'FISIOTERAPIA', profissionais_habilitados: [4] },
+      ]),
+      'GET /api/profissionais/': () => json([
+        { id: 2, nome: 'Diego Treinador', perfil: 'TREINADOR' },
+        { id: 4, nome: 'Eva Fisio', perfil: 'PROFISSIONAL_SAUDE' },
+      ]),
+      'GET /api/alunos/': () => json([]),
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: /novo agendamento/i }));
+    const profissional = await screen.findByLabelText('Profissional') as HTMLSelectElement;
+    expect(profissional.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Serviço'), { target: { value: '3' } });
+    expect(within(profissional).getByRole('option', { name: 'Diego Treinador' })).toBeTruthy();
+    expect(within(profissional).queryByRole('option', { name: 'Eva Fisio' })).toBeNull();
+    fireEvent.change(screen.getByLabelText('Serviço'), { target: { value: '5' } });
+    expect(within(profissional).getByRole('option', { name: 'Eva Fisio' })).toBeTruthy();
+    expect(within(profissional).queryByRole('option', { name: 'Diego Treinador' })).toBeNull();
+  });
+
+  it('cadastra e remove habilitações pela interface administrativa', async () => {
+    const fetchMock = mockApi(admin, {
+      'GET /api/sessoes/?': () => json([]),
+      'GET /api/servicos/': () => json([{ id: 3, nome: 'Treino funcional', categoria: 'TREINO', profissionais_habilitados: [] }]),
+      'GET /api/profissionais/': () => json([{ id: 2, nome: 'Diego Treinador', perfil: 'TREINADOR' }]),
+      'GET /api/profissionais-servicos/': () => json([]),
+      'POST /api/profissionais-servicos/': (body) => json({ id: 8, ...(body as object) }, 201),
+      'DELETE /api/profissionais-servicos/8/': () => json(null, 204),
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Habilitações' }));
+    expect(await screen.findByRole('heading', { name: 'Habilitações' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Serviço'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('Profissional'), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar habilitação' }));
+
+    expect(await screen.findByText('Habilitação cadastrada.')).toBeTruthy();
+    expect(bodyOf(fetchMock, 'POST', '/api/profissionais-servicos/')).toEqual({ profissional: 2, servico: 3 });
+    fireEvent.click(screen.getByRole('button', { name: 'Remover' }));
+    expect(await screen.findByText('Habilitação removida.')).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledWith('/api/profissionais-servicos/8/', expect.objectContaining({ method: 'DELETE' }));
   });
 });
 

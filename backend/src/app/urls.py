@@ -9,6 +9,7 @@ from app.views import (
     PendenciasView,
     DisponibilidadeViewSet,
     ProfissionalViewSet,
+    ProfissionalServicoViewSet,
     ServicoViewSet,
     SessaoViewSet,
 )
@@ -18,6 +19,7 @@ from app.views import (
 router = DefaultRouter()
 router.register('alunos', AlunoViewSet, basename='aluno')
 router.register('profissionais', ProfissionalViewSet, basename='profissional')
+router.register('profissionais-servicos', ProfissionalServicoViewSet, basename='profissional-servico')
 router.register('servicos', ServicoViewSet, basename='servico')
 router.register('sessoes', SessaoViewSet, basename='sessao')
 router.register('disponibilidades', DisponibilidadeViewSet, basename='disponibilidade')

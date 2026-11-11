@@ -183,6 +183,8 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c45c53;
 .remove-button { color: #9b4b43; background: #fff7f6; }
 .text-button { border: 0; color: #526e8e; background: transparent; font-size: 11px; font-weight: 650; }
 .text-button:hover:not(:disabled) { color: var(--navy); text-decoration: underline; }
+.danger-text { color: var(--danger); }
+.form-hint { margin: -8px 0 18px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .button-secondary { border: 1px solid #dbe3ec; color: #405b7a; background: #fff; }
 .button-secondary:hover:not(:disabled) { border-color: #bdcddd; background: #f7f9fc; }
 .inline-message { margin-top: 17px; padding: 10px 12px; border: 1px solid #e2e8ef; border-radius: 8px; color: #5e6f82; background: #f7f9fb; font-size: 12px; line-height: 1.5; }

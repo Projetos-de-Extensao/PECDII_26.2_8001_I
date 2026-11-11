@@ -4,6 +4,13 @@ export interface Service {
   id: number;
   nome: string;
   categoria: string;
+  profissionais_habilitados?: number[];
+}
+
+export interface ProfessionalServiceLink {
+  id: number;
+  profissional: number;
+  servico: number;
 }
 
 export interface Profile {
