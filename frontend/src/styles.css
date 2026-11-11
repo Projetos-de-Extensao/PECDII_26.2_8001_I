@@ -217,9 +217,14 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c45c53;
   .login-card { max-width: 520px; width: 100%; justify-self: center; padding: 27px; }
   .workspace { padding-top: 23px; }
   .workspace-body { grid-template-columns: 1fr; gap: 14px; }
+  .workspace-body > * { min-width: 0; }
   .main-nav { min-height: auto; flex-direction: row; flex-wrap: wrap; gap: 7px; padding: 6px; }
   .nav-link { width: auto; min-width: 0; flex: 1 1 auto; justify-content: center; padding: 0 10px; white-space: nowrap; }
   .nav-user { display: none; }
+  .filter-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filter-field { min-width: 0; }
+  .filter-field:nth-child(3), .filter-bar > button { grid-column: 1 / -1; }
+  .filter-bar > button { width: 100%; }
   .session-card { grid-template-columns: 95px minmax(0, 1fr); gap: 11px; }
   .session-meta { grid-column: 2; justify-content: start; }
   .availability-layout { grid-template-columns: 1fr; gap: 22px; }
