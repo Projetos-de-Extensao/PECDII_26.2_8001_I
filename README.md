@@ -44,6 +44,7 @@ Os endpoints ficam sob `/api/`:
 | Sessões ainda agendadas 30 minutos após o fim | `/api/sessoes/pendentes-status/` |
 | Disponibilidades | `/api/disponibilidades/` |
 | Bloqueios da agenda | `/api/bloqueios-agenda/` |
+| Dashboard do Administrador | `/api/dashboard/` |
 
 Disponibilidade e bloqueio aceitam `GET`, `POST`, `PUT`, `PATCH` e `DELETE` no recurso e em `/api/disponibilidades/{id}/` ou `/api/bloqueios-agenda/{id}/`. O payload da disponibilidade contém `profissional`, `inicio` e `fim`; o bloqueio também aceita `motivo` (opcional, até 200 caracteres). Os horários usam data/hora ISO 8601, por exemplo:
 
@@ -114,6 +115,35 @@ O `PATCH /api/sessoes/{id}/presencas/` registra a presença de cada aluno partic
 ```
 
 Os registros são gravados juntos: se algum falhar, nenhum é gravado. A resposta `200` traz a sessão, e a consulta de qualquer sessão mostra `presencas`, com `situacao_presenca` nula enquanto não houver registro. Aluno que não participa da sessão, aluno repetido, lista vazia ou situação diferente de `PRESENTE`/`FALTA` recebem `400`; sessão cancelada recebe `409`.
+
+### Dashboard do Administrador
+
+O `GET /api/dashboard/` mostra quantos compromissos houve por serviço e por situação no período (RF-11). É exclusivo do Administrador; os demais perfis recebem `403`. O período é informado em datas, com `inicio` e `fim` juntos e os dois dias incluídos. Sem os parâmetros, vale o mês atual:
+
+```http
+GET /api/dashboard/?inicio=2026-11-01&fim=2026-11-30
+```
+
+Cada compromisso conta pelo dia em que começa, no fuso `America/Sao_Paulo`. Todos os serviços do catálogo aparecem, ordenados pelo total decrescente e depois pelo nome; situações sem ocorrência vêm com `0`:
+
+```json
+{
+  "periodo": {"inicio": "2026-11-01", "fim": "2026-11-30"},
+  "situacoes": [{"valor": "AGENDADA", "rotulo": "Agendada"}, "..."],
+  "servicos": [
+    {
+      "id": 3,
+      "nome": "Treino funcional",
+      "categoria": "TREINO",
+      "por_situacao": {"AGENDADA": 4, "REALIZADA": 10, "NAO_REALIZADA": 1, "CANCELADA": 0},
+      "total": 15
+    }
+  ],
+  "total": {"por_situacao": {"AGENDADA": 4, "REALIZADA": 10, "NAO_REALIZADA": 1, "CANCELADA": 0}, "total": 15}
+}
+```
+
+Enviar só uma das datas, `fim` anterior a `inicio` ou data fora do formato `AAAA-MM-DD` responde `400`.
 
 ### Perfis e acesso
 
