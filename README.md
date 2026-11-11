@@ -45,6 +45,7 @@ Os endpoints ficam sob `/api/`:
 | Disponibilidades | `/api/disponibilidades/` |
 | Bloqueios da agenda | `/api/bloqueios-agenda/` |
 | Dashboard do Administrador | `/api/dashboard/` |
+| Pendências da agenda (Administrador) | `/api/pendencias/` |
 
 Disponibilidade e bloqueio aceitam `GET`, `POST`, `PUT`, `PATCH` e `DELETE` no recurso e em `/api/disponibilidades/{id}/` ou `/api/bloqueios-agenda/{id}/`. O payload da disponibilidade contém `profissional`, `inicio` e `fim`; o bloqueio também aceita `motivo` (opcional, até 200 caracteres). Os horários usam data/hora ISO 8601, por exemplo:
 
@@ -115,6 +116,36 @@ O `PATCH /api/sessoes/{id}/presencas/` registra a presença de cada aluno partic
 ```
 
 Os registros são gravados juntos: se algum falhar, nenhum é gravado. A resposta `200` traz a sessão, e a consulta de qualquer sessão mostra `presencas`, com `situacao_presenca` nula enquanto não houver registro. Aluno que não participa da sessão, aluno repetido, lista vazia ou situação diferente de `PRESENTE`/`FALTA` recebem `400`; sessão cancelada recebe `409`.
+
+### Pendências da agenda
+
+O `GET /api/pendencias/` lista os compromissos que ainda pedem ação (RF-09). É exclusivo do Administrador; os demais perfis recebem `403`. Hoje há um tipo de pendência, `PRESENCA_PENDENTE`: compromisso já encerrado, não cancelado, com ao menos um participante sem presença ou falta registrada. Sessões `NAO_REALIZADA` também entram, porque a situação da sessão é independente da presença de cada aluno. As pendências de relatório de treino entram quando o relatório existir (#109).
+
+```json
+{
+  "total": 1,
+  "por_tipo": {"PRESENCA_PENDENTE": 1},
+  "tipos": [{"valor": "PRESENCA_PENDENTE", "rotulo": "Presença pendente"}],
+  "itens": [
+    {
+      "tipo": "PRESENCA_PENDENTE",
+      "motivo": "1 de 2 participante(s) sem presença ou falta registrada.",
+      "sessao": {
+        "id": 42,
+        "titulo": "Treino de força",
+        "inicio": "2026-11-10T09:00:00-03:00",
+        "fim": "2026-11-10T10:00:00-03:00",
+        "status": "AGENDADA",
+        "servico": {"id": 3, "nome": "Treino funcional", "categoria": "TREINO"}
+      },
+      "responsavel": {"id": 12, "nome": "Carla Dias"},
+      "detalhe": "/api/sessoes/42/"
+    }
+  ]
+}
+```
+
+Os itens vêm do mais antigo para o mais recente. O parâmetro opcional `tipo` filtra a lista (`?tipo=PRESENCA_PENDENTE`); tipo desconhecido responde `400`. `total` e `por_tipo` contam todas as pendências mesmo com o filtro, para servir de contador no menu. O atalho `detalhe` abre a sessão, mas o Administrador continua sem registrar presença: isso é do profissional responsável (RN-05).
 
 ### Dashboard do Administrador
 

@@ -11,7 +11,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from app.agendamento import RegraDeAgendamentoViolada
 from app.models import Aluno, BloqueioAgenda, Disponibilidade, Servico, Sessao, Usuario
-from app.operacao import mes_atual, resumo_por_servico
+from app.operacao import mes_atual, pendencias_operacionais, resumo_por_servico
 from app.permissoes import (
     PodeAdministrarCadastros,
     PodeAlterarSessao,
@@ -25,6 +25,7 @@ from app.serializers import (
     BloqueioAgendaSerializer,
     DisponibilidadeSerializer,
     FiltroAgendaQueryParamsSerializer,
+    FiltroPendenciasQueryParamsSerializer,
     PeriodoDashboardQueryParamsSerializer,
     ProfissionalSerializer,
     RegistroPresencaSerializer,
@@ -224,3 +225,18 @@ class DashboardView(APIView):
         inicio = periodo.validated_data.get('inicio', inicio)
         fim = periodo.validated_data.get('fim', fim)
         return Response(resumo_por_servico(inicio, fim))
+
+
+class PendenciasView(APIView):
+    """Pendências operacionais da agenda, exclusivas do Administrador (RF-09).
+
+    É só consulta: o atalho `detalhe` abre a sessão, mas presença e relatório continuam
+    sendo alterados apenas pelo profissional responsável (RN-05).
+    """
+
+    permission_classes = [SomenteAdministrador]
+
+    def get(self, request):
+        filtro = FiltroPendenciasQueryParamsSerializer(data=request.query_params)
+        filtro.is_valid(raise_exception=True)
+        return Response(pendencias_operacionais(tipo=filtro.validated_data.get('tipo')))

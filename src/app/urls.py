@@ -5,6 +5,7 @@ from app.views import (
     AlunoViewSet,
     BloqueioAgendaViewSet,
     DashboardView,
+    PendenciasView,
     DisponibilidadeViewSet,
     ProfissionalViewSet,
     ServicoViewSet,
@@ -23,5 +24,6 @@ router.register('bloqueios-agenda', BloqueioAgendaViewSet, basename='bloqueio-ag
 
 urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('pendencias/', PendenciasView.as_view(), name='pendencias'),
     *router.urls,
 ]
