@@ -47,7 +47,16 @@ export interface Student {
 export interface Professional {
   id: number;
   nome: string;
+  email?: string;
   perfil: ProfileName;
+}
+
+export interface AgendaRange {
+  id: number;
+  profissional: number;
+  inicio: string;
+  fim: string;
+  motivo?: string;
 }
 
 export interface Report {

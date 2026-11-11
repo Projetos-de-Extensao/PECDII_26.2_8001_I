@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
@@ -46,8 +46,6 @@ from app.serializers import (
     FiltroPendenciasQueryParamsSerializer,
     PendenciasResponseSerializer,
     PeriodoDashboardQueryParamsSerializer,
-    FiltroPendenciasQueryParamsSerializer,
-    PeriodoDashboardQueryParamsSerializer,
     ProfissionalSerializer,
     RegistroAuditoriaSerializer,
     RelatorioTreinoSerializer,
@@ -85,6 +83,33 @@ def executar_alteracao_de_agenda(profissionais, validar, gravar):
         raise Conflito(detalhes) from erro
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Alunos'],
+        summary='Listar alunos',
+        description='Retorna os alunos cadastrados. Operação restrita ao Administrador.',
+    ),
+    retrieve=extend_schema(
+        tags=['Alunos'], summary='Consultar aluno',
+        description='Busca um aluno pelo identificador.',
+    ),
+    create=extend_schema(
+        tags=['Alunos'],
+        summary='Cadastrar aluno',
+        description='Cria o cadastro básico de um aluno. Data de nascimento no formato AAAA-MM-DD; telefone opcional.',
+        examples=[OpenApiExample(
+            'Novo aluno',
+            value={'nome': 'Ana Lima', 'data_nascimento': '2010-03-01', 'telefone': '+5511999999999'},
+            request_only=True,
+        )],
+    ),
+    update=extend_schema(tags=['Alunos'], summary='Atualizar aluno'),
+    partial_update=extend_schema(tags=['Alunos'], summary='Atualizar dados do aluno'),
+    destroy=extend_schema(
+        tags=['Alunos'], summary='Remover aluno',
+        description='Remove o cadastro se ele não estiver vinculado a sessões.',
+    ),
+)
 class AlunoViewSet(ModelViewSet):
     queryset = Aluno.objects.all()
     serializer_class = AlunoSerializer
@@ -99,6 +124,39 @@ class AlunoViewSet(ModelViewSet):
         instance.delete()
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Profissionais'], summary='Listar profissionais',
+        description='Lista Treinadores e Profissionais de Saúde cadastrados.',
+    ),
+    retrieve=extend_schema(tags=['Profissionais'], summary='Consultar profissional'),
+    create=extend_schema(
+        tags=['Profissionais'],
+        summary='Cadastrar profissional',
+        description='Cria o perfil profissional e sua conta de acesso. Login e senha são obrigatórios na criação. A senha é armazenada como hash e nunca retornada.',
+        examples=[OpenApiExample(
+            'Novo treinador',
+            value={
+                'nome': 'Lucas Pereira', 'email': 'lucas@example.com',
+                'telefone': '+5511999999999', 'perfil': 'TREINADOR',
+                'login': 'lucas.pereira', 'senha': 'SenhaSegura123!',
+            },
+            request_only=True,
+        )],
+    ),
+    update=extend_schema(
+        tags=['Profissionais'], summary='Atualizar profissional',
+        description='Atualiza o cadastro. Login ou senha podem ser alterados quando informados.',
+    ),
+    partial_update=extend_schema(
+        tags=['Profissionais'], summary='Atualizar dados do profissional',
+        description='Altera apenas os campos enviados; senha nova só é aplicada se informada.',
+    ),
+    destroy=extend_schema(
+        tags=['Profissionais'], summary='Remover profissional',
+        description='Remove a conta e o perfil se não houver sessões vinculadas.',
+    ),
+)
 class ProfissionalViewSet(ModelViewSet):
     queryset = Usuario.objects.filter(perfil__in=Usuario.PERFIS_PROFISSIONAIS)
     serializer_class = ProfissionalSerializer
@@ -125,6 +183,24 @@ class ProfissionalViewSet(ModelViewSet):
         instance.conta.delete()
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Serviços'], summary='Listar serviços'),
+    retrieve=extend_schema(tags=['Serviços'], summary='Consultar serviço'),
+    create=extend_schema(
+        tags=['Serviços'], summary='Cadastrar serviço',
+        description='Adiciona um serviço ao catálogo. O nome deve ser único.',
+        examples=[OpenApiExample(
+            'Novo serviço', value={'nome': 'Treino funcional', 'categoria': 'TREINO'},
+            request_only=True,
+        )],
+    ),
+    update=extend_schema(tags=['Serviços'], summary='Atualizar serviço'),
+    partial_update=extend_schema(tags=['Serviços'], summary='Atualizar dados do serviço'),
+    destroy=extend_schema(
+        tags=['Serviços'], summary='Remover serviço',
+        description='Remove o serviço se não houver sessões vinculadas.',
+    ),
+)
 class ServicoViewSet(ModelViewSet):
     queryset = Servico.objects.all()
     serializer_class = ServicoSerializer
@@ -140,8 +216,45 @@ class ServicoViewSet(ModelViewSet):
 
 
 @extend_schema_view(
-    list=extend_schema(parameters=[FiltroAgendaQueryParamsSerializer]),
-    pendentes_status=extend_schema(parameters=[FiltroAgendaQueryParamsSerializer]),
+    list=extend_schema(
+        tags=['Sessões'], summary='Consultar agenda',
+        description='Lista sessões no escopo permitido ao perfil autenticado. Os filtros de período e serviço são opcionais.',
+        parameters=[FiltroAgendaQueryParamsSerializer],
+    ),
+    retrieve=extend_schema(
+        tags=['Sessões'], summary='Consultar sessão',
+        description='Retorna os detalhes e a presença registrada para cada participante.',
+    ),
+    create=extend_schema(
+        tags=['Sessões'],
+        summary='Confirmar sessão',
+        description='Confirma um agendamento com serviço, profissional responsável e ao menos um participante. Disponibilidade, bloqueios e conflitos de agenda são validados antes de gravar.',
+        examples=[OpenApiExample(
+            'Sessão de treino',
+            value={
+                'titulo': 'Treino funcional', 'tipo': 'TREINAMENTO',
+                'descricao': 'Treino de resistência',
+                'inicio': '2026-11-12T14:00:00-03:00',
+                'fim': '2026-11-12T15:00:00-03:00',
+                'servico': 1, 'profissional': 2, 'participantes': [3, 4],
+            },
+            request_only=True,
+        )],
+    ),
+    update=extend_schema(
+        tags=['Sessões'], summary='Atualizar sessão',
+        description='Atualiza os dados permitidos ao perfil. O profissional responsável pode alterar somente situação e observações.',
+    ),
+    partial_update=extend_schema(
+        tags=['Sessões'], summary='Atualizar dados da sessão',
+        description='Altera os campos enviados respeitando o escopo e as permissões do responsável.',
+    ),
+    destroy=extend_schema(tags=['Sessões'], summary='Remover sessão'),
+    pendentes_status=extend_schema(
+        tags=['Sessões'], summary='Listar sessões com situação pendente',
+        description='Lista sessões ainda agendadas cujo horário previsto terminou há pelo menos 30 minutos.',
+        parameters=[FiltroAgendaQueryParamsSerializer],
+    ),
 )
 class SessaoViewSet(ModelViewSet):
     queryset = Sessao.objects.prefetch_related('participacoes')
@@ -236,6 +349,17 @@ class SessaoViewSet(ModelViewSet):
         serializer.save()
 
     @action(detail=True, methods=['patch'], url_path='presencas')
+    @extend_schema(
+        tags=['Sessões'], summary='Registrar presenças',
+        description='O profissional responsável registra PRESENTE ou FALTA para participantes da sessão encerrada. IDs repetidos e alunos fora da sessão são rejeitados.',
+        request=RegistroPresencaSerializer,
+        responses=SessaoSerializer,
+        examples=[OpenApiExample(
+            'Presenças da sessão',
+            value={'presencas': [{'aluno': 3, 'situacao': 'PRESENTE'}, {'aluno': 4, 'situacao': 'FALTA'}]},
+            request_only=True,
+        )],
+    )
     def presencas(self, request, pk=None):
         """Registra presença ou falta dos participantes (RF-06), só pelo responsável (RN-05)."""
         sessao = self.get_object()
@@ -293,6 +417,21 @@ class SessaoViewSet(ModelViewSet):
             raise Conflito(self.MENSAGEM_SESSAO_NAO_ENCERRADA)
 
     @action(detail=True, methods=['get', 'post', 'patch'], url_path='relatorio')
+    @extend_schema(
+        tags=['Relatórios'], summary='Consultar ou editar relatório de treino',
+        description='Consulta um relatório, cria um rascunho com POST ou altera um rascunho com PATCH. O relatório pertence a uma sessão de Treino realizada; edição permitida apenas ao Treinador responsável.',
+        request=RelatorioTreinoSerializer,
+        responses=RelatorioTreinoSerializer,
+        examples=[OpenApiExample(
+            'Rascunho do relatório',
+            value={
+                'data': '2026-11-12', 'horario': '15:00:00', 'local': 'Centro esportivo',
+                'objetivo': 'Desenvolver resistência', 'exercicios': 'Corrida leve; circuito funcional',
+                'volume_valor': '45.00', 'volume_unidade': 'minutos', 'intensidade_borg': '6.0',
+            },
+            request_only=True,
+        )],
+    )
     def relatorio(self, request, pk=None):
         """Consulta, cria ou edita o rascunho do relatório único da sessão de Treino."""
         sessao = self.get_object()
@@ -335,6 +474,12 @@ class SessaoViewSet(ModelViewSet):
         return Response(RelatorioTreinoSerializer(relatorio).data)
 
     @action(detail=True, methods=['post'], url_path='relatorio/finalizar')
+    @extend_schema(
+        tags=['Relatórios'], summary='Finalizar relatório de treino',
+        description='Exige todos os campos de execução e torna o relatório imutável. Permitido ao Treinador responsável.',
+        request=RelatorioTreinoSerializer,
+        responses=RelatorioTreinoSerializer,
+    )
     def finalizar_relatorio(self, request, pk=None):
         """Valida todos os campos obrigatórios e finaliza o relatório em caráter imutável."""
         sessao = self.get_object()
@@ -365,6 +510,12 @@ class SessaoViewSet(ModelViewSet):
         return Response(RelatorioTreinoSerializer(relatorio).data)
 
     @action(detail=False, methods=['get'], url_path='pendentes-status')
+    @extend_schema(
+        tags=['Sessões'], summary='Listar sessões com situação pendente',
+        description='Lista sessões ainda agendadas cujo horário previsto terminou há pelo menos 30 minutos.',
+        parameters=[FiltroAgendaQueryParamsSerializer],
+        responses=SessaoSerializer(many=True),
+    )
     def pendentes_status(self, request):
         limite = timezone.now() - timedelta(minutes=30)
         sessoes = self.get_queryset().filter(
@@ -381,6 +532,20 @@ class DisponibilidadeViewSet(ModelViewSet):
     queryset = Disponibilidade.objects.select_related('profissional').all()
     serializer_class = DisponibilidadeSerializer
     permission_classes = [PodeAdministrarCadastros]
+
+    @extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Listar disponibilidades',
+        description='Consulta as faixas em que profissionais podem atender. Escrita restrita ao Administrador.',
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Criar disponibilidade',
+        description='Cria uma faixa de atendimento. O fim deve ser posterior ao início; mudanças que invalidem sessões existentes são recusadas.',
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         instancia = serializer.instance
@@ -425,6 +590,20 @@ class BloqueioAgendaViewSet(ModelViewSet):
     queryset = BloqueioAgenda.objects.select_related('profissional').all()
     serializer_class = BloqueioAgendaSerializer
     permission_classes = [PodeAdministrarCadastros]
+
+    @extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Listar bloqueios',
+        description='Consulta períodos indisponíveis na agenda dos profissionais. Escrita restrita ao Administrador.',
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Criar bloqueio',
+        description='Bloqueia um intervalo da agenda. O motivo é opcional; o fim deve ser posterior ao início e o bloqueio não pode conflitar com sessões.',
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         dados = serializer.validated_data
@@ -478,6 +657,8 @@ class PendenciasView(APIView):
     permission_classes = [SomenteAdministrador]
 
     @extend_schema(
+        tags=['Operação'], summary='Consultar pendências operacionais',
+        description='Lista sessões encerradas sem situação e sessões de Treino realizadas sem relatório finalizado. Somente leitura e exclusivo do Administrador.',
         parameters=[FiltroPendenciasQueryParamsSerializer],
         responses=PendenciasResponseSerializer,
     )
@@ -487,6 +668,13 @@ class PendenciasView(APIView):
         return Response(pendencias_operacionais(tipo=filtro.validated_data.get('tipo')))
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Auditoria'], summary='Consultar trilha de auditoria',
+        description='Lista registros imutáveis de operações críticas. Exclusivo do Administrador.',
+    ),
+    retrieve=extend_schema(tags=['Auditoria'], summary='Consultar evento de auditoria'),
+)
 class AuditoriaViewSet(ReadOnlyModelViewSet):
     """Consulta da trilha de auditoria, exclusiva do Administrador (RNF-06).
 
@@ -515,6 +703,8 @@ class DashboardView(APIView):
     permission_classes = [SomenteAdministrador]
 
     @extend_schema(
+        tags=['Operação'], summary='Consultar dashboard',
+        description='Resume sessões por serviço e situação. Sem datas, considera o mês atual; para definir outro período, envie inicio e fim juntos no formato AAAA-MM-DD. Exclusivo do Administrador.',
         parameters=[PeriodoDashboardQueryParamsSerializer],
         responses=DashboardResponseSerializer,
     )
