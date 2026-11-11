@@ -7,7 +7,12 @@ from django.db import IntegrityError, connection
 from django.test import TestCase, TransactionTestCase
 from rest_framework.test import APIClient
 
-from app.agendamento import CAPACIDADE_MAXIMA_SESSAO, RegraDeAgendamentoViolada, confirmar_sessao
+from app.agendamento import (
+    CAPACIDADE_MAXIMA_SESSAO,
+    RegraDeAgendamentoViolada,
+    confirmar_sessao,
+    validar_regras_da_agenda,
+)
 from app.models import (
     Aluno,
     Disponibilidade,
@@ -227,9 +232,10 @@ class AtomicidadeConfirmacaoTests(TestCase):
 class ConcorrenciaConfirmacaoTests(TransactionTestCase):
     """Duas confirmações simultâneas não validam a mesma agenda (RN-06, RNF-03).
 
-    A validação de conflito abaixo é um substituto da regra da #98: ela lê a agenda,
-    espera para alargar a janela de corrida e só então deixa gravar. Sem a transação
-    serializada, as duas threads leriam a agenda vazia e gravariam duas sessões.
+    As duas threads usam as regras reais da agenda, com o mesmo profissional no mesmo
+    horário: a segunda deve ser recusada pela RN-01. Depois de validar, cada thread espera
+    um pouco antes de gravar, para alargar a janela de corrida. Sem a transação
+    serializada, as duas leriam a agenda vazia e gravariam duas sessões sobrepostas.
     """
 
     def setUp(self):
@@ -244,15 +250,9 @@ class ConcorrenciaConfirmacaoTests(TransactionTestCase):
         self.alunos = criar_alunos(2)
 
     @staticmethod
-    def recusar_profissional_ocupado(dados, alunos):
-        ocupado = Sessao.objects.filter(
-            profissional=dados['profissional'],
-            inicio__lt=dados['fim'],
-            fim__gt=dados['inicio'],
-        ).exists()
+    def validar_e_esperar(dados, alunos):
+        validar_regras_da_agenda(dados, alunos)
         time.sleep(0.3)
-        if ocupado:
-            raise RegraDeAgendamentoViolada('RN-01', 'O profissional já possui um compromisso neste horário.')
 
     def confirmar_em_thread(self, aluno, resultados, largada):
         try:
@@ -277,7 +277,7 @@ class ConcorrenciaConfirmacaoTests(TransactionTestCase):
         resultados = []
         largada = threading.Barrier(2)
 
-        with mock.patch('app.agendamento.validar_regras_da_agenda', self.recusar_profissional_ocupado):
+        with mock.patch('app.agendamento.validar_regras_da_agenda', self.validar_e_esperar):
             threads = [
                 threading.Thread(target=self.confirmar_em_thread, args=(aluno, resultados, largada))
                 for aluno in self.alunos
