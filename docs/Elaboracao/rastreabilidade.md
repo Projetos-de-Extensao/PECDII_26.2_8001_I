@@ -30,6 +30,7 @@ Esta matriz liga os requisitos estáveis do [levantamento](levreq.md) aos docume
 | RNF-04 | Restrições | UC-01 a UC-07, UC-09 a UC-11 | Usuario | Ambos | Erro de acesso/dados | Login; outros estados de erro pendentes nos exports |
 | RNF-05 | Restrições | UC-01 a UC-07, UC-09 | Todos | Ambos | — (testes e documentação fora da interface) | — (testes e documentação fora da interface) |
 | RNF-06 | Objetivos/qualidade | UC-02, UC-05, UC-06, UC-07, UC-10 | RegistroAuditoria com mensagem legível; DER registro_auditoria | — | Registro interno à API | Registro interno à API |
+| RNF-07 | Escopo adicional do MVP do grupo | Fluxos RF-01 a RF-12 conforme perfil | Cliente web responsivo; backend continua como autoridade | Integração cliente–API | Não se aplica | Telas desktop e mobile existentes; cobertura parcial e pendências descritas no [registro de revisão](prototipo_alta_fidelidade.md#revisao-de-aderencia-para-o-front-end) |
 
 ## Lacunas de rastreabilidade
 

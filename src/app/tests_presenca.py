@@ -111,10 +111,15 @@ class RegistroPresencaTests(BaseSessaoTests):
                 self.url_presencas, {'presencas': [{'aluno': self.ana.pk, 'situacao': 'PRESENTE'}]}, format='json'
             )
 
-            self.assertEqual(response.status_code, 403)
-            self.assertEqual(
-                response.data['detail'], 'Apenas o profissional responsável pela sessão registra presença ou falta.'
-            )
+            if usuario.perfil == Usuario.Perfil.PROFISSIONAL_SAUDE:
+                # A agenda de saúde não revela sequer se existe uma sessão de Treino.
+                self.assertEqual(response.status_code, 404)
+            else:
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    response.data['detail'],
+                    'Apenas o profissional responsável pela sessão registra presença ou falta.',
+                )
         self.assertIsNone(self.presenca_de(self.ana))
 
     def test_administrador_nao_registra_presenca(self):
@@ -222,11 +227,15 @@ class AlteracaoSessaoTests(BaseSessaoTests):
         for usuario in (self.outro_treinador, self.fisio):
             response = cliente(usuario).patch(self.url_sessao, {'status': 'REALIZADA'}, format='json')
 
-            self.assertEqual(response.status_code, 403)
-            self.assertEqual(
-                response.data['detail'],
-                'Apenas o profissional responsável ou o Administrador pode alterar esta sessão.',
-            )
+            if usuario.perfil == Usuario.Perfil.PROFISSIONAL_SAUDE:
+                # A agenda de saúde não revela sessões de Treino fora do seu escopo.
+                self.assertEqual(response.status_code, 404)
+            else:
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    response.data['detail'],
+                    'Apenas o profissional responsável ou o Administrador pode alterar esta sessão.',
+                )
         self.sessao.refresh_from_db()
         self.assertEqual(self.sessao.status, Sessao.Status.AGENDADA)
 

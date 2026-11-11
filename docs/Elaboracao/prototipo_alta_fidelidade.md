@@ -12,6 +12,23 @@ Os nomes dos quadros editáveis no Figma identificam os fluxos funcionais relaci
 
 Em 30/10/2026, o aviso de capacidade da tela "Novo agendamento" foi atualizado nos quadros desktop e mobile e nos respectivos exports: o professor informou limite máximo de **6 alunos por sessão**, conforme relato de Pedro Lucas. O limite vale para qualquer serviço e será uma constante no backend do MVP, sem configuração administrativa.
 
+## Revisão de aderência para o front-end
+
+Revisão dos quadros editáveis no Figma e dos exports em 11/11/2026: o arquivo tem seis telas principais desktop, seis versões mobile e uma variante de recusa em cada formato, correspondendo à estrutura documentada. A direção visual cobre os três perfis e os fluxos principais, mas o protótipo **ainda não está pronto para ser implementado sem ajustes**. Há requisitos e estados faltantes, além de controles que prometem comportamento não definido.
+
+| Área | Aderência e ajuste necessário antes da implementação |
+|---|---|
+| Login | “Manter conectado” e “Esqueci minha senha” não têm requisito nem fluxo correspondente; remover esses controles ou definir seu comportamento. O texto “Projeto Back-end” deve ser atualizado se o cliente web fizer parte do MVP. |
+| Visão geral e pendências | Os cards atuais mostram contagens do dia, semana e bloqueios, mas a RF-11 pede um período visível (mês atual por padrão), quantidades por serviço e situação, zeros explícitos e ordenação pelo total. A RF-09 também precisa de lista de pendências com filtro por tipo, contador no menu e atalhos; o Administrador não pode alterar presença ou relatório por esses atalhos. |
+| Cadastros | As telas mostram abas/listas, mas não os formulários de criar/editar, confirmação, validação e estados de sucesso/erro exigidos pela RF-02. |
+| Disponibilidade e bloqueios | A agenda do Administrador mostra um atalho de configuração, sem telas para consultar, criar, editar ou remover períodos e bloqueios (RF-03). |
+| Novo agendamento | A variante de recusa cobre conflitos, bloqueio, incompatibilidade e capacidade. Ainda falta uma confirmação bem-sucedida. “Participantes, se aplicável” diverge do contrato da API, que exige o campo `participantes`; definir visualmente quando a lista pode ficar vazia e refletir essa regra no formulário. |
+| Agenda do Treinador | A presença e os dados do relatório estão representados. Falta a ação/estado de realizado ou não realizado após o horário previsto (RF-10), separado da presença. A tela combina “finalizado somente leitura” com ações de salvar e finalizar; criar estados distintos de rascunho editável e relatório finalizado somente para leitura. |
+| Atendimentos de saúde | A presença/falta está representada. Faltam os estados de presença salva/erro e realizado/não realizado de RF-10, separados do estado “confirmado” do agendamento. |
+| Responsividade e validação | Os quadros mobile são versões web em 390 × 844, não comprovam um aplicativo nativo. Não há resultado de teste de usabilidade registrado. Validar os fluxos com usuários antes de considerar o desenho aprovado. |
+
+**Conclusão:** usar o protótipo como base visual para o cliente web responsivo, depois de corrigir as lacunas acima e atualizar os exports. A cobertura é parcial; não representa ainda todos os estados necessários para o aceite.
+
 ## Cobertura prevista e lacunas dos exports
 
 | Tela a produzir | Perfil | Requisitos | Estados que precisam ser representados |

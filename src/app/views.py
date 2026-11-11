@@ -21,6 +21,7 @@ from app.serializers import (
     AlunoSerializer,
     BloqueioAgendaSerializer,
     DisponibilidadeSerializer,
+    PeriodoConsultaSerializer,
     ProfissionalSerializer,
     RegistroPresencaSerializer,
     ServicoSerializer,
@@ -87,6 +88,31 @@ class SessaoViewSet(ModelViewSet):
     # Campos que o profissional responsável pode mudar: se a sessão foi ministrada (RF-10) e observações.
     CAMPOS_DO_RESPONSAVEL = {'status', 'observacoes'}
 
+    def get_queryset(self):
+        """Limita os atendimentos de saúde ao profissional e serviços vinculados."""
+        queryset = self.queryset.all().select_related('profissional', 'servico')
+        usuario = getattr(self.request.user, 'usuario', None)
+        if usuario is not None and usuario.perfil == Usuario.Perfil.PROFISSIONAL_SAUDE:
+            queryset = queryset.filter(
+                profissional=usuario,
+                servico__categoria__in=[
+                    Servico.Categoria.FISIOTERAPIA,
+                    Servico.Categoria.PSICOLOGIA,
+                    Servico.Categoria.NUTRICAO,
+                ],
+                servico__vinculos__profissional=usuario,
+            )
+
+        if self.action in ('list', 'pendentes_status'):
+            periodo = PeriodoConsultaSerializer(data=self.request.query_params)
+            periodo.is_valid(raise_exception=True)
+            if 'inicio' in periodo.validated_data:
+                queryset = queryset.filter(fim__gt=periodo.validated_data['inicio'])
+            if 'fim' in periodo.validated_data:
+                queryset = queryset.filter(inicio__lt=periodo.validated_data['fim'])
+
+        return queryset.order_by('inicio', 'pk')
+
     def get_permissions(self):
         # Confirmar agendamento é do Administrador (UC-05), assim como remover sessões.
         if self.action == 'create':
@@ -144,7 +170,7 @@ class SessaoViewSet(ModelViewSet):
     @action(detail=False, methods=['get'], url_path='pendentes-status')
     def pendentes_status(self, request):
         limite = timezone.now() - timedelta(minutes=30)
-        sessoes = self.queryset.filter(
+        sessoes = self.get_queryset().filter(
             status=Sessao.Status.AGENDADA,
             fim__lte=limite,
         )

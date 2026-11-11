@@ -40,6 +40,7 @@ Os endpoints ficam sob `/api/`:
 | Profissionais | `/api/profissionais/` |
 | Serviços | `/api/servicos/` |
 | Sessões | `/api/sessoes/` |
+| Agenda do Profissional de Saúde | `/api/sessoes/?inicio={ISO-8601}&fim={ISO-8601}` |
 | Sessões ainda agendadas 30 minutos após o fim | `/api/sessoes/pendentes-status/` |
 | Disponibilidades | `/api/disponibilidades/` |
 | Bloqueios da agenda | `/api/bloqueios-agenda/` |
@@ -83,9 +84,19 @@ O limite é de 6 alunos por sessão, para qualquer serviço (RN-02). Os particip
 
 Duas confirmações simultâneas não validam a mesma agenda: o SQLite está configurado com `transaction_mode` `IMMEDIATE`, que reserva a escrita no início da transação, e a segunda confirmação espera a primeira terminar (até 20 segundos) antes de validar (RNF-03).
 
+### Consultar a agenda de saúde
+
+O `GET /api/sessoes/` aceita os parâmetros opcionais `inicio` e `fim` em ISO 8601. A consulta considera sessões que cruzam o período (`fim` da sessão posterior a `inicio` da consulta e `inicio` da sessão anterior a `fim` da consulta), em ordem cronológica. Quando enviados juntos, `fim` deve ser posterior a `inicio`:
+
+```http
+GET /api/sessoes/?inicio=2026-11-16T09:00:00-03:00&fim=2026-11-16T18:00:00-03:00
+```
+
+Para o perfil Profissional de Saúde, a resposta contém somente atendimentos de Fisioterapia, Psicologia ou Nutrição atribuídos ao próprio profissional e vinculados aos serviços do seu cadastro. Essa restrição também vale para a consulta de uma sessão por ID e para a lista de sessões pendentes; uma sessão fora do escopo retorna `404`. Sem autenticação, a API retorna `401`.
+
 ### Registrar presença ou falta
 
-O `PATCH /api/sessoes/{id}/presencas/` registra a presença de cada aluno participante (RF-06). Só o profissional responsável pela sessão registra; outro profissional e o Administrador recebem `403` (RN-05). O registro pode ser parcial e corrigido depois:
+O `PATCH /api/sessoes/{id}/presencas/` registra a presença de cada aluno participante (RF-06). Só o profissional responsável pela sessão registra; o Administrador e outro profissional que consegue consultar a sessão recebem `403` (RN-05). Para o Profissional de Saúde, uma sessão fora do próprio escopo retorna `404`. O registro pode ser parcial e corrigido depois:
 
 ```json
 {
@@ -102,7 +113,7 @@ Os registros são gravados juntos: se algum falhar, nenhum é gravado. A respost
 
 Toda a API exige autenticação: sem credenciais, a resposta é `401`. Cada conta tem um dos três perfis do GAAP — Administrador, Treinador ou Profissional de Saúde.
 
-Nos cadastros de alunos, profissionais, serviços, disponibilidades e bloqueios, qualquer perfil autenticado consulta, mas só o Administrador cria, edita e remove; os demais recebem `403`. O superusuário do Django é tratado como Administrador, o que permite administrar o sistema antes de existir qualquer cadastro. Nas sessões, qualquer perfil autenticado consulta. Só o Administrador confirma (`POST /api/sessoes/`) e remove sessões. Alterar uma sessão (`PUT`/`PATCH`) é permitido ao Administrador e ao profissional responsável por ela; o responsável muda apenas `status` e `observacoes` (RF-10). Outro profissional recebe `403`. A responsabilidade da sessão é enviada no campo `profissional` com o ID do cadastro em `/api/profissionais/`; o antigo campo `professor` e o endpoint `/api/professores/` foram removidos.
+Nos cadastros de alunos, profissionais, serviços, disponibilidades e bloqueios, qualquer perfil autenticado consulta, mas só o Administrador cria, edita e remove; os demais recebem `403`. O superusuário do Django é tratado como Administrador, o que permite administrar o sistema antes de existir qualquer cadastro. Nas sessões, o Profissional de Saúde consulta somente os atendimentos da própria agenda vinculados aos seus serviços; os demais perfis autenticados consultam as sessões. Só o Administrador confirma (`POST /api/sessoes/`) e remove sessões. Alterar uma sessão (`PUT`/`PATCH`) é permitido ao Administrador e ao profissional responsável por ela; o responsável muda apenas `status` e `observacoes` (RF-10). Outro profissional que consegue consultar a sessão recebe `403`; uma sessão fora do escopo de consulta do Profissional de Saúde retorna `404`. A responsabilidade da sessão é enviada no campo `profissional` com o ID do cadastro em `/api/profissionais/`; o antigo campo `professor` e o endpoint `/api/professores/` foram removidos.
 
 O perfil fica no modelo `Usuario`, ligado por `conta` ao usuário do Django, que guarda o login e o hash da senha. Cadastre o primeiro Administrador pelo painel `/admin/`, ou use um superusuário.
 
