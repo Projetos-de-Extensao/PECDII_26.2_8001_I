@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError as ValidacaoDjango
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
@@ -16,6 +16,7 @@ from app.agendamento import (
     RegraDeAgendamentoViolada,
     alterar_agenda,
     validar_bloqueio,
+    validar_regras_da_agenda,
     validar_saida_de_disponibilidade,
 )
 from app.models import (
@@ -41,9 +42,13 @@ from app.permissoes import (
 )
 from app.serializers import (
     AlunoSerializer,
+    AtualizarSessaoPatchRequestSerializer,
+    AtualizarSessaoPutRequestSerializer,
     BloqueioAgendaSerializer,
+    ConfirmarSessaoRequestSerializer,
     DashboardResponseSerializer,
     DisponibilidadeSerializer,
+    FiltroAuditoriaQueryParamsSerializer,
     FiltroAgendaQueryParamsSerializer,
     FiltroPendenciasQueryParamsSerializer,
     PendenciasResponseSerializer,
@@ -90,27 +95,38 @@ def executar_alteracao_de_agenda(profissionais, validar, gravar):
     list=extend_schema(
         tags=['Alunos'],
         summary='Listar alunos',
-        description='Retorna os alunos cadastrados. Operação restrita ao Administrador.',
+        description='Lista os alunos cadastrados. Qualquer usuário autenticado pode consultar; escrita restrita ao Administrador.',
     ),
     retrieve=extend_schema(
         tags=['Alunos'], summary='Consultar aluno',
-        description='Busca um aluno pelo identificador.',
+        description='Busca um aluno pelo identificador. Disponível a qualquer usuário autenticado.',
     ),
     create=extend_schema(
         tags=['Alunos'],
         summary='Cadastrar aluno',
-        description='Cria o cadastro básico de um aluno. Data de nascimento no formato AAAA-MM-DD; telefone opcional.',
+        description='Cria o cadastro básico de um aluno. Somente o Administrador pode gravar. Data de nascimento no formato AAAA-MM-DD; telefone opcional.',
         examples=[OpenApiExample(
             'Novo aluno',
             value={'nome': 'Ana Lima', 'data_nascimento': '2010-03-01', 'telefone': '+5511999999999'},
             request_only=True,
         )],
     ),
-    update=extend_schema(tags=['Alunos'], summary='Atualizar aluno'),
-    partial_update=extend_schema(tags=['Alunos'], summary='Atualizar dados do aluno'),
+    update=extend_schema(
+        tags=['Alunos'], summary='Atualizar aluno',
+        description='Substitui os dados do aluno. Somente o Administrador pode gravar.',
+    ),
+    partial_update=extend_schema(
+        tags=['Alunos'], summary='Atualizar dados do aluno',
+        description='Altera apenas os campos enviados. Somente o Administrador pode gravar.',
+    ),
     destroy=extend_schema(
         tags=['Alunos'], summary='Remover aluno',
-        description='Remove o cadastro se ele não estiver vinculado a sessões.',
+        description='Somente o Administrador pode remover o cadastro. A exclusão retorna 409 se o aluno participar de alguma sessão.',
+        responses={
+            204: None,
+            403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.'),
+            409: OpenApiResponse(description='Aluno vinculado a uma ou mais sessões.'),
+        },
     ),
 )
 class AlunoViewSet(ModelViewSet):
@@ -130,13 +146,16 @@ class AlunoViewSet(ModelViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=['Profissionais'], summary='Listar profissionais',
-        description='Lista Treinadores e Profissionais de Saúde cadastrados.',
+        description='Lista Treinadores e Profissionais de Saúde. Qualquer usuário autenticado pode consultar; escrita restrita ao Administrador.',
     ),
-    retrieve=extend_schema(tags=['Profissionais'], summary='Consultar profissional'),
+    retrieve=extend_schema(
+        tags=['Profissionais'], summary='Consultar profissional',
+        description='Busca um profissional pelo identificador. Disponível a qualquer usuário autenticado.',
+    ),
     create=extend_schema(
         tags=['Profissionais'],
         summary='Cadastrar profissional',
-        description='Cria o perfil profissional e sua conta de acesso. Login e senha são obrigatórios na criação. A senha é armazenada como hash e nunca retornada.',
+        description='Somente o Administrador pode criar o perfil profissional e sua conta de acesso. Login e senha são obrigatórios na criação. A senha é armazenada como hash e nunca retornada.',
         examples=[OpenApiExample(
             'Novo treinador',
             value={
@@ -149,15 +168,20 @@ class AlunoViewSet(ModelViewSet):
     ),
     update=extend_schema(
         tags=['Profissionais'], summary='Atualizar profissional',
-        description='Atualiza o cadastro. Login ou senha podem ser alterados quando informados.',
+        description='Somente o Administrador pode atualizar o cadastro. Login ou senha podem ser alterados quando informados; credenciais não são retornadas.',
     ),
     partial_update=extend_schema(
         tags=['Profissionais'], summary='Atualizar dados do profissional',
-        description='Altera apenas os campos enviados; senha nova só é aplicada se informada.',
+        description='Somente o Administrador pode gravar. Altera apenas os campos enviados; login ou senha só mudam quando informados e nunca são retornados.',
     ),
     destroy=extend_schema(
         tags=['Profissionais'], summary='Remover profissional',
-        description='Remove a conta e o perfil se não houver sessões vinculadas.',
+        description='Somente o Administrador pode remover a conta e o perfil. A exclusão retorna 409 se o profissional estiver vinculado a alguma sessão.',
+        responses={
+            204: None,
+            403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.'),
+            409: OpenApiResponse(description='Profissional responsável por uma ou mais sessões.'),
+        },
     ),
 )
 class ProfissionalViewSet(ModelViewSet):
@@ -189,17 +213,23 @@ class ProfissionalViewSet(ModelViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=['Habilitações'], summary='Listar profissionais habilitados para serviços',
+        description='Lista os vínculos profissional-serviço. Qualquer usuário autenticado pode consultar; escrita restrita ao Administrador.',
     ),
     create=extend_schema(
         tags=['Habilitações'], summary='Habilitar profissional para serviço',
-        description='Cria o vínculo que autoriza o profissional a atender o serviço (RN-04).',
+        description='Somente o Administrador pode criar o vínculo que autoriza o profissional a atender o serviço (RN-04). O par profissional-serviço deve ser único.',
         examples=[OpenApiExample(
             'Nova habilitação', value={'profissional': 2, 'servico': 3}, request_only=True,
         )],
     ),
     destroy=extend_schema(
         tags=['Habilitações'], summary='Remover habilitação',
-        description='Recusa a remoção se houver sessão futura ou em andamento associada.',
+        description='Somente o Administrador pode remover. A API retorna 409 se houver sessão não cancelada, futura ou em andamento, para esse profissional e serviço.',
+        responses={
+            204: None,
+            403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.'),
+            409: OpenApiResponse(description='Habilitação necessária para uma sessão futura ou em andamento.'),
+        },
     ),
 )
 class ProfissionalServicoViewSet(
@@ -246,21 +276,38 @@ class ProfissionalServicoViewSet(
 
 
 @extend_schema_view(
-    list=extend_schema(tags=['Serviços'], summary='Listar serviços'),
-    retrieve=extend_schema(tags=['Serviços'], summary='Consultar serviço'),
+    list=extend_schema(
+        tags=['Serviços'], summary='Listar serviços',
+        description='Lista os serviços cadastrados. Qualquer usuário autenticado pode consultar; escrita restrita ao Administrador.',
+    ),
+    retrieve=extend_schema(
+        tags=['Serviços'], summary='Consultar serviço',
+        description='Busca um serviço pelo identificador. Disponível a qualquer usuário autenticado.',
+    ),
     create=extend_schema(
         tags=['Serviços'], summary='Cadastrar serviço',
-        description='Adiciona um serviço ao catálogo. O nome deve ser único.',
+        description='Somente o Administrador pode adicionar serviços ao catálogo. O nome deve ser único.',
         examples=[OpenApiExample(
             'Novo serviço', value={'nome': 'Treino funcional', 'categoria': 'TREINO'},
             request_only=True,
         )],
     ),
-    update=extend_schema(tags=['Serviços'], summary='Atualizar serviço'),
-    partial_update=extend_schema(tags=['Serviços'], summary='Atualizar dados do serviço'),
+    update=extend_schema(
+        tags=['Serviços'], summary='Atualizar serviço',
+        description='Substitui os dados do serviço. Somente o Administrador pode gravar.',
+    ),
+    partial_update=extend_schema(
+        tags=['Serviços'], summary='Atualizar dados do serviço',
+        description='Altera apenas os campos enviados. Somente o Administrador pode gravar.',
+    ),
     destroy=extend_schema(
         tags=['Serviços'], summary='Remover serviço',
-        description='Remove o serviço se não houver sessões vinculadas.',
+        description='Somente o Administrador pode remover. A API retorna 409 se o serviço estiver vinculado a alguma sessão; vínculos profissional-serviço também são removidos.',
+        responses={
+            204: None,
+            403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.'),
+            409: OpenApiResponse(description='Serviço vinculado a uma ou mais sessões.'),
+        },
     ),
 )
 class ServicoViewSet(ModelViewSet):
@@ -280,17 +327,24 @@ class ServicoViewSet(ModelViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=['Sessões'], summary='Consultar agenda',
-        description='Lista sessões no escopo permitido ao perfil autenticado. Os filtros de período e serviço são opcionais.',
+        description='Lista sessões no escopo do perfil autenticado: Administrador consulta todas; Treinador consulta as sessões sob sua responsabilidade; Profissional de Saúde consulta as sessões próprias de Fisioterapia, Psicologia ou Nutrição para as quais está habilitado. Os filtros de período e serviço são opcionais; profissionais só podem filtrar por serviço vinculado ao seu perfil.',
         parameters=[FiltroAgendaQueryParamsSerializer],
     ),
     retrieve=extend_schema(
         tags=['Sessões'], summary='Consultar sessão',
-        description='Retorna os detalhes e a presença registrada para cada participante.',
+        description='Retorna os detalhes e a presença registrada para cada participante. O Administrador pode consultar qualquer sessão; Treinadores consultam sessões sob sua responsabilidade; Profissionais de Saúde consultam sessões próprias de Fisioterapia, Psicologia ou Nutrição para as quais estão habilitados.',
     ),
     create=extend_schema(
         tags=['Sessões'],
         summary='Confirmar sessão',
-        description='Confirma um agendamento com serviço, profissional responsável e ao menos um participante. Disponibilidade, bloqueios e conflitos de agenda são validados antes de gravar.',
+        description='Somente o Administrador pode confirmar. Informe serviço, profissional responsável e pelo menos um participante. A API valida disponibilidade, bloqueios, habilitação profissional, capacidade e conflitos do profissional e dos alunos antes de gravar; violações de agenda retornam 409 com regra e motivo.',
+        request=ConfirmarSessaoRequestSerializer,
+        responses={
+            201: SessaoSerializer,
+            400: OpenApiResponse(description='Campos ausentes, inválidos ou participantes duplicados.'),
+            403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.'),
+            409: OpenApiResponse(description='Regra de agenda violada; resposta contém regra e motivo.'),
+        },
         examples=[OpenApiExample(
             'Sessão de treino',
             value={
@@ -305,13 +359,31 @@ class ServicoViewSet(ModelViewSet):
     ),
     update=extend_schema(
         tags=['Sessões'], summary='Atualizar sessão',
-        description='Atualiza os dados permitidos ao perfil. O profissional responsável pode alterar somente situação e observações.',
+        description='O Administrador pode alterar os dados da sessão; mudanças de horário, serviço ou responsável revalidam RN-01, RN-03, RN-04 e RN-07 na mesma transação. O profissional responsável pode alterar apenas status e observações; REALIZADA e NAO_REALIZADA só podem ser definidas a partir do fim previsto. Reativar uma sessão cancelada revalida as regras de agenda. Participantes não podem ser alterados. CANCELADA permanece um status disponível ao responsável, sem restrição temporal específica na regra atual.',
+        request=AtualizarSessaoPutRequestSerializer,
+        responses={
+            200: SessaoSerializer,
+            400: OpenApiResponse(description='Campos obrigatórios ou valores inválidos.'),
+            403: OpenApiResponse(description='Somente Administrador ou profissional responsável pode alterar; o responsável tem campos limitados.'),
+            409: OpenApiResponse(description='Conflito de agenda ou tentativa de registrar desfecho antes do fim previsto.'),
+        },
     ),
     partial_update=extend_schema(
         tags=['Sessões'], summary='Atualizar dados da sessão',
-        description='Altera os campos enviados respeitando o escopo e as permissões do responsável.',
+        description='O Administrador pode alterar os campos enviados; mudanças de horário, serviço ou responsável revalidam RN-01, RN-03, RN-04 e RN-07 na mesma transação. O profissional responsável pode alterar apenas status e observações; REALIZADA e NAO_REALIZADA só podem ser definidas a partir do fim previsto. Reativar uma sessão cancelada revalida as regras de agenda. Participantes não podem ser alterados. CANCELADA permanece um status disponível ao responsável, sem restrição temporal específica na regra atual.',
+        request=AtualizarSessaoPatchRequestSerializer,
+        responses={
+            200: SessaoSerializer,
+            400: OpenApiResponse(description='Valores inválidos ou tentativa de alterar participantes.'),
+            403: OpenApiResponse(description='Somente Administrador ou profissional responsável pode alterar; o responsável tem campos limitados.'),
+            409: OpenApiResponse(description='Conflito de agenda ou tentativa de registrar desfecho antes do fim previsto.'),
+        },
     ),
-    destroy=extend_schema(tags=['Sessões'], summary='Remover sessão'),
+    destroy=extend_schema(
+        tags=['Sessões'], summary='Remover sessão',
+        description='Exclusivo do Administrador. A remoção também exclui participações e relatório vinculados à sessão.',
+        responses={204: None, 403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.')},
+    ),
     pendentes_status=extend_schema(
         tags=['Sessões'], summary='Listar sessões com situação pendente',
         description='Lista sessões ainda agendadas cujo horário previsto terminou há pelo menos 30 minutos.',
@@ -391,31 +463,94 @@ class SessaoViewSet(ModelViewSet):
             raise Conflito({'regra': erro.regra, 'detail': erro.mensagem}) from erro
 
     def perform_update(self, serializer):
-        sessao = serializer.instance
-        novo_status = serializer.validated_data.get('status', sessao.status)
-        if (
-            novo_status in (Sessao.Status.REALIZADA, Sessao.Status.NAO_REALIZADA)
-            and novo_status != sessao.status
-            and timezone.now() < sessao.fim
-        ):
-            raise Conflito(self.MENSAGEM_SESSAO_NAO_ENCERRADA)
-        if perfil_da_conta(self.request.user) != Usuario.Perfil.ADMINISTRADOR:
-            alterados = {
-                campo for campo, valor in serializer.validated_data.items()
-                if getattr(sessao, campo) != valor
-            }
-            if alterados - self.CAMPOS_DO_RESPONSAVEL:
-                raise PermissionDenied(
-                    'O profissional responsável altera apenas a situação e as observações da sessão.'
+        try:
+            with transaction.atomic():
+                sessao = Sessao.objects.select_for_update().select_related(
+                    'profissional', 'servico',
+                ).get(pk=serializer.instance.pk)
+                serializer.instance = sessao
+                perfil = perfil_da_conta(self.request.user)
+
+                # A autorização de objeto é verificada também sob lock: outro administrador
+                # pode ter trocado o responsável depois de get_object() validar a requisição.
+                if perfil != Usuario.Perfil.ADMINISTRADOR:
+                    usuario = getattr(self.request.user, 'usuario', None)
+                    if usuario is None or sessao.profissional_id != usuario.pk:
+                        raise PermissionDenied(
+                            'Apenas o profissional responsável ou o Administrador pode alterar esta sessão.'
+                        )
+
+                novo_status = serializer.validated_data.get('status', sessao.status)
+                if (
+                    novo_status in (Sessao.Status.REALIZADA, Sessao.Status.NAO_REALIZADA)
+                    and novo_status != sessao.status
+                    and timezone.now() < sessao.fim
+                ):
+                    raise Conflito(self.MENSAGEM_SESSAO_NAO_ENCERRADA)
+
+                if perfil != Usuario.Perfil.ADMINISTRADOR:
+                    alterados = {
+                        campo for campo, valor in serializer.validated_data.items()
+                        if getattr(sessao, campo) != valor
+                    }
+                    if alterados - self.CAMPOS_DO_RESPONSAVEL:
+                        raise PermissionDenied(
+                            'O profissional responsável altera apenas a situação e as observações da sessão.'
+                        )
+
+                campos_da_agenda = {'inicio', 'fim', 'servico', 'profissional'}
+                agenda_alterada = any(
+                    campo in serializer.validated_data
+                    and serializer.validated_data[campo] != getattr(sessao, campo)
+                    for campo in campos_da_agenda
                 )
-        serializer.save()
+                reativando_cancelada = (
+                    sessao.status == Sessao.Status.CANCELADA
+                    and novo_status != Sessao.Status.CANCELADA
+                )
+                if agenda_alterada or reativando_cancelada:
+                    profissional_novo = serializer.validated_data.get('profissional', sessao.profissional)
+                    ids_profissionais = {sessao.profissional_id, profissional_novo.pk}
+                    list(
+                        Usuario.objects.select_for_update()
+                        .filter(pk__in=ids_profissionais)
+                        .order_by('pk')
+                    )
+                    ids_alunos = list(
+                        Participacao.objects.filter(sessao=sessao)
+                        .order_by('aluno_id')
+                        .values_list('aluno_id', flat=True)
+                    )
+                    alunos = list(
+                        Aluno.objects.select_for_update()
+                        .filter(pk__in=ids_alunos)
+                        .order_by('pk')
+                    )
+                    dados = {
+                        campo: serializer.validated_data.get(campo, getattr(sessao, campo))
+                        for campo in ('inicio', 'fim', 'servico', 'profissional')
+                    }
+                    validar_regras_da_agenda(dados, alunos, sessao_ignorada=sessao.pk)
+
+                serializer.save()
+        except RegraDeAgendamentoViolada as erro:
+            detalhes = {'regra': erro.regra, 'detail': erro.mensagem}
+            sessao_conflitante = getattr(erro, 'sessao', None)
+            if sessao_conflitante is not None:
+                detalhes['sessao'] = sessao_conflitante.pk
+            raise Conflito(detalhes) from erro
 
     @action(detail=True, methods=['patch'], url_path='presencas')
     @extend_schema(
         tags=['Sessões'], summary='Registrar presenças',
-        description='O profissional responsável registra PRESENTE ou FALTA para participantes da sessão encerrada. IDs repetidos e alunos fora da sessão são rejeitados.',
+        description='Somente o profissional responsável registra PRESENTE ou FALTA para participantes da sessão. A sessão precisa ter chegado ao fim previsto e não pode estar cancelada. IDs repetidos e alunos fora da sessão são rejeitados.',
         request=RegistroPresencaSerializer,
-        responses=SessaoSerializer,
+        responses={
+            200: SessaoSerializer,
+            400: OpenApiResponse(description='Presenças vazias, inválidas, duplicadas ou de alunos que não participam da sessão.'),
+            403: OpenApiResponse(description='Usuário autenticado que não é o profissional responsável.'),
+            409: OpenApiResponse(description='Sessão ainda não encerrada ou cancelada.'),
+        },
         examples=[OpenApiExample(
             'Presenças da sessão',
             value={'presencas': [{'aluno': 3, 'situacao': 'PRESENTE'}, {'aluno': 4, 'situacao': 'FALTA'}]},
@@ -481,16 +616,26 @@ class SessaoViewSet(ModelViewSet):
     @extend_schema(
         methods=['GET'],
         tags=['Relatórios'], summary='Consultar relatório de treino',
-        description='Consulta o relatório da sessão. Disponível ao Administrador ou ao Treinador responsável.',
+        description='Consulta o relatório da sessão. Disponível ao Administrador ou ao Treinador responsável; um relatório ausente retorna 404.',
         request=None,
-        responses=RelatorioTreinoSerializer,
+        responses={
+            200: RelatorioTreinoSerializer,
+            403: OpenApiResponse(description='Somente Administrador ou Treinador responsável pode consultar.'),
+            404: OpenApiResponse(description='A sessão ainda não tem relatório de treino.'),
+        },
     )
     @extend_schema(
         methods=['POST', 'PATCH'],
         tags=['Relatórios'], summary='Criar ou editar relatório de treino',
-        description='Cria um rascunho com POST ou altera um rascunho com PATCH. O relatório pertence a uma sessão de Treino realizada; edição permitida apenas ao Treinador responsável.',
+        description='Somente o Treinador responsável pode criar ou editar um rascunho de sessão de Treino realizada e encerrada. Relatórios finalizados são imutáveis; POST duplicado, edição sem rascunho, sessão não realizada ou tentativa antes do fim retornam conflito.',
         request=RelatorioTreinoSerializer,
-        responses=RelatorioTreinoSerializer,
+        responses={
+            200: RelatorioTreinoSerializer,
+            201: RelatorioTreinoSerializer,
+            400: OpenApiResponse(description='Campos do relatório inválidos.'),
+            403: OpenApiResponse(description='Somente o Treinador responsável pode criar ou editar.'),
+            409: OpenApiResponse(description='Sessão não realizada, relatório finalizado ou operação em estado inválido.'),
+        },
         examples=[OpenApiExample(
             'Rascunho do relatório',
             value={
@@ -546,9 +691,14 @@ class SessaoViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='relatorio/finalizar')
     @extend_schema(
         tags=['Relatórios'], summary='Finalizar relatório de treino',
-        description='Exige todos os campos de execução e torna o relatório imutável. Permitido ao Treinador responsável.',
+        description='Somente o Treinador responsável pode finalizar o relatório depois do fim da sessão. Exige todos os campos de execução e torna o relatório imutável.',
         request=RelatorioTreinoSerializer,
-        responses=RelatorioTreinoSerializer,
+        responses={
+            200: RelatorioTreinoSerializer,
+            400: OpenApiResponse(description='Campos obrigatórios ausentes ou inválidos.'),
+            403: OpenApiResponse(description='Somente o Treinador responsável pode finalizar.'),
+            409: OpenApiResponse(description='Sessão em estado inválido ou relatório já finalizado.'),
+        },
     )
     def finalizar_relatorio(self, request, pk=None):
         """Valida todos os campos obrigatórios e finaliza o relatório em caráter imutável."""
@@ -596,6 +746,27 @@ class SessaoViewSet(ModelViewSet):
         return Response(serializer.data)
 
 
+@extend_schema_view(
+    retrieve=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Consultar disponibilidade',
+        description='Consulta uma faixa de atendimento. Leitura disponível a qualquer usuário autenticado.',
+    ),
+    update=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Substituir disponibilidade',
+        description='Somente o Administrador pode alterar a faixa. A mudança retorna 409 se deixar uma sessão ativa fora da disponibilidade.',
+        responses={409: OpenApiResponse(description='A alteração deixaria uma sessão ativa sem cobertura de disponibilidade.')},
+    ),
+    partial_update=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Alterar disponibilidade',
+        description='Somente o Administrador pode alterar os campos enviados. A mudança retorna 409 se deixar uma sessão ativa fora da disponibilidade.',
+        responses={409: OpenApiResponse(description='A alteração deixaria uma sessão ativa sem cobertura de disponibilidade.')},
+    ),
+    destroy=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Remover disponibilidade',
+        description='Somente o Administrador pode remover. A API retorna 409 se uma sessão ativa perder sua cobertura.',
+        responses={204: None, 403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.'), 409: OpenApiResponse(description='A disponibilidade cobre uma sessão ativa.')},
+    ),
+)
 class DisponibilidadeViewSet(ModelViewSet):
     """Gerencia períodos de disponibilidade com leitura autenticada e escrita administrativa."""
 
@@ -605,14 +776,14 @@ class DisponibilidadeViewSet(ModelViewSet):
 
     @extend_schema(
         tags=['Agenda e disponibilidade'], summary='Listar disponibilidades',
-        description='Consulta as faixas em que profissionais podem atender. Escrita restrita ao Administrador.',
+        description='Consulta as faixas em que profissionais podem atender. Qualquer usuário autenticado pode consultar; escrita restrita ao Administrador.',
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
     @extend_schema(
         tags=['Agenda e disponibilidade'], summary='Criar disponibilidade',
-        description='Cria uma faixa de atendimento. O fim deve ser posterior ao início; mudanças que invalidem sessões existentes são recusadas.',
+        description='Somente o Administrador pode criar uma faixa de atendimento. O fim deve ser posterior ao início.',
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -654,6 +825,27 @@ class DisponibilidadeViewSet(ModelViewSet):
         executar_alteracao_de_agenda([instance.profissional], validar, excluir)
 
 
+@extend_schema_view(
+    retrieve=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Consultar bloqueio',
+        description='Consulta um bloqueio. Leitura disponível a qualquer usuário autenticado.',
+    ),
+    update=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Substituir bloqueio',
+        description='Somente o Administrador pode alterar o bloqueio. A API retorna 409 se ele se sobrepuser a uma sessão ativa.',
+        responses={409: OpenApiResponse(description='O bloqueio conflita com uma sessão ativa.')},
+    ),
+    partial_update=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Alterar bloqueio',
+        description='Somente o Administrador pode alterar os campos enviados. A API retorna 409 se o intervalo se sobrepuser a uma sessão ativa.',
+        responses={409: OpenApiResponse(description='O bloqueio conflita com uma sessão ativa.')},
+    ),
+    destroy=extend_schema(
+        tags=['Agenda e disponibilidade'], summary='Remover bloqueio',
+        description='Somente o Administrador pode remover o bloqueio.',
+        responses={204: None, 403: OpenApiResponse(description='Usuário autenticado sem perfil Administrador.')},
+    ),
+)
 class BloqueioAgendaViewSet(ModelViewSet):
     """Gerencia bloqueios com leitura autenticada e escrita administrativa."""
 
@@ -663,14 +855,14 @@ class BloqueioAgendaViewSet(ModelViewSet):
 
     @extend_schema(
         tags=['Agenda e disponibilidade'], summary='Listar bloqueios',
-        description='Consulta períodos indisponíveis na agenda dos profissionais. Escrita restrita ao Administrador.',
+        description='Consulta períodos indisponíveis na agenda dos profissionais. Qualquer usuário autenticado pode consultar; escrita restrita ao Administrador.',
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
     @extend_schema(
         tags=['Agenda e disponibilidade'], summary='Criar bloqueio',
-        description='Bloqueia um intervalo da agenda. O motivo é opcional; o fim deve ser posterior ao início e o bloqueio não pode conflitar com sessões.',
+        description='Somente o Administrador pode bloquear um intervalo. O motivo é opcional; o fim deve ser posterior ao início. A API retorna 409 se o bloqueio se sobrepuser a uma sessão ativa.',
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -728,7 +920,7 @@ class PendenciasView(APIView):
 
     @extend_schema(
         tags=['Operação'], summary='Consultar pendências operacionais',
-        description='Lista sessões encerradas sem situação e sessões de Treino realizadas sem relatório finalizado. Somente leitura e exclusivo do Administrador.',
+        description='Lista sessões encerradas não canceladas com participante sem presença/falta e sessões de Treino realizadas sem relatório finalizado. Inclui motivo, responsável e caminho de consulta do compromisso ou relatório. Somente leitura e exclusivo do Administrador.',
         parameters=[FiltroPendenciasQueryParamsSerializer],
         responses=PendenciasResponseSerializer,
     )
@@ -741,9 +933,13 @@ class PendenciasView(APIView):
 @extend_schema_view(
     list=extend_schema(
         tags=['Auditoria'], summary='Consultar trilha de auditoria',
-        description='Lista registros imutáveis de operações críticas. Exclusivo do Administrador.',
+        description='Lista registros imutáveis de operações críticas. Exclusivo do Administrador. Filtros opcionais: operacao, entidade e entidade_id.',
+        parameters=[FiltroAuditoriaQueryParamsSerializer],
     ),
-    retrieve=extend_schema(tags=['Auditoria'], summary='Consultar evento de auditoria'),
+    retrieve=extend_schema(
+        tags=['Auditoria'], summary='Consultar evento de auditoria',
+        description='Consulta um evento imutável. Exclusivo do Administrador.',
+    ),
 )
 class AuditoriaViewSet(ReadOnlyModelViewSet):
     """Consulta da trilha de auditoria, exclusiva do Administrador (RNF-06).
@@ -757,11 +953,9 @@ class AuditoriaViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = RegistroAuditoria.objects.all()
-        entidade_id = self.request.query_params.get('entidade_id')
-        if entidade_id and not entidade_id.isdigit():
-            raise ValidationError({'entidade_id': 'Informe um número inteiro.'})
-        for filtro in ('operacao', 'entidade', 'entidade_id'):
-            valor = self.request.query_params.get(filtro)
+        filtros = FiltroAuditoriaQueryParamsSerializer(data=self.request.query_params)
+        filtros.is_valid(raise_exception=True)
+        for filtro, valor in filtros.validated_data.items():
             if valor:
                 queryset = queryset.filter(**{filtro: valor})
         return queryset
