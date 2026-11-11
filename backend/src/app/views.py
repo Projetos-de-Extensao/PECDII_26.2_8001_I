@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied
@@ -28,8 +29,12 @@ from app.permissoes import (
 from app.serializers import (
     AlunoSerializer,
     BloqueioAgendaSerializer,
+    DashboardResponseSerializer,
     DisponibilidadeSerializer,
     FiltroAgendaQueryParamsSerializer,
+    FiltroPendenciasQueryParamsSerializer,
+    PendenciasResponseSerializer,
+    PeriodoDashboardQueryParamsSerializer,
     FiltroPendenciasQueryParamsSerializer,
     PeriodoDashboardQueryParamsSerializer,
     ProfissionalSerializer,
@@ -112,6 +117,10 @@ class ServicoViewSet(ModelViewSet):
         instance.delete()
 
 
+@extend_schema_view(
+    list=extend_schema(parameters=[FiltroAgendaQueryParamsSerializer]),
+    pendentes_status=extend_schema(parameters=[FiltroAgendaQueryParamsSerializer]),
+)
 class SessaoViewSet(ModelViewSet):
     queryset = Sessao.objects.prefetch_related('participacoes')
     serializer_class = SessaoSerializer
@@ -418,6 +427,10 @@ class PendenciasView(APIView):
 
     permission_classes = [SomenteAdministrador]
 
+    @extend_schema(
+        parameters=[FiltroPendenciasQueryParamsSerializer],
+        responses=PendenciasResponseSerializer,
+    )
     def get(self, request):
         filtro = FiltroPendenciasQueryParamsSerializer(data=request.query_params)
         filtro.is_valid(raise_exception=True)
@@ -429,6 +442,10 @@ class DashboardView(APIView):
 
     permission_classes = [SomenteAdministrador]
 
+    @extend_schema(
+        parameters=[PeriodoDashboardQueryParamsSerializer],
+        responses=DashboardResponseSerializer,
+    )
     def get(self, request):
         periodo = PeriodoDashboardQueryParamsSerializer(data=request.query_params)
         periodo.is_valid(raise_exception=True)

@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'app',
 ]
 
@@ -182,4 +183,31 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'GAAP API',
+    'DESCRIPTION': 'API REST para agenda, sessões e serviços do GAAP.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'ENUM_NAME_OVERRIDES': {
+        'TipoSessaoEnum': [('TREINAMENTO', 'Treinamento'), ('AVALIACAO', 'Avaliação')],
+        'StatusSessaoEnum': [
+            ('AGENDADA', 'Agendada'),
+            ('REALIZADA', 'Realizada'),
+            ('NAO_REALIZADA', 'Não realizada'),
+            ('CANCELADA', 'Cancelada'),
+        ],
+        'TipoPendenciaEnum': [
+            ('PRESENCA_PENDENTE', 'Presença pendente'),
+            ('RELATORIO_PENDENTE', 'Relatório pendente'),
+        ],
+        'CategoriaServicoEnum': [
+            ('TREINO', 'Treino'),
+            ('FISIOTERAPIA', 'Fisioterapia'),
+            ('PSICOLOGIA', 'Psicologia'),
+            ('NUTRICAO', 'Nutrição'),
+        ],
+    },
 }

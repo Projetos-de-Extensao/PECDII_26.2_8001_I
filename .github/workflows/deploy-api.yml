@@ -40,6 +40,19 @@ jobs:
             cd "$repo"
             git pull --ff-only origin main
 
+            # O cliente React é compilado na VPS e servido como arquivo estático pelo Nginx.
+            node_manager="$HOME/.nvm/nvm.sh"
+            if [ ! -s "$node_manager" ]; then
+              printf "NVM ausente para ubuntu; instale Node.js 26 antes do deploy.\\n" >&2
+              exit 1
+            fi
+            . "$node_manager"
+            cd "$repo/frontend"
+            nvm install
+            nvm use
+            npm ci
+            npm run build
+
             # O refactor moveu o código versionado, mas .venv, .env e o SQLite são
             # arquivos locais ignorados pelo Git e permaneceram em src/ na VPS.
             for nome in .venv .env db.sqlite3; do
@@ -68,6 +81,11 @@ jobs:
             .venv/bin/python manage.py collectstatic --noinput
           '
           cp -r /home/ubuntu/PECDII_26.2_8001_I/backend/src/staticfiles/. /var/www/PECDII_26.2_8001_I/static/
+          install -d -m 0755 /var/www/PECDII_26.2_8001_I/frontend
+          cp -r /home/ubuntu/PECDII_26.2_8001_I/frontend/dist/. /var/www/PECDII_26.2_8001_I/frontend/
+          install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/nginx/pbe.conf /etc/nginx/sites-available/pbe
+          ln -sfn /etc/nginx/sites-available/pbe /etc/nginx/sites-enabled/pbe
+          nginx -t
           mkdir -p /etc/systemd/system/pbe.service.d
           install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe.service.d/override.conf /etc/systemd/system/pbe.service.d/override.conf
           install -m 0644 /home/ubuntu/PECDII_26.2_8001_I/deploy/systemd/pbe-notificar-sessoes.service /etc/systemd/system/pbe-notificar-sessoes.service
@@ -75,6 +93,7 @@ jobs:
           systemctl daemon-reload
           systemctl enable --now pbe-notificar-sessoes.timer
           systemctl restart pbe
+          systemctl reload nginx
           SCRIPT
           )"
 

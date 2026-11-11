@@ -43,6 +43,8 @@ Os endpoints ficam sob `/api/`:
 | Login de cliente web | `/api/auth/login/` |
 | Perfil da sessão atual | `/api/auth/session/` |
 | Logout de cliente web | `/api/auth/logout/` |
+| Swagger interativo | `/api/docs` |
+| Especificação OpenAPI | `/api/schema/` |
 | Alunos | `/api/alunos/` |
 | Profissionais | `/api/profissionais/` |
 | Serviços | `/api/servicos/` |
@@ -307,6 +309,6 @@ python manage.py makemigrations --check --dry-run
 python manage.py test app
 ```
 
-Após merge em `main`, os workflows [Deploy da API](.github/workflows/deploy-api.yml) e [Deploy da documentação MkDocs](.github/workflows/deploy.yml) cuidam de publicar a API e a documentação, respectivamente.
+Após merge em `main`, o workflow [Deploy da API e do cliente web](.github/workflows/deploy-api.yml) publica o backend Django e o cliente React na VPS. O deploy da documentação MkDocs é feito pelo workflow [Deploy da documentação](.github/workflows/deploy.yml). A VPS precisa ter Node.js 26 instalado para o usuário `ubuntu`; as instruções estão em [frontend/README.md](frontend/README.md#publicação-na-vps).
 
 O GitHub disponibiliza modelos para [pull requests](.github/PULL_REQUEST_TEMPLATE.md) e para abrir issues de [documentação](.github/ISSUE_TEMPLATE/documentacao.md), [bugs](.github/ISSUE_TEMPLATE/reportar_bug.md) e [funcionalidades](.github/ISSUE_TEMPLATE/sugerir_feature.md).
