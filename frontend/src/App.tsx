@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api, ApiError, clearCsrf, refreshCsrf } from './api';
+import { Dashboard, NovoAgendamento, Pendencias } from './AdminViews';
+import { SessionActions } from './SessionActions';
+import { errorMessage } from './errors';
 import gaapLogo from './assets/gaap-logo.svg';
-import type { Profile, RecordKind, Service, Session, SessionList } from './types';
+import type { Notice, Profile, RecordKind, Service, Session, SessionList, Student } from './types';
 
 const profileLabels = {
   ADMINISTRADOR: 'Administrador',
@@ -23,12 +26,6 @@ const statusLabels: Record<string, string> = {
   NAO_REALIZADA: 'Não realizada',
   CANCELADA: 'Cancelada',
 };
-
-type NoticeKind = 'info' | 'success' | 'error';
-interface Notice {
-  message: string;
-  kind: NoticeKind;
-}
 
 function describeError(error: unknown): string {
   if (error instanceof ApiError) return error.message;
@@ -218,6 +215,20 @@ function App() {
   );
 }
 
+type View = 'agenda' | 'pendencias' | 'dashboard' | 'agendamento' | 'cadastros';
+
+const adminViews: { id: View; label: string; icon: string }[] = [
+  { id: 'agenda', label: 'Agenda', icon: '▦' },
+  { id: 'pendencias', label: 'Pendências', icon: '!' },
+  { id: 'dashboard', label: 'Dashboard', icon: '▤' },
+  { id: 'agendamento', label: 'Novo agendamento', icon: '◷' },
+  { id: 'cadastros', label: 'Cadastros', icon: '＋' },
+];
+
+const professionalViews: { id: View; label: string; icon: string }[] = [
+  { id: 'agenda', label: 'Agenda', icon: '▦' },
+];
+
 function Workspace({
   profile,
   notice,
@@ -231,8 +242,18 @@ function Workspace({
   onLogout: () => void;
   onUnauthorized: () => void;
 }) {
-  const [view, setView] = useState<'agenda' | 'cadastros'>('agenda');
+  const [view, setView] = useState<View>('agenda');
   const isAdmin = profile.perfil === 'ADMINISTRADOR';
+  // A API recusa com 403 o que o perfil não pode acessar; o menu só evita mostrar o que não se aplica.
+  const views = isAdmin ? adminViews : professionalViews;
+
+  function navButton(item: { id: View; label: string; icon: string }) {
+    return (
+      <button key={item.id} className={`nav-link${view === item.id ? ' is-active' : ''}`} type="button" aria-current={view === item.id ? 'page' : undefined} onClick={() => setView(item.id)}>
+        <span aria-hidden="true">{item.icon}</span> {item.label}
+      </button>
+    );
+  }
 
   return (
     <main className="workspace">
@@ -243,13 +264,14 @@ function Workspace({
       <NoticeBanner notice={notice} onClose={onDismissNotice} />
       <div className="workspace-body">
         <nav className="main-nav" aria-label="Navegação principal">
-          <button className={`nav-link${view === 'agenda' ? ' is-active' : ''}`} type="button" aria-current={view === 'agenda' ? 'page' : undefined} onClick={() => setView('agenda')}><span aria-hidden="true">▦</span> Agenda</button>
-          {isAdmin && <button className={`nav-link${view === 'cadastros' ? ' is-active' : ''}`} type="button" aria-current={view === 'cadastros' ? 'page' : undefined} onClick={() => setView('cadastros')}><span aria-hidden="true">＋</span> Cadastros</button>}
+          {views.map(navButton)}
           <div className="nav-user"><span className="nav-user-mark" aria-hidden="true">{profile.nome.slice(0, 1).toLocaleUpperCase('pt-BR')}</span><span><strong>{profile.nome}</strong><small>{profileLabels[profile.perfil]}</small></span></div>
         </nav>
-        {view === 'agenda'
-          ? <Agenda profile={profile} onUnauthorized={onUnauthorized} />
-          : isAdmin && <Records onUnauthorized={onUnauthorized} />}
+        {view === 'agenda' && <Agenda profile={profile} onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'pendencias' && <Pendencias onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'dashboard' && <Dashboard onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'agendamento' && <NovoAgendamento onUnauthorized={onUnauthorized} />}
+        {isAdmin && view === 'cadastros' && <Records onUnauthorized={onUnauthorized} />}
       </div>
     </main>
   );
@@ -264,7 +286,22 @@ function Agenda({ profile, onUnauthorized }: { profile: Profile; onUnauthorized:
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [count, setCount] = useState(0);
+  const [openSession, setOpenSession] = useState<number | null>(null);
+  const [studentNames, setStudentNames] = useState(new Map<number, string>());
   const requestId = useRef(0);
+  const isProfessional = profile.perfil !== 'ADMINISTRADOR';
+
+  // Nomes dos alunos para o registro de presença; se falhar, a tela mostra o ID.
+  useEffect(() => {
+    if (!isProfessional) return;
+    api<Student[]>('/api/alunos/')
+      .then((students) => setStudentNames(new Map(students.map((item) => [item.id, item.nome]))))
+      .catch(() => undefined);
+  }, [isProfessional]);
+
+  function replaceSession(updated: Session) {
+    setSessions((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+  }
 
   const loadAgenda = useCallback(async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -293,9 +330,7 @@ function Agenda({ profile, onUnauthorized }: { profile: Profile; onUnauthorized:
         onUnauthorized();
         return;
       }
-      setError(reason instanceof ApiError && reason.status === 403
-        ? `Acesso negado: ${reason.message}`
-        : 'Não foi possível carregar a agenda. Verifique a conexão e tente novamente.');
+      setError(errorMessage(reason));
       setSessions([]);
       setCount(0);
     } finally {
@@ -328,11 +363,17 @@ function Agenda({ profile, onUnauthorized }: { profile: Profile; onUnauthorized:
         const from = dateTime(session.inicio);
         const to = dateTime(session.fim);
         const sessionService = serviceById.get(String(session.servico));
+        const isOpen = openSession === session.id;
         return (
           <article className="session-card" key={session.id}>
             <div className="session-time"><span className="session-date">{from.date}</span>{from.time}{to.time ? ` – ${to.time}` : ''}</div>
             <div className="session-summary"><h4>{session.titulo || 'Sessão'}</h4><p>{sessionService?.nome ?? 'Serviço não informado'} · {session.participantes?.length ?? 0} participante(s)</p></div>
-            <div className="session-meta">{sessionService?.categoria && <span className="tag">{categoryLabels[sessionService.categoria] ?? sessionService.categoria}</span>}<span className="tag status">{statusLabels[session.status] ?? session.status}</span></div>
+            <div className="session-meta">
+              {sessionService?.categoria && <span className="tag">{categoryLabels[sessionService.categoria] ?? sessionService.categoria}</span>}
+              <span className="tag status">{statusLabels[session.status] ?? session.status}</span>
+              {isProfessional && <button className="button button-quiet" type="button" aria-expanded={isOpen} onClick={() => setOpenSession(isOpen ? null : session.id)}>{isOpen ? 'Fechar' : 'Detalhes'}</button>}
+            </div>
+            {isOpen && <SessionActions session={session} profile={profile} isTraining={sessionService?.categoria === 'TREINO'} studentNames={studentNames} onChanged={replaceSession} onUnauthorized={onUnauthorized} />}
           </article>
         );
       })}</div>}
