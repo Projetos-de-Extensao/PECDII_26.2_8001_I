@@ -1,35 +1,24 @@
 from datetime import datetime, timedelta, timezone as timezone_utc
 from unittest import mock
 
-from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
 from rest_framework.test import APIClient
 
 from app.models import Aluno, Participacao, Servico, Sessao, Usuario
+from app.tests.helpers import cliente_para as cliente, criar_perfil
 
 INICIO = datetime(2026, 11, 16, 9, tzinfo=timezone_utc.utc)
-
-
-def criar_usuario(login, perfil):
-    conta = get_user_model().objects.create_user(username=login)
-    return Usuario.objects.create(conta=conta, nome=login, email=f'{login}@example.com', perfil=perfil)
-
-
-def cliente(usuario):
-    client = APIClient()
-    client.force_authenticate(usuario.conta)
-    return client
 
 
 class BaseSessaoTests(TestCase):
     """Sessão de Treino com dois participantes, sob responsabilidade de um Treinador."""
 
     def setUp(self):
-        self.admin = criar_usuario('admin-presenca', Usuario.Perfil.ADMINISTRADOR)
-        self.responsavel = criar_usuario('treinador-responsavel', Usuario.Perfil.TREINADOR)
-        self.outro_treinador = criar_usuario('outro-treinador', Usuario.Perfil.TREINADOR)
-        self.fisio = criar_usuario('fisio-presenca', Usuario.Perfil.PROFISSIONAL_SAUDE)
+        self.admin = criar_perfil(Usuario.Perfil.ADMINISTRADOR, 'admin-presenca')
+        self.responsavel = criar_perfil(Usuario.Perfil.TREINADOR, 'treinador-responsavel')
+        self.outro_treinador = criar_perfil(Usuario.Perfil.TREINADOR, 'outro-treinador')
+        self.fisio = criar_perfil(Usuario.Perfil.PROFISSIONAL_SAUDE, 'fisio-presenca')
         servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
         self.sessao = Sessao.objects.create(
             titulo='Treino de força',
@@ -99,7 +88,7 @@ class RegistroPresencaTests(BaseSessaoTests):
             self.url_presencas, {'presencas': [{'aluno': self.bruno.pk, 'situacao': 'FALTA'}]}, format='json'
         )
 
-        response = cliente(self.outro_treinador).get(self.url_sessao)
+        response = cliente(self.responsavel).get(self.url_sessao)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn({'aluno': self.bruno.pk, 'situacao_presenca': 'FALTA'}, response.data['presencas'])
@@ -111,15 +100,8 @@ class RegistroPresencaTests(BaseSessaoTests):
                 self.url_presencas, {'presencas': [{'aluno': self.ana.pk, 'situacao': 'PRESENTE'}]}, format='json'
             )
 
-            if usuario.perfil == Usuario.Perfil.PROFISSIONAL_SAUDE:
-                # A agenda de saúde não revela sequer se existe uma sessão de Treino.
-                self.assertEqual(response.status_code, 404)
-            else:
-                self.assertEqual(response.status_code, 403)
-                self.assertEqual(
-                    response.data['detail'],
-                    'Apenas o profissional responsável pela sessão registra presença ou falta.',
-                )
+            # As agendas de Treinador e Profissional de Saúde não revelam sessões alheias.
+            self.assertEqual(response.status_code, 404)
         self.assertIsNone(self.presenca_de(self.ana))
 
     def test_administrador_nao_registra_presenca(self):
@@ -227,15 +209,8 @@ class AlteracaoSessaoTests(BaseSessaoTests):
         for usuario in (self.outro_treinador, self.fisio):
             response = cliente(usuario).patch(self.url_sessao, {'status': 'REALIZADA'}, format='json')
 
-            if usuario.perfil == Usuario.Perfil.PROFISSIONAL_SAUDE:
-                # A agenda de saúde não revela sessões de Treino fora do seu escopo.
-                self.assertEqual(response.status_code, 404)
-            else:
-                self.assertEqual(response.status_code, 403)
-                self.assertEqual(
-                    response.data['detail'],
-                    'Apenas o profissional responsável ou o Administrador pode alterar esta sessão.',
-                )
+            # As agendas de Treinador e Profissional de Saúde não revelam sessões alheias.
+            self.assertEqual(response.status_code, 404)
         self.sessao.refresh_from_db()
         self.assertEqual(self.sessao.status, Sessao.Status.AGENDADA)
 

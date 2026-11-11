@@ -12,7 +12,7 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
 |---|---|---|---|
 | Acesso | Todos | RF-01 | Autenticar; apresentar acesso negado. |
 | Cadastros | Administrador | RF-02 | Manter aluno, profissional e serviço. |
-| Visão geral e pendências | Administrador | RF-04, RF-09, RF-11 (indicadores a confirmar) | Consultar a operação e as pendências; indicadores simples dependem de definição. |
+| Visão geral e pendências | Administrador | RF-04, RF-09, RF-11 | Consultar a operação e as pendências; representar os filtros de RF-09 e o dashboard de RF-11 já definido. |
 | Agenda e configuração | Administrador | RF-03, RF-04, RF-05 | Consultar disponibilidade/bloqueios e confirmar agendamento sem conflito do profissional ou do aluno. |
 | Agenda pessoal | Treinador | RF-04, RF-10 | Consultar sessões sob sua responsabilidade e serviços vinculados; registrar se foram ministradas após o horário previsto. |
 | Atendimentos | Profissional de Saúde | RF-04, RF-06, RF-10 | Consultar serviços e agenda atribuídos; registrar presença/falta por aluno e se o atendimento foi ministrado, em ações separadas. |
@@ -60,16 +60,16 @@ Este protótipo de navegação usa os perfis do cenário GAAP e os IDs RF do [le
   {* <b>GAAP — Visão geral}
   [Consultar agenda] | [Consultar pendências]
   <b>Pendências operacionais (RF-09)
-  Presença/falta | "Compromissos encerrados sem registro (proposta)"
-  Relatório | "Sessões de Treino com rascunho (proposta)"
+  Presença/falta | "Compromissos encerrados sem registro"
+  Relatório | "Sessões de Treino sem relatório ou com rascunho"
   ..
   <b>Dashboard simples (RF-11)
-  Indicadores | "A definir com o responsável pelo cenário"
+  Indicadores | "Quantidade por serviço e situação; mês atual por padrão"
 }
 @endsalt
 ```
 
-Os indicadores de RF-11 e a definição de pendência da RF-09 ainda precisam de confirmação.
+Os critérios de RF-09 e RF-11 foram definidos no registro de decisões D-11, D-12 e D-15. O protótipo ainda precisa mostrar os filtros de pendência e os controles de período e agrupamento do dashboard.
 
 ## Agenda e confirmação — Administrador — RF-03, RF-04, RF-05
 
@@ -91,7 +91,7 @@ Os indicadores de RF-11 e a definição de pendência da RF-09 ainda precisam de
   Fim | "hh:mm"
   Serviço | "Selecionar serviço (Treino, Fisioterapia, Psicologia ou Nutrição)"
   Profissional | "Selecionar profissional"
-  Participantes | "Selecionar alunos, se aplicável"
+  Participantes | "Selecionar de 1 a 6 alunos"
   [Validar e confirmar]
   Resultado | "Confirmado ou rejeitado com o motivo"
 }
@@ -164,12 +164,12 @@ O registro de atendimento ministrado é separado da presença/falta e só fica d
 
 ## Referência visual — protótipo de alta fidelidade
 
-As telas abaixo são os exports atuais de alta fidelidade. Os wireframes PlantUML acima continuam sendo a referência de baixa fidelidade; as imagens não alteram o escopo nem resolvem as decisões ainda pendentes. Os exports mostram exemplos de presença/falta em atendimentos e os campos definidos para o relatório de treino, com ações de rascunho e finalização. Foi acrescentada uma variante de recusa de agendamento para desktop e mobile: ambas mostram indisponibilidade, conflito, bloqueio e incompatibilidade; o desktop também explicita capacidade excedida, enquanto o mobile mostra o limite de seis alunos por sessão. **Ainda faltam estados de sucesso/erro para outros fluxos, uma visualização separada do relatório finalizado somente para leitura e os fluxos propostos RF-10 e RF-11.** O arquivo editável está no [Figma](https://www.figma.com/design/7a3PVqNYNlwLtSgN4sfiU4/GAAP-%E2%80%94-Prot%C3%B3tipo-de-alta-fidelidade).
+As telas abaixo são os exports atuais de alta fidelidade. Os wireframes PlantUML acima continuam sendo a referência de baixa fidelidade; as imagens ilustram o escopo e os critérios definidos, mas não cobrem todos os estados necessários. Os exports mostram exemplos de presença/falta em atendimentos e os campos definidos para o relatório de treino, com ações de rascunho e finalização. Foi acrescentada uma variante de recusa de agendamento para desktop e mobile: ambas mostram indisponibilidade, conflito, bloqueio e incompatibilidade; o desktop também explicita capacidade excedida, enquanto o mobile mostra o limite de seis alunos por sessão. **Ainda faltam estados de sucesso/erro para outros fluxos, uma visualização separada do relatório finalizado somente para leitura e as representações visuais de RF-10 e RF-11.** O arquivo editável está no [Figma](https://www.figma.com/design/7a3PVqNYNlwLtSgN4sfiU4/GAAP-%E2%80%94-Protótipo-de-alta-fidelidade).
 
 | Export atual | IDs relacionados | Cobertura ainda necessária |
 |---|---|---|
 | Acesso | RF-01 | Estados de credencial inválida e acesso negado. |
-| Visão geral | RF-04, RF-09, RF-11 | Pendências conforme definição aprovada e indicadores simples ainda a confirmar. |
+| Visão geral | RF-04, RF-09, RF-11 | Pendências conforme critério definido; filtros de tipo, período e agrupamentos do dashboard por serviço/situação ainda precisam de representação visual. |
 | Cadastros | RF-02 | Formulário, validação e confirmação. |
 | Novo agendamento e recusa | RF-03, RF-05 | A variante desktop mostra capacidade excedida (7/6); ambas mostram indisponibilidade, bloqueio, conflito e incompatibilidade. A configuração de disponibilidade/bloqueios e o estado de sucesso ainda precisam de representação. |
 | Agenda do Treinador | RF-04, RF-06, RF-07, RF-10 | Estado finalizado somente para leitura e erros; representação de realizado/não realizado separada da presença ainda falta. |

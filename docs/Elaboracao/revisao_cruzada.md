@@ -6,17 +6,19 @@ title: Revisão do Escopo GAAP
 
 Este documento organiza a conferência dos critérios de aceite da seção 10 do cenário GAAP e dos sete pontos do feedback AP1 (#56), além de registrar achados e decisões de escopo. A issue #63 não exige revisão por outros integrantes nem aprovação do escopo; ela é concluída com a revisão documental e o registro das decisões.
 
+Os resultados abaixo foram reavaliados contra o código e a documentação do workspace em 11/11/2026. A suíte local passou com 145 testes; o resultado remoto do workflow e o estado do GitHub Project não foram verificados nesta revisão.
+
 ## Critérios de aceite do cenário GAAP
 
 | # | Pergunta de revisão | Evidência/documento | Resultado (OK / ajustar / pendente) | Observação/decisão |
 |---:|---|---|---|---|
-| C1 | O projeto sobe localmente por instruções reproduzíveis e aplica migrations em banco relacional? | README, migrations, CI | Pendente | |
-| C2 | Administrador consegue cadastrar dados de base e configurar ao menos um serviço? | RF-02, API, casos de uso | Pendente; serviço não está implementado no código atual | |
-| C3 | A API recusa agendamentos conflitantes, bloqueados ou acima da capacidade? | RF-05, RN-01–RN-03, sequência e testes | Pendente; regras ausentes na implementação atual | |
-| C4 | Profissional autorizado consulta agenda, registra presença/falta no compromisso sob sua responsabilidade e o Treinador finaliza relatório? | RF-04, RF-06, RF-07, casos de uso | Pendente; presença/relatório não estão implementados atualmente | |
-| C5 | Usuários sem permissão não acessam agendas/operações indevidas? | RF-01, RN-05, testes de autorização | Pendente; autorização por três perfis ausente no código atual | |
-| C6 | Testes automatizados passam no pipeline e cobrem regras prioritárias? | Workflow de CI e resultados do pipeline | Pendente de execução/revisão | |
-| C7 | Documentação, diagramas UML e GitHub Project refletem o que foi efetivamente entregue? | Artefatos e GitHub Project | Pendente; não declarar conformidade antes da revisão | |
+| C1 | O projeto sobe localmente por instruções reproduzíveis e aplica migrations em banco relacional? | README, migrations, CI | OK no workspace: as instruções estão documentadas e a suíte cria o banco de teste aplicando as migrations. | A configuração de produção/VPS não foi verificada nesta revisão. |
+| C2 | Administrador consegue cadastrar dados de base e configurar ao menos um serviço? | RF-02, API, casos de uso | OK: cadastros de aluno, profissional e serviço estão implementados com escrita administrativa. | |
+| C3 | A API recusa agendamentos conflitantes, bloqueados ou acima da capacidade? | RF-05, RN-01–RN-03, sequência e testes | OK no backend: confirmação valida disponibilidade, bloqueios, compatibilidade, conflitos e capacidade de até seis participantes de forma atômica. | |
+| C4 | Profissional autorizado consulta agenda, registra presença/falta no compromisso sob sua responsabilidade e o Treinador finaliza relatório? | RF-04, RF-06, RF-07, casos de uso | Parcial: consulta por perfil e presença/falta estão implementadas; a API permite atualizar situação, mas ainda não exige que o horário tenha passado. Relatórios de treino não estão implementados. | Concluir relatório e aplicar o limite temporal de RF-10. |
+| C5 | Usuários sem permissão não acessam agendas/operações indevidas? | RF-01, RN-05, testes de autorização | OK para as operações implementadas: os três perfis têm escopo próprio de consulta e as escritas administrativas/responsáveis são restritas. | |
+| C6 | Testes automatizados passam no pipeline e cobrem regras prioritárias? | Workflow de CI e resultados do pipeline | Parcial: 145 testes passaram localmente em 11/11/2026; o estado do workflow remoto não foi consultado. | |
+| C7 | Documentação, diagramas UML e GitHub Project refletem o que foi efetivamente entregue? | Artefatos e GitHub Project | Parcial: os documentos de implementação foram atualizados para distinguir código atual de modelo-alvo; protótipos têm lacunas e o GitHub Project não foi comparado. | |
 
 ## Sete pontos do feedback AP1
 
@@ -27,7 +29,7 @@ Este documento organiza a conferência dos critérios de aceite da seção 10 do
 | F3 | Refazer requisitos | Cada RF/RN/RNF tem ID, prioridade, critério observável e cobertura dos três perfis? Bloqueio, capacidade, compatibilidade e autorização estão definidos/assinalados para confirmação? | IDs e critérios registrados; RN-01, RN-07, RF-09, RF-11 e RNF-06 têm decisões registradas (D-10 a D-16). |
 | F4 | Alinhar artefatos | Visão, mapa, casos de uso, classes e protótipos usam os mesmos IDs? Matriz de rastreabilidade não esconde lacunas? | IDs e matriz atualizados na #62; esta revisão corrigiu descrições de cobertura desatualizadas. Lacunas visuais restantes estão listadas no registro do protótipo. |
 | F5 | Modelar fluxos de risco | Sequências mostram conflito, capacidade, bloqueio, usuário sem permissão e payload inválido; finalizar relatório também cobre permissão e dados inválidos? | Fluxos preparados; RNF-06 definido para operações críticas com registro append-only e mensagem legível. |
-| F6 | Revisar viabilidade | Implementação atual foi comparada ao cronograma? Riscos, dependências e critério do marco de Elaboração foram registrados? | Comparação e riscos registrados; semanas 13–16 planejadas em duas etapas; RF-09/RF-11/RF-12/RNF-06 estão definidos e pendentes de implementação. |
+| F6 | Revisar viabilidade | Implementação atual foi comparada ao cronograma? Riscos, dependências e critério do marco de Elaboração foram registrados? | Comparação e riscos registrados; Construção 2 concluída no backend; relatório RF-07, consulta RF-09, dashboard RF-11, lembrete RF-12 e auditoria RNF-06 pendentes; o limite temporal de RF-10 falta implementar. |
 | F7 | Revisar os achados | Os achados, dúvidas e decisões relevantes estão registrados, com inconsistências corrigidas ou explicitamente mantidas como pendências? | Revisão documental registrada; decisões D-04 a D-09 concluídas nesta atualização. |
 
 ## Registro das revisões
@@ -37,6 +39,7 @@ Este documento organiza a conferência dos critérios de aceite da seção 10 do
 | Lucas Santos | Casos de uso, classes, sequência, glossário, rastreabilidade, viabilidade, visão, mapa mental e protótipos (exports desktop e mobile) | 28/10/2026 | 7 inconsistências entre documentos (A1–A7) e 4 pontos no protótipo (P1–P4); detalhes abaixo | D-07 a D-09 |
 | Revisão assistida (Codex) | Reavaliação de A1–A7 e P1–P4 após PR #75; rastreabilidade, viabilidade e exports desktop/mobile | 03/11/2026 | A1–A6, P1, P2 e P4 corrigidos na #62; A7 e descrições desatualizadas corrigidas nesta revisão; decisões D-04 a D-09 registradas e P3 resolvido. | Pendências visuais e RF-09/RF-11/RNF-06 descritas nos artefatos |
 | Atualização das decisões com Pedro Lucas | RN-07, RF-09, RF-11, RN-01, lembrete de relatório e auditoria | 04/11/2026 | D-10 a D-15 registraram regras de conflito, pendências, dashboard e lembrete. D-16 fechou a auditoria para cadastro de usuários, confirmação de agendamento, alteração de presença/falta e finalização de relatório, com mensagens humanas e sem credenciais. | Registro de decisões D-10 a D-16; LevReq, casos de uso, modelos e rastreabilidade |
+| Revisão assistida (Codex) | Código em `src/`, README e documentos de iniciação/elaboração | 11/11/2026 | Confirmou-se consulta da agenda por perfil, presença/falta e confirmação transacional. Permanecem ausentes relatório, consulta operacional RF-09, dashboard, lembrete RF-12 e auditoria; RF-10 ainda não impõe o horário previsto. A documentação de status e os textos que diziam que definições estavam pendentes foram corrigidos. A suíte local passou com 145 testes. | Viabilidade, rastreabilidade, 5W2H, Design Thinking, mapa mental e protótipos |
 
 ### Achados da revisão — Lucas Santos (28/10/2026)
 

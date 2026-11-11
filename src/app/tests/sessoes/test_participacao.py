@@ -1,22 +1,20 @@
 from datetime import datetime, timedelta, timezone as timezone_utc
 
 from django.contrib import admin
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
 from django.test import TestCase
-from rest_framework.test import APIClient
-
 from app.admin import ParticipacaoInline, SessaoAdmin
 from app.models import Aluno, Participacao, Servico, Sessao, Usuario
+from app.tests.helpers import cliente_para, criar_perfil
 
 
 class BaseParticipacaoTests(TestCase):
     """Cria um treinador, um serviço, uma sessão e dois alunos."""
 
     def setUp(self):
-        self.treinador = self.criar_usuario('treinador-participacao', Usuario.Perfil.TREINADOR)
+        self.treinador = criar_perfil(Usuario.Perfil.TREINADOR, 'treinador-participacao')
         self.servico = Servico.objects.create(nome='Treino funcional', categoria=Servico.Categoria.TREINO)
         self.inicio = datetime(2026, 11, 16, 9, tzinfo=timezone_utc.utc)
         self.sessao = Sessao.objects.create(
@@ -27,11 +25,6 @@ class BaseParticipacaoTests(TestCase):
         )
         self.ana = Aluno.objects.create(nome='Ana Lima', data_nascimento='2010-03-01')
         self.bruno = Aluno.objects.create(nome='Bruno Costa', data_nascimento='2011-07-15')
-
-    def criar_usuario(self, login, perfil):
-        conta = get_user_model().objects.create_user(username=login)
-        return Usuario.objects.create(conta=conta, nome=login, email=f'{login}@example.com', perfil=perfil)
-
 
 class ParticipacaoModelTests(BaseParticipacaoTests):
     """Verifica as regras da tabela participacao descritas no DER."""
@@ -118,9 +111,8 @@ class RemocaoComParticipacaoApiTests(BaseParticipacaoTests):
 
     def setUp(self):
         super().setUp()
-        self.admin = self.criar_usuario('admin-participacao', Usuario.Perfil.ADMINISTRADOR)
-        self.client = APIClient()
-        self.client.force_authenticate(self.admin.conta)
+        self.admin = criar_perfil(Usuario.Perfil.ADMINISTRADOR, 'admin-participacao')
+        self.client = cliente_para(self.admin)
 
     def test_remover_aluno_com_participacao_retorna_409(self):
         Participacao.objects.create(sessao=self.sessao, aluno=self.ana)

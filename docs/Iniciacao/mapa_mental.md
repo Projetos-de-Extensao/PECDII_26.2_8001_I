@@ -19,8 +19,8 @@ skinparam NodeFontSize 14
 **** RF-03 disponibilidade e bloqueios
 **** RF-04 consulta operacional da agenda
 **** RF-05 confirmação de agendamento
-**** RF-09 consulta de pendências operacionais (definição a confirmar)
-**** RF-11 dashboard simples (indicadores a confirmar)
+**** RF-09 consulta de pendências operacionais (critério definido; implementação pendente)
+**** RF-11 dashboard simples por serviço e situação (critério definido; implementação pendente)
 *** Treinador
 **** RF-04 agenda sob responsabilidade
 **** RF-06 presença/falta
@@ -44,14 +44,14 @@ skinparam NodeFontSize 14
 *** RN-04 profissional compatível com serviço
 *** RN-05 autorização para presença e relatório
 *** RN-06 confirmação atômica
-*** RN-07 conflito de horário do aluno (proposta)
+*** RN-07 conflito de horário do aluno
 ** Qualidade
 *** RNF-01 banco relacional normalizado
 *** RNF-02 hash de senha
 *** RNF-03 atomicidade sob concorrência
 *** RNF-04 validação e autorização
 *** RNF-05 testes e documentação
-*** RNF-06 auditoria de operações (proposta)
+*** RNF-06 auditoria de operações (critério definido; implementação pendente)
 ** Exceção fora do escopo
 *** RF-08 notificação por e-mail já implementada
 ** Fora do MVP

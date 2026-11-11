@@ -1,20 +1,20 @@
 from datetime import datetime, timedelta, timezone as timezone_utc
 
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from app.models import ProfissionalServico, Servico, Sessao, Usuario
+from app.tests.helpers import cliente_para, criar_perfil
 
 
 class AgendaProfissionalSaudeApiTests(TestCase):
     """A agenda de saúde mostra só atendimentos próprios de serviços vinculados."""
 
     def setUp(self):
-        self.profissional = self.criar_usuario('saude-agenda', Usuario.Perfil.PROFISSIONAL_SAUDE)
-        self.outro_profissional = self.criar_usuario(
-            'outra-saude-agenda', Usuario.Perfil.PROFISSIONAL_SAUDE
+        self.profissional = criar_perfil(Usuario.Perfil.PROFISSIONAL_SAUDE, 'saude-agenda')
+        self.outro_profissional = criar_perfil(
+            Usuario.Perfil.PROFISSIONAL_SAUDE, 'outra-saude-agenda'
         )
         self.servico_vinculado = self.criar_servico(
             'Fisioterapia esportiva', Servico.Categoria.FISIOTERAPIA
@@ -34,22 +34,16 @@ class AgendaProfissionalSaudeApiTests(TestCase):
             servico=self.servico_nao_vinculado,
         )
         ProfissionalServico.objects.create(
+            profissional=self.outro_profissional,
+            servico=self.servico_vinculado,
+        )
+        ProfissionalServico.objects.create(
             profissional=self.profissional,
             servico=self.servico_treino,
         )
 
-        self.client = APIClient()
-        self.client.force_authenticate(self.profissional.conta)
+        self.client = cliente_para(self.profissional)
         self.base = datetime(2026, 11, 16, 9, tzinfo=timezone_utc.utc)
-
-    def criar_usuario(self, login, perfil):
-        conta = get_user_model().objects.create_user(username=login)
-        return Usuario.objects.create(
-            conta=conta,
-            nome=login,
-            email=f'{login}@example.com',
-            perfil=perfil,
-        )
 
     def criar_servico(self, nome, categoria):
         return Servico.objects.create(nome=nome, categoria=categoria)
@@ -87,6 +81,33 @@ class AgendaProfissionalSaudeApiTests(TestCase):
         self.assertEqual([item['id'] for item in resposta.data], [permitida.pk])
         detalhe_alheio = self.client.get(f'/api/sessoes/{sessao_de_terceiro.pk}/')
         self.assertEqual(detalhe_alheio.status_code, 404)
+
+    def test_profissional_de_saude_filtra_por_servico_vinculado_sem_ampliar_escopo(self):
+        propria = self.criar_sessao(
+            'Consulta própria', self.profissional, self.servico_vinculado, self.base
+        )
+        self.criar_sessao(
+            'Consulta de outro profissional', self.outro_profissional,
+            self.servico_vinculado, self.base + timedelta(hours=1),
+        )
+
+        resposta = self.client.get(
+            '/api/sessoes/', {'servico': self.servico_vinculado.pk}
+        )
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual([item['id'] for item in resposta.data], [propria.pk])
+
+    def test_profissional_de_saude_nao_filtra_por_servico_sem_vinculo(self):
+        resposta = self.client.get(
+            '/api/sessoes/', {'servico': self.servico_nao_vinculado.pk}
+        )
+
+        self.assertEqual(resposta.status_code, 403)
+        self.assertEqual(
+            resposta.data['detail'],
+            'Só é possível filtrar por serviços vinculados ao seu perfil.',
+        )
 
     def test_periodo_inclui_sessoes_que_cruzam_a_janela_em_ordem_cronologica(self):
         antes_que_cruza_inicio = self.criar_sessao(

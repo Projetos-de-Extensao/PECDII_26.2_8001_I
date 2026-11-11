@@ -4,7 +4,7 @@ title: Diagrama de Classes
 ---
 # Modelo Conceitual do Domínio GAAP
 
-Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. A implementação da Construção 1 já inclui `Aluno`, `Usuario`, `Servico`, `ProfissionalServico` e `Sessao`; as classes de disponibilidade, bloqueios, presença individual e relatório de treino ainda são propostas para iterações seguintes. O professor informou capacidade máxima de 6 alunos por sessão para qualquer serviço; no MVP, a validação usa uma constante no backend.
+Este é o modelo conceitual proposto a partir do cenário GAAP e dos requisitos RF/RN. O código atual implementa `Aluno`, `Usuario`, `Servico`, `ProfissionalServico`, `Disponibilidade`, `BloqueioAgenda`, `Sessao` e `Participacao`, incluindo a consulta de agenda com escopo por perfil. `RelatorioTreino` e `RegistroAuditoria` continuam no modelo-alvo, mas ainda não têm implementação. A notificação RF-08 é implementada por `Sessao.notificacao_enviada_em` e pelo comando de notificação; `NotificacaoEmail` no diagrama é uma evolução do modelo, não uma classe atual. O professor informou capacidade máxima de 6 alunos por sessão para qualquer serviço; no MVP, a validação usa uma constante no backend.
 
 ## Diagrama
 

@@ -215,11 +215,15 @@ class SessaoSerializer(serializers.ModelSerializer):
         return confirmar_sessao(validated_data, alunos)
 
 
-class PeriodoConsultaSerializer(serializers.Serializer):
-    """Valida os limites opcionais usados na consulta da agenda."""
+class FiltroAgendaQueryParamsSerializer(serializers.Serializer):
+    """Valida os filtros de período e serviço usados na consulta da agenda."""
 
     inicio = serializers.DateTimeField(required=False)
     fim = serializers.DateTimeField(required=False)
+    servico = serializers.PrimaryKeyRelatedField(
+        queryset=Servico.objects.all(),
+        required=False,
+    )
 
     def validate(self, attrs):
         inicio = attrs.get('inicio')

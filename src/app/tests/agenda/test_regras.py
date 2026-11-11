@@ -1,10 +1,7 @@
 from datetime import timedelta
 
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
-from rest_framework.test import APIClient
-
 from app.models import (
     Aluno,
     BloqueioAgenda,
@@ -15,15 +12,16 @@ from app.models import (
     Sessao,
     Usuario,
 )
+from app.tests.helpers import cliente_para, criar_perfil
 
 
 class RegrasDaAgendaApiTests(TestCase):
     """Valida RN-01, RN-03, RN-04 e RN-07 durante a confirmação transacional."""
 
     def setUp(self):
-        self.admin = self.criar_usuario('admin-regras', Usuario.Perfil.ADMINISTRADOR)
-        self.profissional = self.criar_usuario('profissional-regras', Usuario.Perfil.PROFISSIONAL_SAUDE)
-        self.outro_profissional = self.criar_usuario('outro-profissional-regras', Usuario.Perfil.TREINADOR)
+        self.admin = criar_perfil(Usuario.Perfil.ADMINISTRADOR, 'admin-regras')
+        self.profissional = criar_perfil(Usuario.Perfil.PROFISSIONAL_SAUDE, 'profissional-regras')
+        self.outro_profissional = criar_perfil(Usuario.Perfil.TREINADOR, 'outro-profissional-regras')
         self.servico = Servico.objects.create(
             nome='Fisioterapia de agenda',
             categoria=Servico.Categoria.FISIOTERAPIA,
@@ -46,17 +44,7 @@ class RegrasDaAgendaApiTests(TestCase):
         self.fim = self.inicio + timedelta(hours=8)
         self.disponibilizar(self.profissional)
         self.disponibilizar(self.outro_profissional)
-        self.client = APIClient()
-        self.client.force_authenticate(self.admin.conta)
-
-    def criar_usuario(self, login, perfil):
-        conta = get_user_model().objects.create_user(username=login)
-        return Usuario.objects.create(
-            conta=conta,
-            nome=login,
-            email=f'{login}@example.com',
-            perfil=perfil,
-        )
+        self.client = cliente_para(self.admin)
 
     def disponibilizar(self, profissional):
         Disponibilidade.objects.create(
