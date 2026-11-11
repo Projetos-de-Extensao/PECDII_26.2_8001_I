@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api } from './api';
-import { formatDateTime, reportError } from './errors';
-import type { DashboardData, Notice, PendingList, Professional, ProfessionalServiceLink, Service, Student } from './types';
+import { formatDate, formatDateTime, plural, reportError } from './errors';
+import { SessionDetails } from './SessionActions';
+import type { DashboardData, Notice, PendingList, Professional, ProfessionalServiceLink, Service, Session, Student } from './types';
 
 interface AdminProps {
   onUnauthorized: () => void;
@@ -10,7 +11,7 @@ interface AdminProps {
 
 export function Message({ notice }: { notice: Notice | null }) {
   if (!notice) return null;
-  const className = notice.kind === 'error' ? 'error-message' : 'success-message';
+  const className = { error: 'error-message', info: 'info-message', success: 'success-message' }[notice.kind];
   return <div className={`inline-message ${className}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.message}</div>;
 }
 
@@ -24,6 +25,28 @@ export function Pendencias({ onUnauthorized }: AdminProps) {
   const [dados, setDados] = useState<PendingList | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<Notice | null>(null);
+  // Atalho para os detalhes (D-15): a sessão aberta e os nomes dos alunos.
+  const [aberta, setAberta] = useState<Session | null>(null);
+  const [nomes, setNomes] = useState(new Map<number, string>());
+
+  useEffect(() => {
+    api<Student[]>('/api/alunos/')
+      .then((lista) => setNomes(new Map(lista.map((aluno) => [aluno.id, aluno.nome]))))
+      .catch(() => undefined);
+  }, []);
+
+  async function verSessao(id: number) {
+    if (aberta?.id === id) {
+      setAberta(null);
+      return;
+    }
+    setMessage(null);
+    try {
+      setAberta(await api<Session>(`/api/sessoes/${id}/`));
+    } catch (error) {
+      reportError(error, onUnauthorized, setMessage);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -66,7 +89,19 @@ export function Pendencias({ onUnauthorized }: AdminProps) {
               <div className="session-meta">
                 <span className="tag">{item.sessao.servico.nome}</span>
                 <span className="tag status">{dados.tipos.find((t) => t.valor === item.tipo)?.rotulo ?? item.tipo}</span>
+                <button className="button button-quiet" type="button" aria-expanded={aberta?.id === item.sessao.id} onClick={() => void verSessao(item.sessao.id)}>
+                  {aberta?.id === item.sessao.id ? 'Fechar' : 'Ver sessão'}
+                </button>
               </div>
+              {aberta?.id === item.sessao.id && (
+                <SessionDetails
+                  session={aberta}
+                  isTraining={item.sessao.servico.categoria === 'TREINO'}
+                  studentNames={nomes}
+                  onChanged={setAberta}
+                  onUnauthorized={onUnauthorized}
+                />
+              )}
             </article>
           ))}
         </div>
@@ -88,8 +123,16 @@ export function Dashboard({ onUnauthorized }: AdminProps) {
     setLoading(true);
     setMessage(null);
     try {
-      const query = inicio || fim ? `?${new URLSearchParams({ inicio, fim }).toString()}` : '';
-      setDados(await api<DashboardData>(`/api/dashboard/${query}`));
+      // Envia as datas preenchidas; a regra "início e fim juntos" é conferida pela API.
+      const params = new URLSearchParams();
+      if (inicio) params.set('inicio', inicio);
+      if (fim) params.set('fim', fim);
+      const query = params.size ? `?${params.toString()}` : '';
+      const resultado = await api<DashboardData>(`/api/dashboard/${query}`);
+      setDados(resultado);
+      // Mostra nos campos o período usado pela API (na primeira carga, o mês atual).
+      setInicio(resultado.periodo.inicio);
+      setFim(resultado.periodo.fim);
     } catch (error) {
       reportError(error, onUnauthorized, setMessage);
     } finally {
@@ -103,7 +146,7 @@ export function Dashboard({ onUnauthorized }: AdminProps) {
     <section className="content-panel" aria-labelledby="dashboard-title">
       <div className="panel-title-row">
         <div><p className="eyebrow">VISÃO GERAL</p><h2 id="dashboard-title">Dashboard</h2><p className="muted">Compromissos por serviço e situação no período.</p></div>
-        {dados && <span className="date-chip">{dados.periodo.inicio} a {dados.periodo.fim}</span>}
+        {dados && <span className="date-chip">{formatDate(dados.periodo.inicio)} a {formatDate(dados.periodo.fim)}</span>}
       </div>
       <form className="filter-bar" onSubmit={(event) => void carregar(event)}>
         <div className="filter-field"><label htmlFor="dash-start">De</label><input id="dash-start" type="date" value={inicio} onChange={(event) => setInicio(event.target.value)} /></div>
@@ -151,6 +194,7 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
   const [message, setMessage] = useState<Notice | null>(null);
   const [servicoSelecionado, setServicoSelecionado] = useState('');
   const [profissionalSelecionado, setProfissionalSelecionado] = useState('');
+  const [selecionados, setSelecionados] = useState(0);
 
   const profissionaisElegiveis = servicos.find((servico) => String(servico.id) === servicoSelecionado)
     ?.profissionais_habilitados ?? [];
@@ -187,7 +231,6 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
         method: 'POST',
         body: {
           titulo: String(dados.get('titulo')).trim(),
-          tipo: dados.get('tipo'),
           servico: Number(dados.get('servico')),
           profissional: Number(dados.get('profissional')),
           inicio: new Date(String(dados.get('inicio'))).toISOString(),
@@ -198,6 +241,7 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
       form.reset();
       setServicoSelecionado('');
       setProfissionalSelecionado('');
+      setSelecionados(0);
       setMessage({ kind: 'success', message: 'Agendamento confirmado.' });
     } catch (error) {
       reportError(error, onUnauthorized, setMessage);
@@ -216,12 +260,6 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
         <form className="record-form" onSubmit={(event) => void submit(event)}>
           <div className="form-grid">
             <label htmlFor="booking-name">Título<input id="booking-name" name="titulo" required maxLength={150} /></label>
-            <label htmlFor="booking-type">Tipo
-              <select id="booking-type" name="tipo" defaultValue="TREINAMENTO">
-                <option value="TREINAMENTO">Treinamento</option>
-                <option value="AVALIACAO">Avaliação</option>
-              </select>
-            </label>
             <label htmlFor="booking-service">Serviço
               <select id="booking-service" name="servico" required value={servicoSelecionado} onChange={(event) => {
                 setServicoSelecionado(event.target.value);
@@ -246,8 +284,8 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
               <button className="text-button" type="button" onClick={onManageLinks}>Configurar habilitações</button>
             </p>
           )}
-          <fieldset className="checkbox-list">
-            <legend>Alunos participantes</legend>
+          <fieldset className="checkbox-list" onChange={(event) => setSelecionados(event.currentTarget.querySelectorAll('input:checked').length)}>
+            <legend>Alunos participantes · {plural(selecionados, 'selecionado', 'selecionados')} (máximo 6)</legend>
             {alunos.length === 0 && <p className="muted">Nenhum aluno cadastrado.</p>}
             {alunos.map((aluno) => (
               <label key={aluno.id}><input type="checkbox" name="participantes" value={aluno.id} /> {aluno.nome}</label>
