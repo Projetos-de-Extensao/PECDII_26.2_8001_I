@@ -62,6 +62,24 @@ class SessaoApiTests(TestCase):
         self.assertEqual(response.data['descricao'], 'Avaliação de mobilidade e força.')
         self.assertEqual(response.data['profissional'], self.profissional.pk)
 
+    def test_cria_sessao_sem_tipo_usando_treinamento_como_padrao(self):
+        inicio = timezone.now() + timedelta(days=1)
+        response = self.admin_client.post(
+            '/api/sessoes/',
+            {
+                'titulo': 'Treino sem tipo',
+                'inicio': inicio.isoformat(),
+                'fim': (inicio + timedelta(minutes=60)).isoformat(),
+                'servico': self.servico.pk,
+                'profissional': self.profissional.pk,
+                'participantes': [self.aluno.pk],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['tipo'], Sessao.Tipo.TREINAMENTO)
+
     def test_criacao_sem_profissional_e_rejeitada(self):
         inicio = timezone.now() + timedelta(days=1)
         response = self.admin_client.post(

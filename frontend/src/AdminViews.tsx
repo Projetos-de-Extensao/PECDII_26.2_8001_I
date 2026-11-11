@@ -231,7 +231,6 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
         method: 'POST',
         body: {
           titulo: String(dados.get('titulo')).trim(),
-          tipo: dados.get('tipo'),
           servico: Number(dados.get('servico')),
           profissional: Number(dados.get('profissional')),
           inicio: new Date(String(dados.get('inicio'))).toISOString(),
@@ -278,12 +277,6 @@ export function NovoAgendamento({ onUnauthorized, onManageLinks }: AdminProps & 
             </label>
             <label htmlFor="booking-start">Início<input id="booking-start" name="inicio" type="datetime-local" required /></label>
             <label htmlFor="booking-end">Fim<input id="booking-end" name="fim" type="datetime-local" required /></label>
-            <label htmlFor="booking-type">Formato da sessão
-              <select id="booking-type" name="tipo" defaultValue="TREINAMENTO">
-                <option value="TREINAMENTO">Treinamento</option>
-                <option value="AVALIACAO">Avaliação</option>
-              </select>
-            </label>
           </div>
           {servicoSelecionado && profissionaisDoServico.length === 0 && (
             <p className="form-hint" role="status">
